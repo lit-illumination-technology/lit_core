@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>NEOPIXELS</title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+    </head>
+    <body>
+        <h1>Neopixels</h1>
+        <select id="effect_selector" style="display:none"></select>
+        <select id="color_selector" style="display:none"></select>
+        <input id="speed_input" style="display:none" type="range" value=50 min=0 max=100 ></input>
+        <button id="send" style="display:none">go</button>
+        <p id="result"></p>
+
+        <script>
+            COLOR = 1;
+            SPEED = 2;
+            $(document).ready(function(){
+                effectSelector = $("#effect_selector");
+                speedInput = $("#speed_input");
+                colorSelector = $("#color_selector");
+                sendButton = $("#send");
+
+                //Populate the effect dropdown
+                $.getJSON("/get_effects.json", function(result) {
+                    $.each(result.effects, function() {
+                        effectSelector.append($("<option />").val(this.modifiers).text(this.name));
+                    });
+                    effectSelector.show();
+                    sendButton.show();
+                    //Update options for initially selected effect
+                    effectSelector.trigger("change");
+                });
+
+                //When a differnet effect is chosen, hide/show appropriate options
+                effectSelector.change(function() {
+                    if(effectSelector.val() & COLOR)
+                        colorSelector.show();
+                    else
+                        colorSelector.hide();
+
+                    if(effectSelector.val() & SPEED)
+                        speedInput.show();
+                    else
+                        speedInput.hide();
+                });
+
+                //Populate color dorpdown
+                $.getJSON("/get_colors.json", function(result) {
+                    $.each(result.colors, function() {
+                        colorSelector.append($("<option />").val(this.color).text(this.name).css('color', "rgb(" + this.color + ")"));
+                    });
+                });
+
+                //Send the command
+                $("#send").click(function(){
+                    rgb = colorSelector.val().split(",");
+                    for(i in rgb)
+                        rgb[i] = parseInt(rgb[i], 10);
+                    var command = {
+                        effect : effectSelector.children("option").filter(":selected").text(),
+                        args : {
+                            color : rgb,
+                            speed : parseInt(speedInput.val())
+                            }
+                    };
+                    $.post({
+                        url: '/command',
+                        data: JSON.stringify(command),
+                        contentType: "application/json",
+                        dataType: 'json'
+                    }).done(function(data) {
+                        $("#result").html(data.ret)
+                    });
+                });
+            });
+        </script>
+    </body>
+</html>
