@@ -8,6 +8,7 @@
         <h1>Neopixels</h1>
         <select id="effect_selector" style="display:none"></select>
         <select id="color_selector" style="display:none"></select>
+        <input id="color_input" style="display:none" type="color"></input>
         <input id="speed_input" style="display:none" type="range" value=50 min=0 max=100 ></input>
         <button id="send" style="display:none">go</button>
         <p id="result"></p>
@@ -19,6 +20,7 @@
                 effectSelector = $("#effect_selector");
                 speedInput = $("#speed_input");
                 colorSelector = $("#color_selector");
+                colorInput = $("#color_input");
                 sendButton = $("#send");
 
                 //Populate the effect dropdown
@@ -32,12 +34,15 @@
                     effectSelector.trigger("change");
                 });
 
-                //When a differnet effect is chosen, hide/show appropriate options
+                //When a different effect is chosen, hide/show appropriate options
                 effectSelector.change(function() {
-                    if(effectSelector.val() & COLOR)
+                    if(effectSelector.val() & COLOR){
                         colorSelector.show();
-                    else
+                        colorSelector.trigger("change");
+                    } else {
                         colorSelector.hide();
+                        colorInput.hide();
+                    }
 
                     if(effectSelector.val() & SPEED)
                         speedInput.show();
@@ -45,18 +50,45 @@
                         speedInput.hide();
                 });
 
-                //Populate color dorpdown
+                //Populate color dropdown
                 $.getJSON("/get_colors.json", function(result) {
+                    colorSelector.append($("<option />").val("custom").text("custom"));
+                    
                     $.each(result.colors, function() {
                         colorSelector.append($("<option />").val(this.color).text(this.name).css('color', "rgb(" + this.color + ")"));
                     });
+                    colorSelector.trigger("change");
                 });
 
+                //Check if custom color was selected
+                colorSelector.change(function(){
+                    if(colorSelector.val() === "custom")
+                        colorInput.show();
+                    else
+                        colorInput.hide();
+                });
+
+                function getSelectedColor(){
+                    var rgb;
+                    if(colorSelector.val() === "custom") {
+                        var hex = colorInput.val();
+                        var split = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                        rgb = [
+                            parseInt(split[1], 16), 
+                            parseInt(split[2], 16), 
+                            parseInt(split[3], 16)
+                        ] 
+                        return rgb;
+                    } else {
+                        rgb = colorSelector.val().split(",");
+                        for(i in rgb)
+                            rgb[i] = parseInt(rgb[i], 10);
+                    }
+                    return rgb;
+                }
                 //Send the command
                 $("#send").click(function(){
-                    rgb = colorSelector.val().split(",");
-                    for(i in rgb)
-                        rgb[i] = parseInt(rgb[i], 10);
+                    rgb = getSelectedColor();
                     var command = {
                         effect : effectSelector.children("option").filter(":selected").text(),
                         args : {
