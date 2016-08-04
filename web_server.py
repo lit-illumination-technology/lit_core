@@ -11,6 +11,7 @@ password = config.get("General", "password")
 username = config.get("General", "username")
 port = config.getint("General", "port")
 
+
 def check_auth(un, pw):
     """This function is called to check if a username /
     password combination is valid.
