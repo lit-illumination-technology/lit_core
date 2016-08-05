@@ -1,3 +1,9 @@
 #container-speed {
+    width: 25%;
+    display: none;
+}
+
+#container-color {
+    width: 25%;
     display: none;
 }

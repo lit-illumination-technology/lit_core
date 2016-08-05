@@ -6,29 +6,35 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
         <title>NEOPIXELS</title>
+
+        <link href="{{ url_for('static', filename='css/layout.css') }}" rel="stylesheet">
         <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
         <link href="{{ url_for('static', filename='css/bootstrap-colorpicker.min.css') }}" rel="stylesheet">
+        <link href="{{ url_for('static', filename='css/bootstrap-slider.min.css') }}" rel="stylesheet">
     </head>
     <body>
         <h1>Neopixels</h1>
         <select id="effect_selector" style="display:none"></select>
-        <div style="width: 50%">
+        <div id="container-color">
             <input type="text" class="form-control colorpicker-element" id="color_input" value="White"/>
         </div>
-        <input id="speed_input" style="display:none" type="range" value=50 min=0 max=100 ></input>
+        <div id="container-speed">
+            <input id="speed_input" type="text" data-slider-value=50 date-slider-min=0 data-slider-max=100></input>
+        </div>
         <button id="send" style="display:none">go</button>
         <p id="result"></p>
 
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
         <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
         <script src="{{ url_for('static', filename='js/bootstrap-colorpicker.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/bootstrap-slider.min.js') }}"></script>
         <script>
-
             COLOR = 1;
             SPEED = 2;
             $(document).ready(function(){
                 effectSelector = $("#effect_selector");
                 speedInput = $("#speed_input");
+                speedInput.slider();
                 //colorSelector = $("#color_selector");
                 colorInput = $("#color_input");
                 colorInput.colorpicker({
@@ -50,15 +56,17 @@
                 //When a different effect is chosen, hide/show appropriate options
                 effectSelector.change(function() {
                     if(effectSelector.val() & COLOR){
-                        colorInput.show();
+                        $("#container-color").show();
                     } else {
-                        colorInput.hide();
+                        $("#container-color").hide();
                     }
 
-                    if(effectSelector.val() & SPEED)
-                        speedInput.show();
-                    else
-                        speedInput.hide();
+                    if(effectSelector.val() & SPEED) {
+                        $("#container-speed").show();
+                        speedInput.slider('relayout');
+                    } else {
+                        $("#container-speed").hide();
+                    }
                 });
 
 /*
@@ -80,7 +88,7 @@
                     if(effectSelector.val() & COLOR)
                         args["color"] = rgb;
                     if(effectSelector.val() & SPEED)
-                        args["speed"] = parseInt(speedInput.val());
+                        args["speed"] = parseInt(speedInput.slider("getValue"));
 
                     var command = {
                         effect : effectSelector.children("option").filter(":selected").text(),
