@@ -1,4 +1,4 @@
-import controls as np
+import controls
 import time, random, math, sys, getopt, threading, signal, atexit
 __author__="Nick Pesce"
 __email__="npesce@terpmail.umd.edu"
@@ -6,6 +6,7 @@ __email__="npesce@terpmail.umd.edu"
 SPEED = 0b10
 COLOR = 0b1
 
+np = controls.Led_Controller(0, 120)
 stop_event = threading.Event()
 t = None
 
@@ -53,7 +54,7 @@ def slide(speed = 1, **extras):
     global stop_event
     off = 0
     while(not stop_event.is_set()):
-        for n in range(0, np.LED_COUNT):
+        for n in range(0, np.num_leds):
             np.set_pixel_hsv(n, ((n+off)/60.0)%1, 1, 1)
         off+=.1
         np.show()
@@ -69,10 +70,10 @@ def bounce(speed=1, **extras):
     dx = .1
     while(not stop_event.is_set()):
         np.off()
-        np.set_pixel_hsv(int(x), (x/float(np.LED_COUNT))%1, 1, 1)
-        np.set_pixel_hsv(int(np.LED_COUNT-x), ((np.LED_COUNT-x)/float(np.LED_COUNT))%1, 1, 1)
+        np.set_pixel_hsv(int(x), (x/float(np.num_leds))%1, 1, 1)
+        np.set_pixel_hsv(int(np.num_leds-x), ((np.num_leds-x)/float(np.num_leds))%1, 1, 1)
         x+=dx
-        if(x+dx >=np.LED_COUNT or x+dx <0):
+        if(x+dx >=np.num_leds or x+dx <0):
             dx = -dx
         np.show()
         stop_event.wait(.01/speed)
@@ -83,15 +84,15 @@ def christmas(speed=1, **extras):
     Param speed: Scales the default speed"""
 
     global stop_event
-    for n in range(0, np.LED_COUNT):
-        x = math.fabs((np.LED_COUNT/2 - n)/float(np.LED_COUNT/2))
+    for n in range(0, np.num_leds):
+        x = math.fabs((np.num_leds/2 - n)/float(np.num_leds/2))
         np.set_pixel(n, int(255-(x*255)), int(x*255), 0)
             
     while(not stop_event.is_set()):
         first = np.get_pixel(0)
-        for n in range(0, np.LED_COUNT-1):
+        for n in range(0, np.num_leds-1):
             np.set_pixel(n, *np.get_pixel(n+1))
-            np.set_pixel(np.LED_COUNT-1, *first)
+            np.set_pixel(np.num_leds-1, *first)
         np.show()
         stop_event.wait(.2/speed)
         
@@ -116,7 +117,7 @@ def rave(speed=1, **extras):
 
     global stop_event
     while(not stop_event.is_set()):
-        for n in range(0, np.LED_COUNT):
+        for n in range(0, np.num_leds):
             np.set_pixel(n, random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
         np.show();
         stop_event.wait(.1/speed)
@@ -142,17 +143,15 @@ def throb(speed=1, color=[255, 255, 255], **extras):
     Param r, g, b: Default white. RGB values for light color. [0, 255]"""
 
     global stop_event
-    np.set_all_pixels(color[0], color[1], color[2])
     brightness = 0
     db = .01
     while(not stop_event.is_set()):
-        np.brightness(brightness)
+        np.set_all_pixels(int(color[0]*brightness), int(color[1]*brightness), int(color[2]*brightness))
         np.show()
         if brightness + db > 1 or brightness + db < 0:
             db = -db
         brightness += db
         stop_event.wait(.01/speed)
-    np.brightness(1)
 
 def on(color = [255, 255, 255], **extras):
     """Turns the entire string on.
@@ -171,8 +170,8 @@ def disco(speed=1, **extras):
     global stop_event
     off = 0
     while not stop_event.is_set():
-        for n in range(0, np.LED_COUNT):
-            np.set_pixel_hsv(n, ((n*off)/float(np.LED_COUNT))%1, 1, 1)
+        for n in range(0, np.num_leds):
+            np.set_pixel_hsv(n, ((n*off)/float(np.num_leds))%1, 1, 1)
         off+=.1
         np.show()
         stop_event.wait(.05/speed)
@@ -186,7 +185,7 @@ def chase(speed = 1, **extras):
     global stop_event
     hue = 0;
     while not stop_event.is_set():
-        for n in range(0, np.LED_COUNT):
+        for n in range(0, np.num_leds):
             if stop_event.is_set():
                 break
             np.set_pixel_hsv(n, hue, 1, 1)
@@ -203,9 +202,9 @@ def drip(color=[0, 200, 255], speed=1, **extras):
     Param speed: Scales the default speed"""
 
     global stop_event
-    dullness = [15]*np.LED_COUNT
+    dullness = [15]*np.num_leds
     while not stop_event.is_set():
-        for n in range(0, np.LED_COUNT):
+        for n in range(0, np.num_leds):
             np.set_pixel(n, int(color[0]/dullness[n]), int(color[1]/dullness[n]), int(color[2]/dullness[n]))
             dullness[n] -= random.random()/20
             if dullness[n]<=1 or random.randint(0, int(dullness[n]*20)) == 0:
@@ -217,7 +216,7 @@ def christmas_lights(**extras):
     """Lights light up in the colors and pattern of traditional christmas lights"""
 
     lights = []
-    for n in range(0, np.LED_COUNT):
+    for n in range(0, np.num_leds):
         seq = n%5
         if seq == 0:
             lights.append([100, 0, 0])

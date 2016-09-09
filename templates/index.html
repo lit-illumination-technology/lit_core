@@ -14,7 +14,11 @@
     </head>
     <body>
         <h1>Neopixels</h1>
-        <select id="effect_selector" style="display:none"></select>
+        <form>
+        
+        <div id="container-effect">
+            <select id="effect_selector" style="display:none"></select>
+        </div>
         <div id="container-color">
             <input type="text" class="form-control colorpicker-element" id="color_input" value="White"/>
         </div>
@@ -22,6 +26,7 @@
             <input id="speed_input" type="text" data-slider-value=50 date-slider-min=0 data-slider-max=100></input>
         </div>
         <button id="send" style="display:none">go</button>
+        </form>
         <p id="result"></p>
 
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
@@ -69,20 +74,13 @@
                     }
                 });
 
-/*
-                //Populate color dropdown
-                $.getJSON("/get_colors.json", function(result) {
-                    var colorSelectors = {colorSelectors : result.colors};
-                    colorInput.colorpicker(colorSelectors);
-                });
-*/
                 function getSelectedColor(){
                     var rgba = colorInput.data('colorpicker').color.toRGB();
                     return [rgba['r'], rgba['g'], rgba['b']];
                 }
 
                 //Send the command
-                $("#send").click(function(){
+                sendButton.click(function(){
                     rgb = getSelectedColor();
                     var args = {};
                     if(effectSelector.val() & COLOR)
@@ -107,3 +105,4 @@
         </script>
     </body>
 </html>
+

@@ -1,11 +1,12 @@
 import socket, threading, time, ConfigParser
-import controls as np
+import controls
 
 config = ConfigParser.ConfigParser()
 config.read("config.ini")
 password = config.get("General", "password")
-port = config.getint("General", "port")
+port = config.getint("General", "link_port")
 data = bytearray(2048)
+np = controls.Led_Controller(0, 60)
 
 def start():
     # create a raw socket and bind it to the public interface
