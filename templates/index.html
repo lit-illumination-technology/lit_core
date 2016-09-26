@@ -11,34 +11,45 @@
         <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
         <link href="{{ url_for('static', filename='css/bootstrap-colorpicker.min.css') }}" rel="stylesheet">
         <link href="{{ url_for('static', filename='css/bootstrap-slider.min.css') }}" rel="stylesheet">
+        <link href="{{ url_for('static', filename='css/bootstrap2-toggle.min.css') }}" rel="stylesheet">
     </head>
     <body>
-        <h1>Neopixels</h1>
-        <form>
-        
-        <div id="container-effect">
-            <select id="effect_selector" style="display:none"></select>
+        <div class="container">
+            <h1>Neopixels</h1>
+            <label class="checkbox-inline">
+              <input id="toggle_first" type="checkbox" checked data-toggle="toggle"> Room
+            </label>
+            <label class="checkbox-inline">
+              <input id="toggle_second" type="checkbox" data-toggle="toggle"> Desk
+            </label>
+            <div id="container-effect">
+                <select id="effect_selector" style="display:none"></select>
+            </div>
+            <div id="container-color">
+                <input type="text" class="form-control colorpicker-element" id="color_input" value="White"/>
+            </div>
+            <div id="container-speed">
+                <input id="speed_input" type="text" data-slider-value=50 date-slider-min=0 data-slider-max=100></input>
+            </div>
+            <button id="send" style="display:none">go</button>
         </div>
-        <div id="container-color">
-            <input type="text" class="form-control colorpicker-element" id="color_input" value="White"/>
-        </div>
-        <div id="container-speed">
-            <input id="speed_input" type="text" data-slider-value=50 date-slider-min=0 data-slider-max=100></input>
-        </div>
-        <button id="send" style="display:none">go</button>
-        </form>
         <p id="result"></p>
 
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
         <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
         <script src="{{ url_for('static', filename='js/bootstrap-colorpicker.min.js') }}"></script>
         <script src="{{ url_for('static', filename='js/bootstrap-slider.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/bootstrap2-toggle.min.js') }}"></script>
         <script>
             COLOR = 1;
             SPEED = 2;
             $(document).ready(function(){
                 effectSelector = $("#effect_selector");
                 speedInput = $("#speed_input");
+                toggleFirst = $("#toggle_first");
+                toggleSecond = $("#toggle_second");
+                toggleFirst.bootstrapToggle();
+                toggleSecond.bootstrapToggle();
                 speedInput.slider();
                 //colorSelector = $("#color_selector");
                 colorInput = $("#color_input");
@@ -46,6 +57,22 @@
                     format: "hex"
                 });
                 sendButton = $("#send");
+
+                start = 0;
+                end = 120;
+
+                //When a toggle switch is changed, update the start and end points
+                updateRange = function() {
+                    start = 60;
+                    end = 60;
+                    if(toggleSecond.prop('checked'))
+                        end = 120;
+                    if(toggleFirst.prop('checked'))
+                        start = 0;
+                }
+                toggleFirst.change(updateRange);
+                toggleSecond.change(updateRange);
+                updateRange();
 
                 //Populate the effect dropdown
                 $.getJSON("/get_effects.json", function(result) {
@@ -73,7 +100,7 @@
                         $("#container-speed").hide();
                     }
                 });
-
+                
                 function getSelectedColor(){
                     var rgba = colorInput.data('colorpicker').color.toRGB();
                     return [rgba['r'], rgba['g'], rgba['b']];
@@ -81,17 +108,25 @@
 
                 //Send the command
                 sendButton.click(function(){
-                    rgb = getSelectedColor();
-                    var args = {};
-                    if(effectSelector.val() & COLOR)
-                        args["color"] = rgb;
-                    if(effectSelector.val() & SPEED)
-                        args["speed"] = parseInt(speedInput.slider("getValue"));
+                    if(start == end)
+                        var command = {
+                            effect: "off",
+                            args: {}
+                        }
+                    else {
+                        rgb = getSelectedColor();
+                        var args = {};
+                        args["range"] = {"start" : start, "end" : end}
+                        if(effectSelector.val() & COLOR)
+                            args["color"] = rgb;
+                        if(effectSelector.val() & SPEED)
+                            args["speed"] = parseInt(speedInput.slider("getValue"));
 
-                    var command = {
-                        effect : effectSelector.children("option").filter(":selected").text(),
-                        args : args
-                    };
+                        var command = {
+                            effect : effectSelector.children("option").filter(":selected").text(),
+                            args : args
+                        };
+                    }
                     $.post({
                         url: '/command',
                         data: JSON.stringify(command),

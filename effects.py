@@ -6,7 +6,10 @@ __email__="npesce@terpmail.umd.edu"
 SPEED = 0b10
 COLOR = 0b1
 
-np = controls.Led_Controller(0, 120)
+START = 0
+END = 120
+
+np = controls.Led_Controller(START, END)
 stop_event = threading.Event()
 t = None
 
@@ -15,14 +18,24 @@ def start(effect, **args):
     global t
     if not is_effect(effect):
         return (help(), False)
+    
     if "speed" in args:
         args["speed"] = 10**((args["speed"]-50)/50.0)
+
+    #Stop previous effect
+    stop_event.set()
+    if t is not None:
+        t.join()
+    stop_event.clear()
+    np.off()
+
+    if "range" in args:
+        np.set_range(args["range"]["start"], args["range"]["end"])
+    else:
+        np.set_range(START, END)
+
     try:
         effect_fun = effects[effect.lower()]
-        stop_event.set()
-        if t is not None:
-            t.join()
-        stop_event.clear()
         t = threading.Thread(target=effect_fun, kwargs=args)
         t.daemon = True
         t.start()
@@ -55,7 +68,7 @@ def slide(speed = 1, **extras):
     off = 0
     while(not stop_event.is_set()):
         for n in range(0, np.num_leds):
-            np.set_pixel_hsv(n, ((n+off)/60.0)%1, 1, 1)
+            np.set_pixel_hsv(n, (1.0*(n+off)/np.num_leds)%1, 1, 1)
         off+=.1
         np.show()
         stop_event.wait(.05/speed)

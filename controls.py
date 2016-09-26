@@ -31,6 +31,11 @@ class Led_Controller:
         self.end = end_i
         self.num_leds = end_i - start_i
 
+    def set_range(self, start_i, end_i):
+        self.start = start_i
+        self.end = end_i
+        self.num_leds = end_i - start_i
+
     def clear(self):
         """Clear the buffer"""
         for n in range(self.start, self.end):
@@ -63,7 +68,7 @@ class Led_Controller:
 
     def set_pixels(self, pixels):
         """Sets the pixels to corresponding picels in an array of pixel tuples. Pixel array must be >= than the string length"""
-        clear()
+        self.clear()
         for n in range(0, len(pixels)):
             r, g, b = pixels[n]
             self.set_pixel(n, r, g, b)

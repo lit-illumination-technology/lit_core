@@ -1,16 +1,18 @@
+#container-controls {
+    margin: auto;
+    width: 40%;
+}
+
 #container-effect {
     width: 25%;
-    margin: 10px;
 }
 
 #container-speed {
     width: 25%;
     display: none;
-    margin: 10px;
 }
 
 #container-color {
     width: 25%;
     display: none;
-    margin: 10px;
 }

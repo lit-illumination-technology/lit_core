@@ -6,7 +6,7 @@ config.read("config.ini")
 password = config.get("General", "password")
 port = config.getint("General", "link_port")
 data = bytearray(2048)
-np = controls.Led_Controller(0, 60)
+nps = [controls.Led_Controller(0, 60), controls.Led_Controller(60, 120)]
 
 def start():
     # create a raw socket and bind it to the public interface
@@ -18,8 +18,9 @@ def start():
     print "listening on port " + str(port)
     while True:    
         nbytes = si.recv_into(data)
-        np.set_pixels([data[i:i+3] for i in xrange(0, nbytes, 3)])
-        np.show()
+        for np in nps:
+            np.set_pixels([data[i:i+3] for i in xrange(0, nbytes, 3)])
+            np.show()
 
 if __name__=="__main__":
     start()
