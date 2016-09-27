@@ -7,11 +7,11 @@
         <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
         <title>NEOPIXELS</title>
 
-        <link href="{{ url_for('static', filename='css/layout.css') }}" rel="stylesheet">
         <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
         <link href="{{ url_for('static', filename='css/bootstrap-colorpicker.min.css') }}" rel="stylesheet">
         <link href="{{ url_for('static', filename='css/bootstrap-slider.min.css') }}" rel="stylesheet">
         <link href="{{ url_for('static', filename='css/bootstrap2-toggle.min.css') }}" rel="stylesheet">
+        <link href="{{ url_for('static', filename='css/layout.css') }}" rel="stylesheet">
     </head>
     <body>
         <div class="jumbotron text-center">
@@ -25,10 +25,10 @@
                         <div class="panel-heading">Lights</div>
                         <div class="panel-body">
                             <label class="checkbox-inline">
-                              <input id="toggle_first" type="checkbox" data-toggle="toggle"> Room
+                              Room: <input id="toggle_first" type="checkbox" data-toggle="toggle" data-width="54" data-height="32">
                             </label>
                             <label class="checkbox-inline">
-                              <input id="toggle_second" type="checkbox" data-toggle="toggle"> Desk
+                              Desk: <input id="toggle_second" type="checkbox" data-toggle="toggle" data-width="54" data-height="32">
                             </label>
                         </div>
                     </div>
