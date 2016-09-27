@@ -53,7 +53,7 @@
                     <div class="panel panel-default">
                         <div class="panel-heading">Color</div>
                         <div class="panel-body">
-                            <input type="text" class="form-control colorpicker-element" id="color_input"/>
+                            <input type="text" class="form-control colorpicker-element" id="color_input" data-format="hex"/>
                         </div>
                     </div>
                 </div>
@@ -74,7 +74,7 @@
             <div class="row">
                 <div class="col-sm-4"></div>
                 <div class="col-sm-4 centered_hor">
-                    <button id="send" style="display:none">go</button>
+                    <button type="button" class="btn btn-success start_hidden" id="send">go</button>
                 </div>
                 <div class="col-sm-4"></div>
             </div>
@@ -99,9 +99,6 @@
                 speedInput.slider();
                 //colorSelector = $("#color_selector");
                 colorInput = $("#color_input");
-                colorInput.colorpicker({
-                    format: "hex"
-                });
                 sendButton = $("#send");
 
                 start = 0;
@@ -131,19 +128,44 @@
                     effectSelector.trigger("change");
                 });
 
+                function componentToHex(c) {
+                    var hex = c.toString(16);
+                    return hex.length == 1 ? "0" + hex : hex;
+                }
+
+                function rgbToHex(rgb) {
+                    return "#" + componentToHex(rgb[0]) + componentToHex(rgb[1]) + componentToHex(rgb[2]);
+                }
+
+                //Populate the color selector
+                $.getJSON("/get_colors.json", function(result) {
+                    var colors = {};
+                    $.each(result.colors, function() {
+                        colors[this.name] = rgbToHex(this.color);
+                    });
+                    colorInput.colorpicker({colorSelectors : colors,
+                                            template: '<div class="colorpicker dropdown-menu">' +
+                                              '<div class="colorpicker-saturation"><i><b></b></i></div>' +
+                                              '<div class="colorpicker-hue"><i></i></div>' +
+                                              '<div class="colorpicker-alpha"><i></i></div>' +
+                                              '<div class="colorpicker-color"><div /></div>' +
+                                              //'<div class="colorpicker-selectors"></div>' +
+                                              '</div>',});
+                });
+
                 //When a different effect is chosen, hide/show appropriate options
                 effectSelector.change(function() {
                     if(effectSelector.val() & COLOR){
-                        colorInput.closest(".col-sm-4").show();
+                        colorInput.closest(".col-sm-4").fadeIn();
                     } else {
-                        colorInput.closest(".col-sm-4").hide();
+                        colorInput.closest(".col-sm-4").fadeOut();
                     }
 
                     if(effectSelector.val() & SPEED) {
-                        speedInput.closest(".col-sm-4").show();
+                        speedInput.closest(".col-sm-4").fadeIn();
                         speedInput.slider('relayout');
                     } else {
-                        speedInput.closest(".col-sm-4").hide();
+                        speedInput.closest(".col-sm-4").fadeOut();
                     }
                 });
                 
