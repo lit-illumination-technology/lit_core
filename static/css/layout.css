@@ -13,3 +13,8 @@
 .checkbox-inline + .checkbox-inline {
     margin-left:0px;
 }
+
+.toggle_container {
+    display: inline-block;
+    margin: 0px 10px;
+}

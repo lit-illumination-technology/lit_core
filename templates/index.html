@@ -20,16 +20,16 @@
         <div class="container">
             <div class="row">
                 <div class="col-sm-4"></div>
-                <div class="col-sm-4 centered_hor">
+                <div class="col-sm-4 centered_hor start_hidden">
                     <div class="panel panel-default">
                         <div class="panel-heading">Lights</div>
                         <div class="panel-body">
-                            <label class="checkbox-inline">
-                              Room: <input id="toggle_first" type="checkbox" data-toggle="toggle" data-width="54" data-height="32">
-                            </label>
-                            <label class="checkbox-inline">
-                              Desk: <input id="toggle_second" type="checkbox" data-toggle="toggle" data-width="54" data-height="32">
-                            </label>
+                            <div class="toggle_container">
+                                <input id="toggle_first" type="checkbox" data-toggle="toggle" data-off="Room" data-on="Room" data-width="72" data-height="32">
+                            </div>
+                            <div class="toggle_container">
+                                <input id="toggle_second" type="checkbox" data-toggle="toggle" data-off="Desk" data-on="Desk" data-width="72" data-height="32">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -37,11 +37,11 @@
             </div>
             <div class="row">
                 <div class="col-sm-4"></div>
-                <div class="col-sm-4 centered_hor">
+                <div class="col-sm-4 centered_hor start_hidden">
                     <div class="panel panel-default">
                         <div class="panel-heading">Effect</div>
                         <div class="panel-body">
-                            <select id="effect_selector" style="display:none"></select>
+                            <select id="effect_selector"></select>
                         </div>
                     </div>
                 </div>
@@ -122,8 +122,9 @@
                     $.each(result.effects, function() {
                         effectSelector.append($("<option />").val(this.modifiers).text(this.name));
                     });
-                    effectSelector.show();
-                    sendButton.show();
+                    toggleFirst.closest(".col-sm-4").fadeIn();
+                    effectSelector.closest(".col-sm-4").fadeIn();
+                    sendButton.fadeIn();
                     //Update options for initially selected effect
                     effectSelector.trigger("change");
                 });
