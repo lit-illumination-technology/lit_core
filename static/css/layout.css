@@ -1,18 +1,11 @@
-#container-controls {
-    margin: auto;
-    width: 40%;
-}
+.centered_hor {
+    margin-left:auto;
+    margin-right:auto;
+    display:block;
+    text-align:center;
+    padding: 0px;
+} 
 
-#container-effect {
-    width: 25%;
-}
-
-#container-speed {
-    width: 25%;
-    display: none;
-}
-
-#container-color {
-    width: 25%;
-    display: none;
+.start_hidden {
+    display:none;
 }

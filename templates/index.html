@@ -14,24 +14,70 @@
         <link href="{{ url_for('static', filename='css/bootstrap2-toggle.min.css') }}" rel="stylesheet">
     </head>
     <body>
-        <div class="container">
+        <div class="jumbotron text-center">
             <h1>Neopixels</h1>
-            <label class="checkbox-inline">
-              <input id="toggle_first" type="checkbox" checked data-toggle="toggle"> Room
-            </label>
-            <label class="checkbox-inline">
-              <input id="toggle_second" type="checkbox" data-toggle="toggle"> Desk
-            </label>
-            <div id="container-effect">
-                <select id="effect_selector" style="display:none"></select>
+        </div>
+        <div class="container">
+            <div class="row">
+                <div class="col-sm-4"></div>
+                <div class="col-sm-4 centered_hor">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">Lights</div>
+                        <div class="panel-body">
+                            <label class="checkbox-inline">
+                              <input id="toggle_first" type="checkbox" data-toggle="toggle"> Room
+                            </label>
+                            <label class="checkbox-inline">
+                              <input id="toggle_second" type="checkbox" data-toggle="toggle"> Desk
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-4"></div>
             </div>
-            <div id="container-color">
-                <input type="text" class="form-control colorpicker-element" id="color_input" value="White"/>
+            <div class="row">
+                <div class="col-sm-4"></div>
+                <div class="col-sm-4 centered_hor">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">Effect</div>
+                        <div class="panel-body">
+                            <select id="effect_selector" style="display:none"></select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-4"></div>
             </div>
-            <div id="container-speed">
-                <input id="speed_input" type="text" data-slider-value=50 date-slider-min=0 data-slider-max=100></input>
+            <div class="row">
+                <div class="col-sm-4"></div>
+                <div class="col-sm-4 centered_hor start_hidden">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">Color</div>
+                        <div class="panel-body">
+                            <input type="text" class="form-control colorpicker-element" id="color_input"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-4"></div>
             </div>
-            <button id="send" style="display:none">go</button>
+            <div class="row">
+                <div class="col-sm-4"></div>
+                <div class="col-sm-4 centered_hor start_hidden">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">Speed</div>
+                        <div class="panel-body">
+                            <input id="speed_input" type="text" data-slider-value=50 date-slider-min=0 data-slider-max=100></input>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-4"></div>
+            </div>
+            <div class="row">
+                <div class="col-sm-4"></div>
+                <div class="col-sm-4 centered_hor">
+                    <button id="send" style="display:none">go</button>
+                </div>
+                <div class="col-sm-4"></div>
+            </div>
         </div>
         <p id="result"></p>
 
@@ -88,16 +134,16 @@
                 //When a different effect is chosen, hide/show appropriate options
                 effectSelector.change(function() {
                     if(effectSelector.val() & COLOR){
-                        $("#container-color").show();
+                        colorInput.closest(".col-sm-4").show();
                     } else {
-                        $("#container-color").hide();
+                        colorInput.closest(".col-sm-4").hide();
                     }
 
                     if(effectSelector.val() & SPEED) {
-                        $("#container-speed").show();
+                        speedInput.closest(".col-sm-4").show();
                         speedInput.slider('relayout');
                     } else {
-                        $("#container-speed").hide();
+                        speedInput.closest(".col-sm-4").hide();
                     }
                 });
                 
