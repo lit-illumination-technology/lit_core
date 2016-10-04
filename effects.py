@@ -284,7 +284,7 @@ def get_value_from_string(type, string):
     elif type.lower() == 'speed':
         return speeds.get(string.lower(), 1)
     elif type.lower() == 'range':
-        return range.get(string.lower(), ranges["all"])
+        return ranges.get(string.lower(), ranges["all"])
     return 'error'
 
 #Maps string names to functions
