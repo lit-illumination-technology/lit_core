@@ -3,7 +3,6 @@ from functools import wraps
 import threading
 import ConfigParser
 import effects as np
-
 app = Flask(__name__)
 config = ConfigParser.ConfigParser()
 config.read("config.ini")
@@ -48,6 +47,17 @@ def command():
         ret, status = np.start(json["effect"])
     return jsonify(result=ret, status=status)
 
+@app.route("/ai", methods = ['POST'])
+@requires_auth
+def ai():
+    json = request.get_json()
+    data = json["result"]["parameters"]
+    args = {k.lower():np.get_value_from_string(k, data[k]) for k in data if k.lower() != "effect" and data[k] != ''}
+    if len(args) == 0:
+        ret, status = np.start(data["Effect"])
+    else:
+        ret, status = np.start(data["Effect"], **args)
+
 @app.route("/get_effects.json", methods = ['GET'])
 def effects():
     return jsonify(effects=np.get_effects())
@@ -55,6 +65,14 @@ def effects():
 @app.route("/get_colors.json", methods = ['GET'])
 def colors():
     return jsonify(colors=np.get_colors())
+
+@app.route("/get_ranges.json", methods = ['GET'])
+def ranges():
+    return jsonify(ranges=np.get_ranges())
+
+@app.route("/get_speeds.json", methods = ['GET'])
+def speeds():
+    return jsonify(speeds=np.get_speeds())
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port = port)

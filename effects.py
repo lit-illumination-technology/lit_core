@@ -60,6 +60,12 @@ def get_effects():
 
 def get_colors():
     return colors
+
+def get_speeds():
+    return speeds 
+
+def get_ranges():
+    return {k:ranges[k] for k in ranges if k != "all"} 
     
 def slide(speed = 1, **extras):
     """The full color spectrum is shown and it "slides"/translates across the string
@@ -268,6 +274,19 @@ def stop(**extras):
     """Turns the string off."""
     np.off()
     
+def get_value_from_string(type, string):
+    """Given a attribute represented as a string, convert it to the appropriate value"""
+    if type.lower() == 'color':
+        for c in colors:
+            if c['name'].lower() == string.lower():
+                return c['color']
+        return [255, 255, 255]
+    elif type.lower() == 'speed':
+        return speeds.get(string.lower(), 1)
+    elif type.lower() == 'range':
+        return range.get(string.lower(), ranges["all"])
+    return 'error'
+
 #Maps string names to functions
 effects = {'cycle' : cycle,
            'slide' : slide,
@@ -313,10 +332,10 @@ colors = [
         {'name' : 'brown', 'color' : [165,42,42]},
         {'name' : 'firebrick', 'color' : [178,34,34]},
         {'name' : 'crimson', 'color' : [220,20,60]},
-        {'name' :  'red', 'color' : [255,0,0]},
+        {'name' : 'red', 'color' : [255,0,0]},
         {'name' : 'tomato', 'color' : [255,99,71]},
         {'name' : 'coral', 'color' : [255,127,80]},
-        {'name' :  'indian red', 'color' : [205,92,92]},
+        {'name' : 'indian red', 'color' : [205,92,92]},
         {'name' : 'light coral', 'color' : [240,128,128]},
         {'name' : 'dark salmon', 'color' : [233,150,122]},
         {'name' : 'salmon', 'color' : [250,128,114]},
@@ -457,9 +476,16 @@ speeds = {
         'fastest' : 10,
         'faster' : 5,
         'fast' : 3,
+        'normal' : 1,
         'slow' : .3333,
         'slower' : .2,
         'slowest' : .1
+}
+
+ranges = {
+        'room' : {'start' : 0, 'end' : 60},
+        'desk' : {'start' : 60, 'end' : 120},
+        'all' : {'start' : 0, 'end' : 120}
 }
 
 def combine_colors_in_list(list):
