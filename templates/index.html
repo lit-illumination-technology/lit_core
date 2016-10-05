@@ -16,6 +16,7 @@
     <body>
         <div class="jumbotron text-center">
             <h1>Neopixels</h1>
+            <input type-"text" id="ai">
         </div>
         <div class="container">
             <div class="row">
@@ -90,6 +91,7 @@
             COLOR = 1;
             SPEED = 2;
             $(document).ready(function(){
+                aiInput = $("#ai");
                 effectSelector = $("#effect_selector");
                 speedInput = $("#speed_input");
                 toggleFirst = $("#toggle_first");
@@ -204,6 +206,17 @@
                     }).done(function(data) {
                         $("#result").html(data.ret)
                     });
+                });
+                aiInput.keypress(function(e){
+                    if(e.which == 13){
+                        $.post({
+                            url: '/ai_request',
+                            data: aiInput.val(),
+                            dataType: 'text'
+                        }).done(function(data) {
+                            //TODO do something with data.ret
+                        });
+                    }
                 });
             });
         </script>

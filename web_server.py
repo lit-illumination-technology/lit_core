@@ -3,13 +3,17 @@ from functools import wraps
 import threading
 import ConfigParser
 import effects as np
+
 app = Flask(__name__)
 config = ConfigParser.ConfigParser()
 config.read("config.ini")
 password = config.get("General", "password")
 username = config.get("General", "username")
 port = config.getint("General", "port")
-
+if config.has_option("Api", "apiai"):
+    import apiai
+    apiai_token = config.get("Api", "apiai")
+    ai = apiai.ApiAI(apiai_token)
 
 def check_auth(un, pw):
     """This function is called to check if a username /
@@ -47,16 +51,26 @@ def command():
         ret, status = np.start(json["effect"])
     return jsonify(result=ret, status=status)
 
-@app.route("/ai", methods = ['POST'])
+@app.route("/ai_action", methods = ['POST'])
 @requires_auth
-def ai():
+def ai_action():
     json = request.get_json()
-    data = json["result"]["parameters"]
+    data = json['result']['parameters']
     args = {k.lower():np.get_value_from_string(k, data[k]) for k in data if k.lower() != "effect" and data[k] != ''}
     if len(args) == 0:
-        ret, status = np.start(data["Effect"])
+        ret, status = np.start(data['Effect'])
     else:
-        ret, status = np.start(data["Effect"], **args)
+        ret, status = np.start(data['Effect'], **args)
+
+@app.route("/ai_request", methods = ['POST'])
+@requires_auth
+def ai_request():
+    if ai is None:
+        return "Unsupported Action"
+    api_request = ai.text_request()
+    api_request.query = request.get_data();
+    t = threading.Thread(target=api_request.getresponse)
+    t.start()
 
 @app.route("/get_effects.json", methods = ['GET'])
 def effects():
