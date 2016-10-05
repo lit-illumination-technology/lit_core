@@ -473,13 +473,13 @@ colors = [
 ]
 
 speeds = {
-        'fastest' : 10,
-        'faster' : 5,
-        'fast' : 3,
-        'normal' : 1,
-        'slow' : .3333,
-        'slower' : .2,
-        'slowest' : .1
+        'fastest' : 100,
+        'faster' : 75,
+        'fast' : 66,
+        'normal' : 50,
+        'slow' : 33,
+        'slower' : 25,
+        'slowest' : 0
 }
 
 ranges = {
@@ -522,4 +522,3 @@ def _clean_shutdown():
 signal.signal( signal.SIGHUP, _clean_shutdown )
 signal.signal( signal.SIGTERM, _clean_shutdown )
 atexit.register(_clean_shutdown)
-
