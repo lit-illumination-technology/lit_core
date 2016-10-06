@@ -21,11 +21,6 @@ ws2812 = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT,
 ws2812.begin()
 
     
-def _clean_shutdown():
-    """Registered at exit to ensure ws2812 cleans up after itself
-    and all pixels are turned off.
-    """
-    #off()
 
 def show():
     """Update lights with the contents of the display buffer"""
@@ -95,7 +90,3 @@ class Led_Controller:
 
     def show(self):
         show()
-
-signal.signal( signal.SIGHUP, _clean_shutdown )
-signal.signal( signal.SIGTERM, _clean_shutdown )
-atexit.register(_clean_shutdown)
