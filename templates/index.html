@@ -14,9 +14,8 @@
         <link href="{{ url_for('static', filename='css/layout.css') }}" rel="stylesheet">
     </head>
     <body>
-        <div class="jumbotron text-center header">
+        <div id="header" class="jumbotron text-center">
             <h1>Neopixels</h1>
-            <input type-"text" placeholder="What do you want me to do for you?" onfocus="this.placeholder = ''" onblur="this.placeholder = 'What do you want me to do for you?'" class="ai-input" id="ai">
         </div>
         <div class="container">
             <div class="row">
@@ -91,7 +90,6 @@
             COLOR = 1;
             SPEED = 2;
             $(document).ready(function(){
-                aiInput = $("#ai");
                 effectSelector = $("#effect_selector");
                 speedInput = $("#speed_input");
                 toggleFirst = $("#toggle_first");
@@ -118,6 +116,28 @@
                 toggleFirst.change(updateRange);
                 toggleSecond.change(updateRange);
                 updateRange();
+                $.get("/has_ai", function(result) {
+                    if(result=="true"){
+                        $("<input type='text' placeholder='What do you want me to do for you?' class='ai-input start_hidden' id='ai'/>").appendTo("#header");
+                        aiInput = $("#ai");
+                        $("#header").css("padding-bottom", "0px");
+                        aiInput.fadeIn();
+                        aiInput.focus();
+                        aiInput.keypress(function(e){
+                            if(e.which == 13){
+                                $.post({
+                                    url: '/ai_request',
+                                    data: aiInput.val(),
+                                    dataType: 'text'
+                                }).done(function(data) {
+                                    //TODO do something with data.ret
+                                });
+                                aiInput.val("");
+                            }
+                        });
+                    }
+                
+                });
 
                 //Populate the effect dropdown
                 $.getJSON("/get_effects.json", function(result) {
@@ -207,18 +227,7 @@
                         $("#result").html(data.ret)
                     });
                 });
-                aiInput.keypress(function(e){
-                    if(e.which == 13){
-                        $.post({
-                            url: '/ai_request',
-                            data: aiInput.val(),
-                            dataType: 'text'
-                        }).done(function(data) {
-                            //TODO do something with data.ret
-                        });
-                        aiInput.val("");
-                    }
-                });
+
             });
         </script>
     </body>

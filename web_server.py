@@ -5,11 +5,14 @@ import ConfigParser
 import effects as np
 
 app = Flask(__name__)
+app.config['DEBUG'] = True
+
 config = ConfigParser.ConfigParser()
 config.read("config.ini")
 password = config.get("General", "password")
 username = config.get("General", "username")
 port = config.getint("General", "port")
+ai=None
 if config.has_option("Api", "apiai"):
     import apiai
     apiai_token = config.get("Api", "apiai")
@@ -61,6 +64,7 @@ def ai_action():
         ret, status = np.start(data['Effect'])
     else:
         ret, status = np.start(data['Effect'], **args)
+    return ret
 
 @app.route("/ai_request", methods = ['POST'])
 @requires_auth
@@ -68,9 +72,17 @@ def ai_request():
     if ai is None:
         return "Unsupported Action"
     api_request = ai.text_request()
-    api_request.query = request.get_data();
+    api_request.query = request.get_data()
     t = threading.Thread(target=api_request.getresponse)
     t.start()
+    return "Requested"
+
+@app.route("/has_ai", methods = ['GET'])
+def has_ai():
+    if ai is None:
+        return "false"
+    else:
+        return "true"
 
 @app.route("/get_effects.json", methods = ['GET'])
 def effects():

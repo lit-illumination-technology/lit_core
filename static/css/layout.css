@@ -6,10 +6,7 @@
     padding: 0px;
 } 
 
-.header {
-    padding-bottom:0px;
-}
-.ai-input {
+#ai {
     text-align:center;
     width:100%;
     font-size: 180%;
@@ -18,7 +15,7 @@
     margin-top: 20px;
 }
 
-.ai-input:focus{
+#ai:focus{
 
 }
 
