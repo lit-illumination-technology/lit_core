@@ -6,6 +6,22 @@
     padding: 0px;
 } 
 
+.header {
+    padding-bottom:0px;
+}
+.ai-input {
+    text-align:center;
+    width:100%;
+    font-size: 180%;
+    background-color: #ddd;
+    border: 0px;
+    margin-top: 20px;
+}
+
+.ai-input:focus{
+
+}
+
 .start_hidden {
     display:none;
 }

@@ -14,9 +14,9 @@
         <link href="{{ url_for('static', filename='css/layout.css') }}" rel="stylesheet">
     </head>
     <body>
-        <div class="jumbotron text-center">
+        <div class="jumbotron text-center header">
             <h1>Neopixels</h1>
-            <input type-"text" id="ai">
+            <input type-"text" placeholder="What do you want me to do for you?" onfocus="this.placeholder = ''" onblur="this.placeholder = 'What do you want me to do for you?'" class="ai-input" id="ai">
         </div>
         <div class="container">
             <div class="row">
@@ -216,6 +216,7 @@
                         }).done(function(data) {
                             //TODO do something with data.ret
                         });
+                        aiInput.val("");
                     }
                 });
             });
