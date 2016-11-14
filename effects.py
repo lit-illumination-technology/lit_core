@@ -1,5 +1,6 @@
 import controls
-
+from os.path import dirname, abspath, basename, isfile
+import glob
 import time, random, math, sys, getopt, threading, signal, atexit
 __author__="Nick Pesce"
 __email__="npesce@terpmail.umd.edu"
@@ -14,10 +15,10 @@ np = controls.Led_Controller(START, END)
 stop_event = threading.Event()
 t = None
 
-def start(effect, **args): 
+def start(effect_name, **args): 
     global stop_event
     global t
-    if not is_effect(effect):
+    if not is_effect(effect_name):
         return (help(), False)
     
     if "speed" in args:
@@ -35,12 +36,15 @@ def start(effect, **args):
     else:
         np.set_range(START, END)
 
+    args['lights'] = np
+    args['stop_event'] = stop_event
+
     try:
-        effect_fun = effects[effect.lower()]
-        t = threading.Thread(target=effect_fun, kwargs=args)
+        effect = effects[effect_name.lower()].start
+        t = threading.Thread(target=effect.start, kwargs=args)
         t.daemon = True
         t.start()
-        return (effect + " started!",  True)
+        return (effect.get_start_message(),  True)
     except Exception, e:
         return (str(e), False)
 
@@ -66,213 +70,6 @@ def get_speeds():
 
 def get_ranges():
     return {k:ranges[k] for k in ranges if k != "all"} 
-    
-def slide(speed = 1, **extras):
-    """The full color spectrum is shown and it "slides"/translates across the string
-
-    Param speed: How fast it slides. Scales the default speed."""
-    global stop_event
-    off = 0
-    while(not stop_event.is_set()):
-        for n in range(0, np.num_leds):
-            np.set_pixel_hsv(n, (1.0*(n+off)/np.num_leds)%1, 1, 1)
-        off+=.1
-        np.show()
-        stop_event.wait(.05/speed)
-        
-def bounce(speed=1, **extras):
-    """Two pixels start on either end and move along the string changing color.
-    When the end is hit, they change  direction
-
-    Param speed: Scales the default speed."""
-    global stop_event
-    x = 0
-    dx = .1
-    while(not stop_event.is_set()):
-        np.off()
-        np.set_pixel_hsv(int(x), (x/float(np.num_leds))%1, 1, 1)
-        np.set_pixel_hsv(int(np.num_leds-x), ((np.num_leds-x)/float(np.num_leds))%1, 1, 1)
-        x+=dx
-        if(x+dx >=np.num_leds or x+dx <0):
-            dx = -dx
-        np.show()
-        stop_event.wait(.01/speed)
-
-def christmas(speed=1, **extras):
-    """Lights up green and red. Pattern "slides" along the string.
-
-    Param speed: Scales the default speed"""
-
-    global stop_event
-    for n in range(0, np.num_leds):
-        x = math.fabs((np.num_leds/2 - n)/float(np.num_leds/2))
-        np.set_pixel(n, int(255-(x*255)), int(x*255), 0)
-            
-    while(not stop_event.is_set()):
-        first = np.get_pixel(0)
-        for n in range(0, np.num_leds-1):
-            np.set_pixel(n, *np.get_pixel(n+1))
-            np.set_pixel(np.num_leds-1, *first)
-        np.show()
-        stop_event.wait(.2/speed)
-        
-def cycle(speed=1, **extras):
-    """Cycles through the color spectrum. Entire string is the same color.
-    
-    Param speed: Scales the default speed."""
-
-    global stop_event
-    while not stop_event.is_set():
-        for h in range(0, 1000):
-            if stop_event.is_set():
-                break
-            np.set_all_pixels_hsv(h/1000.0, 1, 1)
-            np.show()
-            stop_event.wait(.05/speed)
-
-def rave(speed=1, **extras):
-    """Each individual light displays a different random color, changing rapidly.
-
-    Param speed: Scales the default speed."""
-
-    global stop_event
-    while(not stop_event.is_set()):
-        for n in range(0, np.num_leds):
-            np.set_pixel(n, random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
-        np.show();
-        stop_event.wait(.1/speed)
-
-def strobe(speed=1, color = [255, 255, 255], **extras):
-    """Entire string flashes rapidly.
-    
-    Param speed: Scales the default speed.
-    Param r, g, b: Default white. RGB values for light color. [0, 255]"""
-    
-    global stop_event
-    while(not stop_event.is_set()):
-        np.set_all_pixels(color[0], color[1], color[2])
-        np.show()
-        stop_event.wait(.1/speed)
-        np.off()
-        stop_event.wait(.1/speed)
-        
-def throb(speed=1, color=[255, 255, 255], **extras):
-    """Entire string cycles through brightness levels. Starts off, gradually gets brighters, the darker, and repeats.
-    
-    Param speed: Scales the default speed.
-    Param r, g, b: Default white. RGB values for light color. [0, 255]"""
-
-    global stop_event
-    brightness = 0
-    db = .01
-    while(not stop_event.is_set()):
-        np.set_all_pixels(int(color[0]*brightness), int(color[1]*brightness), int(color[2]*brightness))
-        np.show()
-        if brightness + db > 1 or brightness + db < 0:
-            db = -db
-        brightness += db
-        stop_event.wait(.01/speed)
-
-def on(color = [255, 255, 255], **extras):
-    """Turns the entire string on.
-    Param r, g, b: Default white. RGB values for light color. [0, 255]"""
-
-    global stop_event
-    np.set_all_pixels(color[0], color[1], color[2])
-    np.show()
-    stop_event.wait()
-
-def disco(speed=1, **extras):
-    """Pattern formed when the color spectrum is repeated and condensed, then reversed
-    
-    Param speed: Scales the default speed."""
-
-    global stop_event
-    off = 0
-    while not stop_event.is_set():
-        for n in range(0, np.num_leds):
-            np.set_pixel_hsv(n, ((n*off)/float(np.num_leds))%1, 1, 1)
-        off+=.1
-        np.show()
-        stop_event.wait(.05/speed)
-
-def chase(speed = 1, **extras):
-    """Each light sequentially lights up a color untill the string is filled with that color,
-    then it is repeated with the next color. Each color is .2 hue away in HSV.
-
-    Param speed: Scales the default speed."""
-
-    global stop_event
-    hue = 0;
-    while not stop_event.is_set():
-        for n in range(0, np.num_leds):
-            if stop_event.is_set():
-                break
-            np.set_pixel_hsv(n, hue, 1, 1)
-            np.show()
-            stop_event.wait(.05/speed)
-        hue += .2
-        hue %= 1
-
-def drip(color=[0, 200, 255], speed=1, **extras):
-    """Lights increase in brightness randomly, then drop off, making an effect like water
-    dropplets falling
-
-    Param color: The color of the lights. Defaults to (0, 200, 255), which is a dark teal color.
-    Param speed: Scales the default speed"""
-
-    global stop_event
-    dullness = [15]*np.num_leds
-    while not stop_event.is_set():
-        for n in range(0, np.num_leds):
-            np.set_pixel(n, int(color[0]/dullness[n]), int(color[1]/dullness[n]), int(color[2]/dullness[n]))
-            dullness[n] -= random.random()/20
-            if dullness[n]<=1 or random.randint(0, int(dullness[n]*20)) == 0:
-                dullness[n] = (random.random()*2)+4
-        np.show()
-        stop_event.wait(.05/speed)
-
-def christmas_lights(**extras):
-    """Lights light up in the colors and pattern of traditional christmas lights"""
-
-    lights = []
-    for n in range(0, np.num_leds):
-        seq = n%5
-        if seq == 0:
-            lights.append([100, 0, 0])
-        elif seq == 1:
-            lights.append([100, 0, 50])
-        elif seq == 2:
-            lights.append([0, 100, 0])
-        elif seq == 3:
-            lights.append([150, 100, 0])
-        elif seq == 4:
-            lights.append([0, 0, 100])
-    each(tuple(lights)) 
-
-def flash(speed = 1, **extras) :
-    """All lights display the same color and change every second(by default).
-    
-    Param speed: Scales the default speed."""
-
-    global stop_event
-    while not stop_event.is_set():
-        color = [random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)]
-        np.set_all_pixels(color[0], color[1], color[2])
-        np.show()
-        stop_event.wait(1/speed)
-
-def each(each, **extras):
-    """Lights the string according to the defined colors for each pixel passed in.
-    
-    Param each: List of tuples containing r, g, b values for each respective pixel in order."""
-    
-    np.set_pixels(each)
-    np.show()
-
-def stop(**extras):
-    """Turns the string off."""
-    np.off()
     
 def get_value_from_string(type, string):
     """Given a attribute represented as a string, convert it to the appropriate value"""
@@ -510,8 +307,10 @@ def combine_colors_in_list(list):
 def is_effect(name):
     return name in effects
 
-if __name__ == "__main__":
-    print "This is module can not be run. Import it and call start()"
+def import_effects(modules):
+    for m in modules:
+        effects[m.get_name()] = m
+        commands.append({'name' : m.get_name(), 'modifiers' : m.get_modifiers()})
 
 def _clean_shutdown():
     global stop_event
@@ -519,6 +318,15 @@ def _clean_shutdown():
     stop_event.set()
     if t is not None:
         t.join()
+
+if __name__ == "__main__":
+    print "This is module can not be run. Import it and call start()"
+
 signal.signal( signal.SIGHUP, _clean_shutdown )
 signal.signal( signal.SIGTERM, _clean_shutdown )
 atexit.register(_clean_shutdown)
+
+module_names = glob.glob(dirname(abspath(__file__))+"/*.py")
+modules = [ basename(f)[:-3] for f in module_names if isfile(f) and f != '__init__.py' and f!= 'sample.py']
+
+import_effects(modules)
