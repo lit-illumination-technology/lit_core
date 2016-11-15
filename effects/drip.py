@@ -25,7 +25,7 @@ modifiers = COLOR | SPEED
 #   color: The color if passed, otherwise the default color. REMOVE IF COLOR IS NOT A MODIFIER.
 #   speed: The speed multiplier if passed, otherwise the default speed. REMOVE IF SPEED IS NOT A MODIFIER.
 #   **extras: Any other parameters that may have been passed. Do not use, but do not remove.
-def start(lights, stop_event, color = [255, 255, 255], speed = 1, **extras):
+def start(lights, stop_event, color = [0, 20, 175], speed = 1, **extras):
     dullness = [15]*lights.num_leds
     while not stop_event.is_set():
         for n in range(0, lights.num_leds):

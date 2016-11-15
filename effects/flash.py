@@ -28,6 +28,6 @@ modifiers = SPEED
 def start(lights, stop_event, speed = 1, **extras):
     while not stop_event.is_set():
         color = [random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)]
-        np.set_all_pixels(color[0], color[1], color[2])
-        np.show()
+        lights.set_all_pixels(color[0], color[1], color[2])
+        lights.show()
         stop_event.wait(1/speed)
