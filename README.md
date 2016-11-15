@@ -26,3 +26,48 @@ Lights can  be controlled from the command line, web interface, or any other pro
 <li>Run web_server.py<br/><code>sudo python web_server.py</code></li>
 <li>Check that the controls at <code>localhost:5000</code> work</li>
 </ol>
+
+</hr>
+##Api.Ai Integration
+<a href="https://api.ai/Api.Ai">Api.Ai</a> is a free and easy artificial intelligence API. It can easily be integrated into Neopixels to enable natural language commands!
+<ol>
+<li>Run generate.py and get the files from the api-ai directory</li>
+<code>sudo python generate.py</code>
+<li>Make an account at <a href="https://console.api.ai/api-client/#/signup">Api.Ai</a> and watch the tutorials</li>
+<li>Create a new agent</li>
+<li>Go to Entities and click on the benu icon next to "Create Entity"</li>
+<li>Click "Upload Entity"</li>
+<li>Upload each of the json files from the api-ai directory</li>
+<li>Go to Fulfillment
+  <ol>
+  <li>Enable webhook.</li>
+  <li>For URL, enter your server hostname followed by <code>/ai_action</code></li>
+  <li>Under "Basic Auth", enter your username and password as defined in the config.ini</li>
+  </ol>
+</li>
+<li>Click the gear next to the agent selector</li>
+<li>Take note of the "Client access token"</li>
+<li>Back on the raspberry pi, open <code>config.ini</code>.
+  <ol>
+  <li>Add a new section <code>[Api]</code></li>
+  <li>Add a new entry <code>apiai: YOUR_CLIENT_ACCESS_TOKEN</code>.
+  </ol>
+<li>Create whatever intents you want</li>
+<li>For each intent you create, be sure to check "enable webhook" at the bottom</li>
+<li>Restart the server and there should be a new text entry at the top of the website</li>
+</ol>
+
+</hr>
+##Adding new effects
+Easily add new and personalized effects. Basic python knowlege is required.
+<ol>
+<li>Navigate to the <code>effects</code> directory</li>
+<li>Make a copy of the template
+<code>cp template.py YOUR_EFFECT_NAME.py</code></li>
+<li>Edit the new effect
+<code>nano YOUR_EFFECT_NAME.py</code></li>
+<li>Change each field according to the comments</li>
+<li>Code your effect in the <code>start</code> function</li>
+<li>Restart the server</li>
+<li>That's it!</li>
+</ol>
