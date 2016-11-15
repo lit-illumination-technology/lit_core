@@ -1,6 +1,6 @@
 import json
 import os
-import effects as np
+import commands as np
 
 def api_ai_list_format(l):
     return map(lambda x: {'value':x['name'],'synonyms':[x['name']]}, l)

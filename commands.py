@@ -297,7 +297,7 @@ signal.signal( signal.SIGTERM, _clean_shutdown )
 atexit.register(_clean_shutdown)
 
 files = glob.glob(dirname(abspath(__file__))+"/effects/*.py")
-module_names = [ basename(f)[:-3] for f in files if isfile(f) and basename(f) != '__init__.py' and basename(f) != 'sample.py']
+module_names = [ basename(f)[:-3] for f in files if isfile(f) and basename(f) != '__init__.py' and basename(f) != 'template.py']
 package = __import__('effects', globals(), locals(), module_names, -1)
 modules = []
 for m in module_names:
