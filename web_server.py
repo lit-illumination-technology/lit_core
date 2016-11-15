@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, abort, Response, jsonify
 from functools import wraps
 import threading
 import ConfigParser
-import effects as np
+import commands as np
 
 app = Flask(__name__)
 app.config['DEBUG'] = True

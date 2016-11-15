@@ -1,7 +1,8 @@
 import controls
 from os.path import dirname, abspath, basename, isfile
+import importlib
 import glob
-import time, random, math, sys, getopt, threading, signal, atexit
+import  math, sys, getopt, threading, signal, atexit
 __author__="Nick Pesce"
 __email__="npesce@terpmail.umd.edu"
 
@@ -10,6 +11,9 @@ COLOR = 0b1
 
 START = 0
 END = 120
+
+effects = {}
+commands =[] 
 
 np = controls.Led_Controller(START, END)
 stop_event = threading.Event()
@@ -40,11 +44,11 @@ def start(effect_name, **args):
     args['stop_event'] = stop_event
 
     try:
-        effect = effects[effect_name.lower()].start
+        effect = effects[effect_name.lower()]
         t = threading.Thread(target=effect.start, kwargs=args)
         t.daemon = True
         t.start()
-        return (effect.get_start_message(),  True)
+        return (effect.start_string,  True)
     except Exception, e:
         return (str(e), False)
 
@@ -83,42 +87,6 @@ def get_value_from_string(type, string):
     elif type.lower() == 'range':
         return ranges.get(string.lower(), ranges["all"])
     return 'error'
-
-#Maps string names to functions
-effects = {'cycle' : cycle,
-           'slide' : slide,
-           'bounce' : bounce,
-           'christmas' : christmas,
-           'rave' : rave,
-           'strobe' : strobe,
-           'disco' : disco,
-           'on' : on,
-           'chase' : chase,
-           'throb' : throb,
-           'stop' : stop,
-           'off' : stop,
-           'each' : each,
-           'drip' : drip,
-           'christmas_lights' : christmas_lights,
-           'flash' : flash
-    }
-
-commands = [
-        {'name' : 'on', 'modifiers' : COLOR},
-        {'name' : 'off', 'modifiers' : 0},
-        {'name' : 'cycle', 'modifiers' : SPEED},
-        {'name' : 'slide', 'modifiers' : SPEED},
-        {'name' : 'bounce', 'modifiers' : SPEED},
-        {'name' : 'christmas', 'modifiers' : SPEED},
-        {'name' : 'rave', 'modifiers' : SPEED},
-        {'name' : 'strobe', 'modifiers' : COLOR | SPEED},
-        {'name' : 'disco', 'modifiers' : SPEED},
-        {'name' : 'chase', 'modifiers' : SPEED},
-        {'name' : 'throb', 'modifiers' : COLOR | SPEED},
-        {'name' : 'drip', 'modifiers' : COLOR | SPEED},
-        {'name' : 'christmas_lights', 'modifiers' : 0},
-        {'name' : 'flash', 'modifiers' : SPEED},
-    ]
 
 colors = [
         {'name' : 'white', 'color' : [255,255,255]},
@@ -305,12 +273,14 @@ def combine_colors_in_list(list):
     return ret
 
 def is_effect(name):
-    return name in effects
+    return name.lower() in effects
 
 def import_effects(modules):
     for m in modules:
-        effects[m.get_name()] = m
-        commands.append({'name' : m.get_name(), 'modifiers' : m.get_modifiers()})
+        name = getattr(m, 'name')
+        modifiers = getattr(m, 'modifiers')
+        effects[name.lower()] = m
+        commands.append({'name' : name, 'modifiers' : modifiers})
 
 def _clean_shutdown():
     global stop_event
@@ -326,7 +296,11 @@ signal.signal( signal.SIGHUP, _clean_shutdown )
 signal.signal( signal.SIGTERM, _clean_shutdown )
 atexit.register(_clean_shutdown)
 
-module_names = glob.glob(dirname(abspath(__file__))+"/*.py")
-modules = [ basename(f)[:-3] for f in module_names if isfile(f) and f != '__init__.py' and f!= 'sample.py']
+files = glob.glob(dirname(abspath(__file__))+"/effects/*.py")
+module_names = [ basename(f)[:-3] for f in files if isfile(f) and basename(f) != '__init__.py' and basename(f) != 'sample.py']
+package = __import__('effects', globals(), locals(), module_names, -1)
+modules = []
+for m in module_names:
+    modules.append(getattr(package, m))
 
 import_effects(modules)
