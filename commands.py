@@ -1,8 +1,7 @@
 import controls
 from os.path import dirname, abspath, basename, isfile
-import importlib
-import glob
-import  math, sys, getopt, threading, atexit
+import  math, sys, getopt, threading, atexit, json, importlib, glob
+
 __author__="Nick Pesce"
 __email__="npesce@terpmail.umd.edu"
 
@@ -14,7 +13,6 @@ END = 120
 
 effects = {}
 commands =[] 
-
 np = controls.Led_Controller(START, END)
 stop_event = threading.Event()
 t = None
@@ -292,14 +290,24 @@ def _clean_shutdown():
 
 if __name__ == "__main__":
     print "This is module can not be run. Import it and call start()"
+    sys.exit()
 
-atexit.register(_clean_shutdown)
+with open('configuration/speeds.json') as data_file:    
+    speeds = json.load(data_file)
+
+with open('configuration/ranges.json') as data_file:    
+    ranges = json.load(data_file)
+
+with open('configuration/colors.json') as data_file:    
+    colors = json.load(data_file)
 
 files = glob.glob(dirname(abspath(__file__))+"/effects/*.py")
 module_names = [ basename(f)[:-3] for f in files if isfile(f) and basename(f) != '__init__.py' and basename(f) != 'template.py']
 package = __import__('effects', globals(), locals(), module_names, -1)
 modules = []
+
 for m in module_names:
     modules.append(getattr(package, m))
 
 import_effects(modules)
+atexit.register(_clean_shutdown)

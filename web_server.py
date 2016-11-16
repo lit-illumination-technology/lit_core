@@ -8,7 +8,7 @@ app = Flask(__name__)
 #app.config['DEBUG'] = True
 
 config = ConfigParser.ConfigParser()
-config.read("config.ini")
+config.read("configuration/config.ini")
 password = config.get("General", "password")
 username = config.get("General", "username")
 port = config.getint("General", "port")
