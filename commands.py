@@ -2,7 +2,7 @@ import controls
 from os.path import dirname, abspath, basename, isfile
 import importlib
 import glob
-import  math, sys, getopt, threading, signal, atexit
+import  math, sys, getopt, threading, atexit
 __author__="Nick Pesce"
 __email__="npesce@terpmail.umd.edu"
 
@@ -288,12 +288,11 @@ def _clean_shutdown():
     stop_event.set()
     if t is not None:
         t.join()
+    np.off()
 
 if __name__ == "__main__":
     print "This is module can not be run. Import it and call start()"
 
-signal.signal( signal.SIGHUP, _clean_shutdown )
-signal.signal( signal.SIGTERM, _clean_shutdown )
 atexit.register(_clean_shutdown)
 
 files = glob.glob(dirname(abspath(__file__))+"/effects/*.py")

@@ -1,6 +1,4 @@
 from neopixel import *
-import signal
-import atexit
 import colorsys
 
 # LED strip configuration:
