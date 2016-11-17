@@ -1,0 +1,5 @@
+{
+    "room" : {"start" : 0, "end" : 60},
+    "desk" : {"start" : 60, "end" : 120},
+    "all" : {"start" : 0, "end" : 120}
+}
