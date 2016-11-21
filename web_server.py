@@ -5,7 +5,7 @@ import ConfigParser
 import commands as np
 
 app = Flask(__name__)
-#app.config['DEBUG'] = True
+app.config['DEBUG'] = True
 
 config = ConfigParser.ConfigParser()
 config.read("configuration/config.ini")
@@ -60,6 +60,7 @@ def ai_action():
     json = request.get_json()
     data = json['result']['parameters']
     args = {k.lower():np.get_value_from_string(k, data[k]) for k in data if k.lower() != "effect" and data[k] != ''}
+    print args
     if len(args) == 0:
         ret, status = np.start(data['Effect'])
     else:

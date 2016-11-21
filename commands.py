@@ -1,7 +1,6 @@
 import controls
 from os.path import dirname, abspath, basename, isfile
 import  math, sys, getopt, threading, atexit, json, importlib, glob
-
 __author__="Nick Pesce"
 __email__="npesce@terpmail.umd.edu"
 
@@ -11,8 +10,6 @@ if __name__ == "__main__":
 
 SPEED = 0b10
 COLOR = 0b1
-start_index = sys.maxint
-end_index = 0
 t = None
 stop_event = threading.Event()
 effects = {}
@@ -55,7 +52,7 @@ def start(effect_name, **args):
     if 'ranges' in args:
         np.set_ranges(args['ranges'])
     else:
-        np.set_range(default_range)
+        np.set_ranges([default_range])
 
     args['lights'] = np
     args['stop_event'] = stop_event
@@ -101,9 +98,9 @@ def get_value_from_string(type, string):
         return [255, 255, 255]
     elif type.lower() == 'speed':
         return speeds.get(string.lower(), 1)
-    elif type.lower() == 'range':
-        return ranges.get(string.lower(), ranges["all"])
-    return 'error'
+    elif type.lower() == 'ranges':
+        return string.split(",")
+    return string
 
 def combine_colors_in_list(list):
     """Takes a list of strings, and combines adjacent strings that are not known to be speeds"""
