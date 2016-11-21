@@ -27,7 +27,7 @@ modifiers = SPEED
 def start(lights, stop_event, speed = 1, **extras):
     hue = 0;
     while not stop_event.is_set():
-        for n in range(0, lights.num_leds):
+        for n in lights.all_lights():
             if stop_event.is_set():
                 break
             lights.set_pixel_hsv(n, hue, 1, 1)

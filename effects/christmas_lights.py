@@ -25,16 +25,16 @@ modifiers = NONE
 #   speed: The speed multiplier if passed, otherwise the default speed. REMOVE IF SPEED IS NOT A MODIFIER.
 #   **extras: Any other parameters that may have been passed. Do not use, but do not remove.
 def start(lights, stop_event, **extras):
-    for n in range(0, lights.num_leds):
+    for i, n in lights.all_lights_with_count():
         seq = n%5
         if seq == 0:
-            lights.set_pixel(n, 100, 0, 0)
+            lights.set_pixel(i, 100, 0, 0)
         elif seq == 1:
-            lights.set_pixel(n, 100, 0, 50)
+            lights.set_pixel(i, 100, 0, 50)
         elif seq == 2:
-            lights.set_pixel(n, 0, 100, 0)
+            lights.set_pixel(i, 0, 100, 0)
         elif seq == 3:
-            lights.set_pixel(n, 150, 100, 0)
+            lights.set_pixel(i, 150, 100, 0)
         elif seq == 4:
-            lights.set_pixel(n, 0, 0, 100)
+            lights.set_pixel(i, 0, 0, 100)
     lights.show()

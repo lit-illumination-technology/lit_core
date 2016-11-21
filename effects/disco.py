@@ -27,8 +27,8 @@ modifiers = SPEED
 def start(lights, stop_event, speed = 1, **extras):
     off = 0
     while not stop_event.is_set():
-        for n in range(0, lights.num_leds):
-            lights.set_pixel_hsv(n, ((n*off)/float(lights.num_leds))%1, 1, 1)
+        for i, n in lights.all_lights_with_count():
+            lights.set_pixel_hsv(i, ((n*off)/float(lights.num_leds))%1, 1, 1)
         off+=.1
         lights.show()
         stop_event.wait(.05/speed)

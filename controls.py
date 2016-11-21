@@ -18,26 +18,39 @@ LED_STRIP	= ws.WS2812_STRIP	#Uses GBR instead of RGB
 ws2812 = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL, LED_STRIP)
 ws2812.begin()
 
-    
 
 def show():
     """Update lights with the contents of the display buffer"""
     ws2812.show()
 
 class Led_Controller:
-    def __init__(self, start_i = 0, end_i = 60):
-        self.start = start_i
-        self.end = end_i
-        self.num_leds = end_i - start_i
+    def __init__(self, ranges = {'default' : range(0, 60)}):
+        self.ranges = ranges
+        self.active_ranges = []
+        self.num_leds = 0
 
-    def set_range(self, start_i, end_i):
-        self.start = start_i
-        self.end = end_i
-        self.num_leds = end_i - start_i
+    def set_ranges(self, new_ranges):
+        self.active_ranges = new_ranges
+        self.num_leds = sum(len(self.ranges[r]) for r in self.active_ranges)
+
+    def get_ranges(self):
+        return [self.ranges[k] for k in self.active_ranges]
+
+    def all_lights(self):
+        for ri in self.active_ranges:
+            for n in self.ranges[ri]:
+                yield n
+
+    def all_lights_with_count(self):
+        n = 0
+        for ri in self.active_ranges:
+            for i in self.ranges[ri]:
+                yield (i, n)
+                n += 1
 
     def clear(self):
         """Clear the buffer"""
-        for n in range(self.start, self.end):
+        for n in self.all_lights():
             ws2812.setPixelColorRGB(n, 0, 0, 0)
 
     def off(self):
@@ -50,23 +63,23 @@ class Led_Controller:
         """Set a single pixel to a colour using HSV"""
         if index is not None:
             r, g, b = [int(n*255) for n in colorsys.hsv_to_rgb(h, s, v)]
-            ws2812.setPixelColorRGB(index + self.start, r, g, b)
+            ws2812.setPixelColorRGB(index, r, g, b)
 
 
     def set_pixel(self, n, r, g, b):
         """Set a single pixel to RGB colour"""
-        ws2812.setPixelColorRGB(n + self.start, r, g, b)
+        ws2812.setPixelColorRGB(n, r, g, b)
 
 
     def get_pixel(self, n):
         """Get the RGB value of a single pixel"""
         if n is not None:
-            pixel = ws2812.getPixelColorRGB(n + self.start)
+            pixel = ws2812.getPixelColorRGB(n)
             return int(pixel.r), int(pixel.g), int(pixel.b)
 
 
     def set_pixels(self, pixels):
-        """Sets the pixels to corresponding picels in an array of pixel tuples. Pixel array must be >= than the string length"""
+        """Sets the pixels to corresponding pixels in an array of pixel tuples. Pixel array must be >= than the string length"""
         self.clear()
         for n in range(0, len(pixels)):
             r, g, b = pixels[n]
@@ -74,12 +87,12 @@ class Led_Controller:
 
     def set_all_pixels(self, r, g, b):
         """Sets all of the pixels to a color in the RGB colorspace"""
-        for n in range(0, self.num_leds):
+        for n in self.all_lights():
             self.set_pixel(n, r, g, b)
 
     def set_all_pixels_hsv(self, h, s, v):
         """Sets all of the pixels to a color in the HSV colorspace"""
-        for n in range(0, self.num_leds):
+        for n in self.all_lights():
             self.set_pixel_hsv(n, h, s, v)
             
     def get_pixels(self):

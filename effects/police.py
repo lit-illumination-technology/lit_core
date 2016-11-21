@@ -45,20 +45,19 @@ def start(lights, stop_event, color = [255, 255, 255], speed = 1, **extras):
         stop_event.wait(.02/speed)
 
 def set_section(lights, section, color):
-    m = lights.num_leds/60
     if section == LEFT:
-        for strip in range(0, m):
-            for n in range(60*strip, (60*strip + 25)):
+        for r in lights.get_ranges():
+            for n in range(r[0], r[0] + int(len(r) * (5.0/12))):
                 lights.set_pixel(n, *color)
     elif section == RIGHT:
-        for strip in range(0, m):
-            for n in range(60*strip+35, (60*strip + 60)):
+        for r in lights.get_ranges():
+            for n in range(r[0] + int(len(r)*(7.0/12)), r[0] + len(r)):
                 lights.set_pixel(n, *color)
     elif section == CENTER_L:
-        for strip in range(0, m):
-            for n in range(60*strip+25, (60*strip + 30)):
+        for r in lights.get_ranges():
+            for n in range(r[0] + int(len(r)*(5.0/12)), r[0] + int(len(r)*(1.0/2))):
                 lights.set_pixel(n, *color)
     elif section == CENTER_R:
-        for strip in range(0, m):
-            for n in range(60*strip+30, (60*strip + 35)):
+        for r in lights.get_ranges():
+            for n in range(r[0] + int(len(r)*(1.0/2)), r[0] + int(len(r)*(7.0/12))):
                 lights.set_pixel(n, *color)

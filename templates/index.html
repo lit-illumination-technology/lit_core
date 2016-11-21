@@ -23,13 +23,7 @@
                 <div class="col-sm-4 centered_hor start_hidden">
                     <div class="panel panel-default">
                         <div class="panel-heading">Lights</div>
-                        <div class="panel-body">
-                            <div class="toggle_container">
-                                <input id="toggle_first" type="checkbox" data-toggle="toggle" data-off="Room" data-on="Room" data-width="72" data-height="32">
-                            </div>
-                            <div class="toggle_container">
-                                <input id="toggle_second" type="checkbox" data-toggle="toggle" data-off="Desk" data-on="Desk" data-width="72" data-height="32">
-                            </div>
+                        <div class="panel-body" id="range_switches">
                         </div>
                     </div>
                 </div>
@@ -92,30 +86,31 @@
             $(document).ready(function(){
                 effectSelector = $("#effect_selector");
                 speedInput = $("#speed_input");
-                toggleFirst = $("#toggle_first");
-                toggleSecond = $("#toggle_second");
-                toggleFirst.bootstrapToggle();
-                toggleSecond.bootstrapToggle();
                 speedInput.slider();
                 //colorSelector = $("#color_selector");
                 colorInput = $("#color_input");
                 sendButton = $("#send");
+                ranges = [];
 
-                start = 0;
-                end = 120;
+                $.get("/get_ranges.json", function(result) {
+                    $.each(result.ranges, function() {
+                        var name = this;
+                        $range_input = $("<input type='checkbox' data-toggle='toggle' data-off='" + name + "' data-on='" + name + "' data-width='72' data-height='32'>");
+                        $range_input.change(function(){
+                            if($(this).prop("checked")) {
+                                ranges.push(name);
+                            }else {
+                                ranges.splice(ranges.indexOf(name), 1);
+                            }
+                        });
+                        $switch_container = $("<div class='toggle_container'></div>");
+                        $range_input.appendTo($switch_container);
+                        $switch_container.appendTo("#range_switches");
+                        $range_input.bootstrapToggle();
+                        $("#range_switches").closest(".col-sm-4").fadeIn();
+                    });
+                });
 
-                //When a toggle switch is changed, update the start and end points
-                updateRange = function() {
-                    start = 60;
-                    end = 60;
-                    if(toggleSecond.prop('checked'))
-                        end = 120;
-                    if(toggleFirst.prop('checked'))
-                        start = 0;
-                }
-                toggleFirst.change(updateRange);
-                toggleSecond.change(updateRange);
-                updateRange();
                 $.get("/has_ai", function(result) {
                     if(result=="true"){
                         $("<input type='text' placeholder='What do you want me to do for you?' class='ai-input start_hidden' id='ai'/>").appendTo("#header");
@@ -144,7 +139,6 @@
                     $.each(result.effects, function() {
                         effectSelector.append($("<option />").val(this.modifiers).text(this.name));
                     });
-                    toggleFirst.closest(".col-sm-4").fadeIn();
                     effectSelector.closest(".col-sm-4").fadeIn();
                     sendButton.fadeIn();
                     //Update options for initially selected effect
@@ -199,15 +193,16 @@
 
                 //Send the command
                 sendButton.click(function(){
-                    if(start == end)
+                    if(ranges.length == 0){
                         var command = {
                             effect: "off",
                             args: {}
                         }
+                    }
                     else {
                         rgb = getSelectedColor();
                         var args = {};
-                        args["range"] = {"start" : start, "end" : end}
+                        args["ranges"] = ranges;
                         if(effectSelector.val() & COLOR)
                             args["color"] = rgb;
                         if(effectSelector.val() & SPEED)

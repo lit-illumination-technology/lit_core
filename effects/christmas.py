@@ -33,8 +33,8 @@ def start(lights, stop_event, color = [255, 255, 255], speed = 1, **extras):
 
     off = 0
     while not stop_event.is_set():
-        for n in range(0, lights.num_leds):
-            lights.set_pixel(n, *colors[(n+off)%lights.num_leds])
+        for i, n in lights.all_lights_with_count():
+            lights.set_pixel(i, *colors[(n+off)%lights.num_leds])
         lights.show()
         off += 1
         stop_event.wait(.1/speed)

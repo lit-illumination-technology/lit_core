@@ -2,7 +2,7 @@ import socket, threading, time, ConfigParser
 import controls
 
 config = ConfigParser.ConfigParser()
-config.read("config.ini")
+config.read("configuration/config.ini")
 password = config.get("General", "password")
 port = config.getint("General", "link_port")
 data = bytearray(2048)

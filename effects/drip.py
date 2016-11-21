@@ -28,8 +28,8 @@ modifiers = COLOR | SPEED
 def start(lights, stop_event, color = [0, 20, 175], speed = 1, **extras):
     dullness = [15]*lights.num_leds
     while not stop_event.is_set():
-        for n in range(0, lights.num_leds):
-            lights.set_pixel(n, int(color[0]/dullness[n]), int(color[1]/dullness[n]), int(color[2]/dullness[n]))
+        for i, n in lights.all_lights_with_count():
+            lights.set_pixel(i, int(color[0]/dullness[n]), int(color[1]/dullness[n]), int(color[2]/dullness[n]))
             dullness[n] -= random.random()/20
             if dullness[n]<=1 or random.randint(0, int(dullness[n]*20)) == 0:
                 dullness[n] = (random.random()*2)+4

@@ -17,6 +17,8 @@ t = None
 stop_event = threading.Event()
 effects = {}
 commands = []
+ranges = {}
+default_range = None
 
 with open('configuration/speeds.json') as data_file:    
     speeds = json.load(data_file)
@@ -25,21 +27,23 @@ with open('configuration/colors.json') as data_file:
     colors = json.load(data_file)
 
 with open('configuration/ranges.json') as data_file:    
-    ranges = json.load(data_file)
-    for k in ranges:
-        r = ranges[k]
-        start_index = min(start_index, r['start'])
-        end_index = max(end_index, r['end'])
+    rangeJson = json.load(data_file)
+    for k in rangeJson:
+        if default_range is None:
+            default_range = k
+        r = rangeJson[k]
+        ranges[k] = range(r['start'], r['end'])
 
-np = controls.Led_Controller(start_index, end_index)
+np = controls.Led_Controller(ranges)
+np.set_ranges([default_range])
 
 def start(effect_name, **args): 
     global t
     if not is_effect(effect_name):
         return (help(), False)
     
-    if "speed" in args:
-        args["speed"] = 10**((args["speed"]-50)/50.0)
+    if 'speed' in args:
+        args['speed'] = 10**((args['speed']-50)/50.0)
 
     #Stop previous effect
     stop_event.set()
@@ -48,10 +52,10 @@ def start(effect_name, **args):
     stop_event.clear()
     np.off()
 
-    if "range" in args:
-        np.set_range(args["range"]["start"], args["range"]["end"])
+    if 'ranges' in args:
+        np.set_ranges(args['ranges'])
     else:
-        np.set_range(start_index, end_index)
+        np.set_range(default_range)
 
     args['lights'] = np
     args['stop_event'] = stop_event
@@ -86,7 +90,7 @@ def get_speeds():
     return speeds 
 
 def get_ranges():
-    return {k:ranges[k] for k in ranges if k != "all"} 
+    return [k for k in ranges]
     
 def get_value_from_string(type, string):
     """Given a attribute represented as a string, convert it to the appropriate value"""

@@ -27,7 +27,7 @@ modifiers = SPEED
 #   **extras: Any other parameters that may have been passed. Do not use, but do not remove.
 def start(lights, stop_event, color = [255, 255, 255], speed = 1, **extras):
     while(not stop_event.is_set()):
-        for n in range(0, lights.num_leds):
+        for n in lights.all_lights():
             lights.set_pixel(n, random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
         lights.show();
         stop_event.wait(.1/speed)
