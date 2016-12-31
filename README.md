@@ -9,7 +9,7 @@ Lights can  be controlled from the command line, web interface, or any other pro
 <li>Install the <a href="https://github.com/jgarff/rpi_ws281x">rpi_ws281x</a> module
   <ol>
   <li><code>$ sudo apt-get update</code></li>
-  <li><code>$ sudo apt-get install scons swig python-dev build-essentials git</code></li>
+  <li><code>$ sudo apt-get install scons swig python-dev build-essential git</code></li>
   <li><code>$ cd ~</code></li>
   <li><code>$ git clone https://github.com/jgarff/rpi_ws281x.git</code></li>
   <li><code>$ cd rpi_ws281x</code></li>
