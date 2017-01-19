@@ -74,8 +74,8 @@ class Led_Controller:
     def get_pixel(self, n):
         """Get the RGB value of a single pixel"""
         if n is not None:
-            pixel = ws2812.getPixelColorRGB(n)
-            return int(pixel.r), int(pixel.g), int(pixel.b)
+            pixel = ws2812.getPixelColor(n)
+            return (pixel>>16)&0xff, (pixel>>8)&0xff, pixel&0xff
 
 
     def set_pixels(self, pixels):
@@ -97,7 +97,7 @@ class Led_Controller:
             
     def get_pixels(self):
         """Get the RGB value of all pixels in a 1d array of 3d tuples"""
-        return [get_pixel(n) for n in range(0, self.num_leds)]
+        return [self.get_pixel(n) for n in range(0, self.num_leds)]
 
     def show(self):
         show()
