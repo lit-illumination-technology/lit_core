@@ -5,7 +5,7 @@ import ConfigParser
 import commands as np
 
 app = Flask(__name__)
-app.config['DEBUG'] = True
+app.config['DEBUG'] = False
 
 config = ConfigParser.ConfigParser()
 config.read("configuration/config.ini")
@@ -60,12 +60,11 @@ def ai_action():
     json = request.get_json()
     data = json['result']['parameters']
     args = {k.lower():np.get_value_from_string(k, data[k]) for k in data if k.lower() != "effect" and data[k] != ''}
-    print args
     if len(args) == 0:
         ret, status = np.start(data['Effect'])
     else:
         ret, status = np.start(data['Effect'], **args)
-    return ret
+    return jsonify(speech=ret, displayText=ret)
 
 @app.route("/ai_request", methods = ['POST'])
 @requires_auth
@@ -102,4 +101,4 @@ def speeds():
     return jsonify(speeds=np.get_speeds())
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port = port)
+    app.run(host='0.0.0.0', port=port, threaded=True)
