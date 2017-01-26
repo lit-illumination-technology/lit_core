@@ -29,7 +29,7 @@ def start(lights, stop_event, color = [0, 0, 0], speed = 1, **extras):
     n = int(100/speed)
     ds = [((color[0]-r)/n, (color[1]-g)/n, (color[2]-b)/n) for (r, g, b) in pixels]
     for i in range(0, n):
-        pixels = [(pixels[n][0]+ds[n][0], pixels[n][1]+ds[n][1], pixels[n][2]+ds[n][2]) for n in range(0, len(pixels))]
+        pixels = [(pixels[p][0]+ds[p][0], pixels[p][1]+ds[p][1], pixels[p][2]+ds[p][2]) for p in range(0, len(pixels))]
         pixelsi = [(max(0,int(r)), max(0,int(g)), max(0,int(b))) for (r, g, b) in pixels]
         lights.set_pixels(pixelsi)
         lights.show()
