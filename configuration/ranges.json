@@ -1,4 +1,4 @@
 {
-    "range 1" : {"start" : 0, "end" : 60a},
+    "range 1" : {"start" : 0, "end" : 60},
     "range 2" : {"start" : 60, "end" : 120}
 }
