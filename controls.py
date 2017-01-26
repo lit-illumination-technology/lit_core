@@ -27,10 +27,13 @@ class Led_Controller:
     def __init__(self, ranges = {'default' : range(0, 60)}):
         self.ranges = ranges
         self.active_ranges = []
+        self.inactive_ranges = list(ranges)
         self.num_leds = 0
+        self.total_leds = sum(len(r) for r in self.ranges.itervalues())
 
     def set_ranges(self, new_ranges):
         self.active_ranges = new_ranges
+        self.inactive_ranges = [x for x in self.ranges if x not in self.active_ranges]
         self.num_leds = sum(len(self.ranges[r]) for r in self.active_ranges)
 
     def get_ranges(self):
@@ -48,10 +51,22 @@ class Led_Controller:
                 yield (i, n)
                 n += 1
 
+    def all_other_lights(self):
+        for ri in self.inactive_ranges:
+            for n in self.ranges[ri]:
+                yield n
+
+    def all_other_lights_with_count(self):
+        n = 0
+        for ri in self.inactive_ranges:
+            for i in self.ranges[ri]:
+                yield (i, n)
+                n += 1
+
     def clear(self):
         """Clear the buffer"""
-        for n in self.all_lights():
-            ws2812.setPixelColorRGB(n, 0, 0, 0)
+        self.set_all_pixels(0, 0, 0)
+        self.set_all_other_pixels(0, 0, 0)
 
     def off(self):
         """Clear the buffer and immediately update lights
@@ -90,14 +105,24 @@ class Led_Controller:
         for n in self.all_lights():
             self.set_pixel(n, r, g, b)
 
+    def set_all_other_pixels(self, r, g, b):
+        """Sets all of the pixels to a color in the RGB colorspace"""
+        for n in self.all_other_lights():
+            self.set_pixel(n, r, g, b)
+
     def set_all_pixels_hsv(self, h, s, v):
         """Sets all of the pixels to a color in the HSV colorspace"""
         for n in self.all_lights():
             self.set_pixel_hsv(n, h, s, v)
+
+    def set_all_other_pixels_hsv(self, h, s, v):
+        """Sets all of the pixels to a color in the HSV colorspace"""
+        for n in self.all_other_lights():
+            self.set_pixel_hsv(n, h, s, v)
             
     def get_pixels(self):
         """Get the RGB value of all pixels in a 1d array of 3d tuples"""
-        return [self.get_pixel(n) for n in range(0, self.num_leds)]
+        return [self.get_pixel(n) for n in range(0, self.total_leds)]
 
     def show(self):
         show()
