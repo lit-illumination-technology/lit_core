@@ -25,6 +25,7 @@ modifiers = SPEED
 #   speed: The speed multiplier if passed, otherwise the default speed. REMOVE IF SPEED IS NOT A MODIFIER.
 #   **extras: Any other parameters that may have been passed. Do not use, but do not remove.
 def start(lights, stop_event, speed = 1, **extras):
+    lights.set_all_other_pixels(0, 0, 0)
     off = 0
     while not stop_event.is_set():
         for i, n in lights.all_lights_with_count():

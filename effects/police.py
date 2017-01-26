@@ -29,6 +29,7 @@ CENTER_L=2
 CENTER_R=3
 RIGHT=1
 def start(lights, stop_event, color = [255, 255, 255], speed = 1, **extras):
+    lights.set_all_other_pixels(0, 0, 0)
     state = 0
     while not stop_event.is_set():
         lights.off()

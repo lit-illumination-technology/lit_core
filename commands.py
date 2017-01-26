@@ -47,7 +47,6 @@ def start(effect_name, **args):
     if t is not None:
         t.join()
     stop_event.clear()
-    np.off()
 
     if 'ranges' in args:
         np.set_ranges(args['ranges'])
