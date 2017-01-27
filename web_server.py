@@ -5,7 +5,7 @@ import ConfigParser
 import commands as np
 
 app = Flask(__name__)
-app.config['DEBUG'] = False
+app.config['DEBUG'] = True
 
 config = ConfigParser.ConfigParser()
 config.read("configuration/config.ini")
@@ -94,7 +94,7 @@ def colors():
 
 @app.route("/get_ranges.json", methods = ['GET'])
 def ranges():
-    return jsonify(ranges=np.get_ranges())
+    return jsonify(sections=np.get_sections(), zones=np.get_zones())
 
 @app.route("/get_speeds.json", methods = ['GET'])
 def speeds():

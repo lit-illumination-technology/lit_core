@@ -4,36 +4,6 @@ import  math, sys, getopt, threading, atexit, json, importlib, glob
 __author__="Nick Pesce"
 __email__="npesce@terpmail.umd.edu"
 
-if __name__ == "__main__":
-    print "This is module can not be run. Import it and call start()"
-    sys.exit()
-
-SPEED = 0b10
-COLOR = 0b1
-t = None
-stop_event = threading.Event()
-effects = {}
-commands = []
-ranges = {}
-default_range = None
-
-with open('configuration/speeds.json') as data_file:    
-    speeds = json.load(data_file)
-
-with open('configuration/colors.json') as data_file:    
-    colors = json.load(data_file)
-
-with open('configuration/ranges.json') as data_file:    
-    rangeJson = json.load(data_file)
-    for k in rangeJson:
-        if default_range is None:
-            default_range = k
-        r = rangeJson[k]
-        ranges[k] = range(r['start'], r['end'])
-
-np = controls.Led_Controller(ranges)
-np.set_ranges([default_range])
-
 def start(effect_name, **args): 
     global t
     if not is_effect(effect_name):
@@ -49,9 +19,9 @@ def start(effect_name, **args):
     stop_event.clear()
 
     if 'ranges' in args:
-        np.set_ranges(args['ranges'])
+        np.set_ranges(get_sections_from_ranges(args['ranges']))
     else:
-        np.set_ranges([default_range])
+        np.set_ranges(get_sections_from_ranges(default_range))
 
     args['lights'] = np
     args['stop_event'] = stop_event
@@ -85,9 +55,22 @@ def get_colors():
 def get_speeds():
     return speeds 
 
-def get_ranges():
-    return [k for k in ranges]
+def get_sections():
+    return [k for k in sections]
+
+def get_zones():
+    return [k for k in zones]
     
+def get_sections_from_ranges(lst):
+    """converts ranges names (sections or zones), to a list containing ony section names"""
+    ret = []
+    for r in lst:
+        if r in sections:
+            ret.append(r)
+        elif r in zones:
+            ret += zones[r]
+    return ret
+
 def get_value_from_string(type, string):
     """Given a attribute represented as a string, convert it to the appropriate value"""
     if type.lower() == 'color':
@@ -143,6 +126,40 @@ def _clean_shutdown():
     if t is not None:
         t.join()
     np.off()
+
+if __name__ == "__main__":
+    print "This is module can not be run. Import it and call start()"
+    sys.exit()
+
+SPEED = 0b10
+COLOR = 0b1
+t = None
+stop_event = threading.Event()
+effects = {}
+commands = []
+sections = {}
+zones = {}
+default_range = None
+
+with open('configuration/speeds.json') as data_file:    
+    speeds = json.load(data_file)
+
+with open('configuration/colors.json') as data_file:    
+    colors = json.load(data_file)
+
+with open('configuration/ranges.json') as data_file:    
+    rangeJson = json.load(data_file)
+    sectionJson = rangeJson['sections']
+    zoneJson = rangeJson['zones']
+    default_range = rangeJson['default']
+    for k in sectionJson:
+        r = sectionJson[k]
+        sections[k] = range(r['start'], r['end'])
+    for k in zoneJson:
+        zones[k] = zoneJson[k]
+
+np = controls.Led_Controller(sections)
+np.set_ranges(get_sections_from_ranges(default_range))
 
 import_effects()
 atexit.register(_clean_shutdown)
