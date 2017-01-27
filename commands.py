@@ -21,7 +21,7 @@ def start(effect_name, **args):
     if 'ranges' in args:
         np.set_ranges(get_sections_from_ranges(args['ranges']))
     else:
-        np.set_ranges(get_sections_from_ranges(default_range))
+        np.set_ranges(get_sections_from_ranges([default_range]))
 
     args['lights'] = np
     args['stop_event'] = stop_event
