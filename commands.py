@@ -12,7 +12,6 @@ def start(effect_name, **args):
             if not history:
                 return ("There is no current effect", False)
             current = history.pop()
-            print current['args'].get('speed', 50)
             if 'speed' in args:
                 if args['speed'] == 'faster':
                     args['speed'] = current['args'].get('speed', 50)+10
@@ -30,6 +29,11 @@ def start(effect_name, **args):
             prev = history.pop()
             return start(prev['effect'], **prev['args'])
         #Incorrect effect name
+        return (help(), False)
+
+    args = {k:get_value_from_string(k, args[k]) for k in args}
+    history.append({'effect' : effect_name.lower(), 'args' : args.copy()})
+    if 'speed' in args:
         args['speed'] = 10**((args['speed']-50)/50.0)
 
     #Stop previous effect
