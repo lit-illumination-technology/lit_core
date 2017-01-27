@@ -1,9 +1,7 @@
 {
     "fastest" : 100,
-    "faster" : 75,
-    "fast" : 66,
+    "fast" : 75,
     "normal" : 50,
-    "slow" : 33,
-    "sloweri" : 25,
+    "slow" : 25,
     "slowest" : 0
 }

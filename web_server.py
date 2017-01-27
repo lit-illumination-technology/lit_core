@@ -5,7 +5,7 @@ import ConfigParser
 import commands as np
 
 app = Flask(__name__)
-app.config['DEBUG'] = True
+app.config['DEBUG'] = False
 
 config = ConfigParser.ConfigParser()
 config.read("configuration/config.ini")
@@ -16,8 +16,7 @@ ai=None
 if config.has_option("Api", "apiai"):
     import apiai
     apiai_token = config.get("Api", "apiai")
-    ai = apiai.ApiAI(apiai_token)
-
+    ai = apiai.ApiAI(apiai_token) 
 def check_auth(un, pw):
     """This function is called to check if a username /
     password combination is valid.
@@ -59,7 +58,7 @@ def command():
 def ai_action():
     json = request.get_json()
     data = json['result']['parameters']
-    args = {k.lower():np.get_value_from_string(k, data[k]) for k in data if k.lower() != "effect" and data[k] != ''}
+    args = {k.lower():data[k] for k in data if k.lower() != "effect" and data[k] != ''}
     if len(args) == 0:
         ret, status = np.start(data['Effect'])
     else:

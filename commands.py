@@ -7,8 +7,30 @@ __email__="npesce@terpmail.umd.edu"
 def start(effect_name, **args): 
     global t
     if not is_effect(effect_name):
+        #Modify command
+        if effect_name.lower() == 'modify':
+            if not history:
+                return ("There is no current effect", False)
+            current = history.pop()
+            print current['args'].get('speed', 50)
+            if 'speed' in args:
+                if args['speed'] == 'faster':
+                    args['speed'] = current['args'].get('speed', 50)+10
+                if args['speed'] == 'slower':
+                    args['speed'] =  current['args'].get('speed', 50)-10
+
+            current['args'].update(args)
+            start(current['effect'], **current['args'])
+            return ("Effect modified!", True)
+        #Back command
+        if effect_name.lower() == 'back':
+            history.pop()
+            prev = history.pop()
+            return start(prev['effect'], **prev['args'])
+        #Incorrect effect name
         return (help(), False)
-    
+    args = {k:get_value_from_string(k, args[k]) for k in args}
+    history.append({'effect' : effect_name.lower(), 'args' : args.copy()})
     if 'speed' in args:
         args['speed'] = 10**((args['speed']-50)/50.0)
 
@@ -33,6 +55,7 @@ def start(effect_name, **args):
         t.start()
         return (effect.start_string,  True)
     except Exception, e:
+        history.pop()
         return (str(e), False)
 
 def help():
@@ -73,13 +96,15 @@ def get_sections_from_ranges(lst):
 
 def get_value_from_string(type, string):
     """Given a attribute represented as a string, convert it to the appropriate value"""
+    if not isinstance(string, basestring):
+        return string
     if type.lower() == 'color':
         for c in colors:
             if c['name'].lower() == string.lower():
                 return c['color']
         return [255, 255, 255]
     elif type.lower() == 'speed':
-        return speeds.get(string.lower(), 1)
+        return speeds.get(string.lower(), 50)
     elif type.lower() == 'ranges':
         return string.split(",")
     return string
@@ -140,6 +165,7 @@ commands = []
 sections = {}
 zones = {}
 default_range = None
+history = []
 
 with open('configuration/speeds.json') as data_file:    
     speeds = json.load(data_file)
