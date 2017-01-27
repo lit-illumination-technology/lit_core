@@ -24,14 +24,12 @@ def start(effect_name, **args):
             return ("Effect modified!", True)
         #Back command
         if effect_name.lower() == 'back':
+            if len(history) < 2:
+                return ("There are no previous effects!", False)
             history.pop()
             prev = history.pop()
             return start(prev['effect'], **prev['args'])
         #Incorrect effect name
-        return (help(), False)
-    args = {k:get_value_from_string(k, args[k]) for k in args}
-    history.append({'effect' : effect_name.lower(), 'args' : args.copy()})
-    if 'speed' in args:
         args['speed'] = 10**((args['speed']-50)/50.0)
 
     #Stop previous effect
