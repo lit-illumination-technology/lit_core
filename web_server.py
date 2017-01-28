@@ -1,11 +1,11 @@
 from flask import Flask, render_template, request, abort, Response, jsonify
 from functools import wraps
-import threading
+import threading, os.path
 import ConfigParser
 import commands as np
 
 app = Flask(__name__)
-app.config['DEBUG'] = False
+app.config['DEBUG'] = True
 
 config = ConfigParser.ConfigParser()
 config.read("configuration/config.ini")
@@ -17,6 +17,11 @@ if config.has_option("Api", "apiai"):
     import apiai
     apiai_token = config.get("Api", "apiai")
     ai = apiai.ApiAI(apiai_token) 
+
+if os.path.isfile("fulfillment.py"):
+    import fulfillment
+    has_fulfillment = True
+
 def check_auth(un, pw):
     """This function is called to check if a username /
     password combination is valid.
@@ -57,13 +62,17 @@ def command():
 @requires_auth
 def ai_action():
     json = request.get_json()
+    action = json['result']['action']
     data = json['result']['parameters']
-    args = {k.lower():data[k] for k in data if k.lower() != "effect" and data[k] != ''}
-    if len(args) == 0:
-        ret, status = np.start(data['Effect'])
-    else:
-        ret, status = np.start(data['Effect'], **args)
-    return jsonify(speech=ret, displayText=ret)
+    if action == 'Lights':
+        args = {k.lower():data[k] for k in data if k.lower() != "effect" and data[k] != ''}
+        if len(args) == 0:
+            ret, status = np.start(data['Effect'])
+        else:
+            ret, status = np.start(data['Effect'], **args)
+        return jsonify(speech=ret, displayText=ret)
+    elif has_fulfillment:
+        return fulfillment.process(json)
 
 @app.route("/ai_request", methods = ['POST'])
 @requires_auth
