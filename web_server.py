@@ -13,14 +13,17 @@ password = config.get("General", "password")
 username = config.get("General", "username")
 port = config.getint("General", "port")
 ai=None
+has_fulfillment=False
 if config.has_option("Api", "apiai"):
     import apiai
     apiai_token = config.get("Api", "apiai")
     ai = apiai.ApiAI(apiai_token) 
+    print("API.AI is enabled!");
 
-if os.path.isfile("fulfillment.py"):
+if ai is not None and os.path.isfile(os.path.dirname(os.path.realpath(__file__)) + "/fulfillment.py"):
     import fulfillment
     has_fulfillment = True
+    print("API.AI fulfillment enabled!")
 
 def check_auth(un, pw):
     """This function is called to check if a username /
@@ -73,6 +76,8 @@ def ai_action():
         return jsonify(speech=ret, displayText=ret)
     elif has_fulfillment:
         return fulfillment.process(json)
+    #else:
+
 
 @app.route("/ai_request", methods = ['POST'])
 @requires_auth
