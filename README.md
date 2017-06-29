@@ -69,5 +69,6 @@ Easily add new and personalized effects. Basic python knowlege is required.
 <li>Change each field according to the comments</li>
 <li>Code your effect in the <code>start</code> function</li>
 <li>Restart the server</li>
+<li>If you want to share your creation, feel free to create a pull request!</li>
 <li>That's it!</li>
 </ol>
