@@ -36,7 +36,7 @@ Lights can  be controlled from the command line, web interface, or any other pro
 <code>$ pip install apiai</code></li>
 <li>Make an account at <a href="https://console.api.ai/api-client/#/signup">Api.Ai</a> and watch the tutorials</li>
 <li>Create a new agent</li>
-<li>Go to Entities and click on the benu icon next to "Create Entity"</li>
+<li>Go to Entities and click on the menu icon next to "Create Entity"</li>
 <li>Click "Upload Entity"</li>
 <li>Upload each of the json files from the api-ai directory</li>
 <li>Go to Fulfillment
