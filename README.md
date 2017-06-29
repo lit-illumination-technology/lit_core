@@ -1,10 +1,9 @@
 # Neopixels-2.0
-##Synopisis
+## Synopisis
 This is an improved version of the <a href="http://github.com/nickpesce/neopixels">Neopixels</a> project</br>
 This python script is intended for <a href="https://www.adafruit.com/products/1138">Adafruit Neopixels</a></br>
 Lights can  be controlled from the command line, web interface, or any other programs that use the RESTful API such as this <a href="http://github.com/nickpesce/NeopixelAndroidApp">Android app</a>.</br>
-</hr>
-##Installation
+## Installation
 <ol>
 <li>Install the <a href="https://github.com/jgarff/rpi_ws281x">rpi_ws281x</a> module
   <ol>
@@ -27,8 +26,7 @@ Lights can  be controlled from the command line, web interface, or any other pro
 <li>Check that the controls at <code>localhost:5000</code> work</li>
 </ol>
 
-</hr>
-##Api.Ai Integration
+## Api.Ai Integration
 <a href="https://api.ai/Api.Ai">Api.Ai</a> is a free and easy artificial intelligence API. It can easily be integrated into Neopixels to enable natural language commands!
 <ol>
 <li>Run generate.py and get the files from the api-ai directory<br/>
@@ -60,8 +58,7 @@ Lights can  be controlled from the command line, web interface, or any other pro
 <li>Restart the server and there should be a new text entry at the top of the website</li>
 </ol>
 
-</hr>
-##Adding new effects
+## Adding new effects
 Easily add new and personalized effects. Basic python knowlege is required.
 <ol>
 <li>Navigate to the <code>effects</code> directory</li>
