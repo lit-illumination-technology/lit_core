@@ -19,7 +19,7 @@ Lights can  be controlled from the command line, web interface, or any other pro
   <li><code>$ sudo rm -rf rpi_ws281x</code></li>
   </ol>
 </li>
-<li>Clone this repository to your computer<br/>
+<li>Clone this repository to your Raspberry Pi<br/>
 <code>$git clone https://github.com/nickpesce/Neopixels-2.0.git</code><br/><code>$ cd Neopixels-2.0</code></li>
 <li>Modify username and password in config.ini<br/><code>$ nano config.ini</code></li>
 <li>Run web_server.py<br/><code>$ sudo python web_server.py</code></li>
