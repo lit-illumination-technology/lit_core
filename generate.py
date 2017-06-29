@@ -26,6 +26,6 @@ speeds_file = open('api-ai/speeds.json', 'w')
 speeds_file.write(json.dumps(speeds))
 
 #API.AI sections
-sections = api_ai_dict_format(np.get_sections())
+sections = api_ai_dict_format(dict(np.get_sections(), **np.get_zones()))
 sections_file = open('api-ai/ranges.json', 'w')
 sections_file.write(json.dumps(sections))

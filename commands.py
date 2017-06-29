@@ -81,10 +81,10 @@ def get_speeds():
     return speeds 
 
 def get_sections():
-    return [k for k in sections]
+    return sections
 
 def get_zones():
-    return [k for k in zones]
+    return zones
     
 def get_sections_from_ranges(lst):
     """converts ranges names (sections or zones), to a list containing ony section names"""
