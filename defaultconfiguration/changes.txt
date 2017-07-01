@@ -1,0 +1,5 @@
+July 1st, 2017:
+- Added 'leds' field in 'General' section
+-- Set to the number of leds that you have connected. Usually a multiple of 30
+- Added 'pin' field in 'General' section
+-- Set to the pin number that the data line is connected to. Usually 18
