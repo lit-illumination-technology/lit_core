@@ -21,9 +21,69 @@ Lights can  be controlled from the command line, web interface, or any other pro
 </li>
 <li>Clone this repository to your Raspberry Pi<br/>
 <code>$ git clone https://github.com/nickpesce/Neopixels-2.0.git</code><br/><code>$ cd Neopixels-2.0</code></li>
-<li>Modify username and password in config.ini<br/><code>$ nano config.ini</code></li>
+<li><code>$ cp -rf defaultconfiguration configuration</code></li>
+<li>Modify username and password in config.ini<br/><code>$ nano configuration/config.ini</code></li>
 <li>Run web_server.py<br/><code>$ sudo python web_server.py</code></li>
 <li>Check that the controls at <code>localhost:5000</code> work</li>
+</ol>
+
+## Customization
+The configuration directory contains four files that can be changed to reflect your personal setup.
+<ul>
+<li>config.ini:
+  <ul>
+  <li>
+  General
+    <ul>
+    <li>leds: The number of leds connected to your pi</li>
+    <li>pin: The pwm pin that your data line is connected to</li>
+    <li>port: The port that the web server should run on</li>
+    <li>username: The username to log into the website</li>
+    <li>password: The password to log into the website</li>
+    </ul>
+   </li>
+   <li>
+   API: Optional
+      <ul>
+      <li>apiai: Api.Ai client access token</li>
+      </ul>
+   </li>
+   <li>
+   Link: If link effect is installed (it is by default)
+     <ul>
+     <li>port: The port that the effect listens on</li>
+     <li>username: The username for link</li>
+     <li>password: The password for link</li>
+     </ul>
+   </li>
+   </ul>
+</li>
+
+<li>ranges.json: Contains information about light groupings.
+  <ul>
+  <li>sections: Contiguous sections of leds defined by a name mapped to a start and end index.</li>
+  <li>zones: Groups of sections that can all be controlled at once. Defined by a name mapped to a list of sections.</li>
+  <li>default: The section or zone that should be used if none are explictly chosen.
+  </ul>
+</li>
+
+<li>colors.json: A list of all preset color values defined by an object containing a name and color. The color field is defined as an array contining a red, green, and blue value.
+</li>
+
+<li>speeds.json: Preset speed values. An object containing a mapping between names and speeds. 0 is the slowest possible, and 50 is the default.
+</li>
+</ul>
+
+## Updating
+<ol>
+<li>cd into the neopixels directory</li>
+<li><code>git pull</code></li>
+<li>If defaultconfiguration/changes.txt changed, your configuration files must be updated
+  <ol>
+  <li>less defaultconfiguration/changes.txt</li>
+  <li>Read the most recent changes</li>
+  <li>update the relevant files in you configuration directory</li>
+</li>
 </ol>
 
 ## Api.Ai Integration
@@ -38,7 +98,7 @@ Lights can  be controlled from the command line, web interface, or any other pro
 <li>Create a new agent</li>
 <li>Go to Entities and click on the menu icon next to "Create Entity"</li>
 <li>Click "Upload Entity"</li>
-<li>Upload each of the json files from the api-ai directory</li>
+<li>Upload each of the json files from the api-ai directory (Ad-Blockers may have to be turned off)</li>
 <li>Go to Fulfillment
   <ol>
   <li>Enable webhook.</li>
