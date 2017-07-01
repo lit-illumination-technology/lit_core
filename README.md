@@ -83,6 +83,7 @@ The configuration directory contains four files that can be changed to reflect y
   <li>less defaultconfiguration/changes.txt</li>
   <li>Read the most recent changes</li>
   <li>update the relevant files in you configuration directory</li>
+  </ol>
 </li>
 </ol>
 
