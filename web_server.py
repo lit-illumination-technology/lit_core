@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, abort, Response, jsonify
+from flask import Flask, render_template, request, abort, Response, json, jsonify
 from functools import wraps
 import threading, os.path
 import ConfigParser
@@ -86,9 +86,10 @@ def ai_request():
         return "Unsupported Action"
     api_request = ai.text_request()
     api_request.query = request.get_data()
-    t = threading.Thread(target=api_request.getresponse)
-    t.start()
-    return "Requested"
+    #t = threading.Thread(target=api_request.getresponse)
+    #t.start()
+    response = api_request.getresponse()
+    return jsonify(json.loads(response.read())['result']['fulfillment'])
 
 @app.route("/has_ai", methods = ['GET'])
 def has_ai():
