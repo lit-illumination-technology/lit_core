@@ -21,7 +21,7 @@ Lights can  be controlled from the command line, web interface, or any other pro
 </li>
 <li>Clone this repository to your Raspberry Pi<br/>
 <code>$ git clone https://github.com/nickpesce/Neopixels-2.0.git</code><br/><code>$ cd Neopixels-2.0</code></li>
-<li><code>$ cp -rf defaultconfiguration configuration</code></li>
+<li><code>$ cp -r defaultconfiguration configuration</code></li>
 <li>Modify username and password in config.ini<br/><code>$ nano configuration/config.ini</code></li>
 <li>Run web_server.py<br/><code>$ sudo python web_server.py</code></li>
 <li>Check that the controls at <code>localhost:5000</code> work</li>
