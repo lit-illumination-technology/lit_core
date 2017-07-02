@@ -79,7 +79,7 @@ def ai_action():
         if result is None:
             abort(404)
         else:
-            return result;
+            return jsonify(speech=result, displayText=result)
     else:
         abort(404)
 
