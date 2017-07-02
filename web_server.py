@@ -5,7 +5,7 @@ import ConfigParser
 import commands as np
 
 app = Flask(__name__)
-app.config['DEBUG'] = False
+app.config['DEBUG'] = True
 
 config = ConfigParser.ConfigParser()
 config.read("configuration/config.ini")
@@ -75,9 +75,13 @@ def ai_action():
             ret, status = np.start(data['Effect'], **args)
         return jsonify(speech=ret, displayText=ret)
     elif has_fulfillment:
-        return fulfillment.process(json)
-    #else:
-
+        result = fulfillment.process(json)
+        if result is None:
+            abort(404)
+        else:
+            return result;
+    else:
+        abort(404)
 
 @app.route("/ai_request", methods = ['POST'])
 @requires_auth
