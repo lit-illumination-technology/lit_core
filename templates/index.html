@@ -80,6 +80,7 @@
         <script src="{{ url_for('static', filename='js/bootstrap-colorpicker.min.js') }}"></script>
         <script src="{{ url_for('static', filename='js/bootstrap-slider.min.js') }}"></script>
         <script src="{{ url_for('static', filename='js/bootstrap2-toggle.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/bootstrap-notify.min.js') }}"></script>
         <script>
             COLOR = 1;
             SPEED = 2;
@@ -125,7 +126,13 @@
                                     data: aiInput.val(),
                                     dataType: 'text'
                                 }).done(function(data) {
-                                    //TODO do something with data.ret
+                                    var msg = new SpeechSynthesisUtterance($.parseJSON(data).speech);
+                                    window.speechSynthesis.speak(msg);
+                                    $.notify({
+                                        message: $.parseJSON(data).speech
+                                    },{
+                                        type: 'success'
+                                    });
                                 });
                                 aiInput.val("");
                             }
