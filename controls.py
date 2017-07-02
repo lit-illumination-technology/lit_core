@@ -55,7 +55,7 @@ class Led_Controller:
         self.pixels = [0]*self.total_leds
 
     def set_ranges(self, new_ranges):
-        self.active_ranges = new_ranges
+        self.active_ranges = sorted(new_ranges, key=lambda e: self.ranges[e][-1])
         self.inactive_ranges = [x for x in self.ranges if x not in self.active_ranges]
         self.num_leds = sum(len(self.ranges[r]) for r in self.active_ranges)
 
