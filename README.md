@@ -119,7 +119,16 @@ The configuration directory contains four files that can be changed to reflect y
 <li>Restart the server and there should be a new text entry at the top of the website</li>
 </ol>
 
-## Adding new effects
+### Custom Api.Ai Fulfillment
+Define custom actions for your api.ai agent. Allows you to override all of the Smalltalk responses.
+<ol>
+<li>In the Neopixels directory, create a new file called fulfillment.py</li>
+<li>Create a 'process' function <br><code>def process(json)</code></li>
+<li>The json parameter contains the Api.Ai request (If the action was not lights)</li>
+<li>In the process function, either return the response text, or <code>None</code> if the action should not be handled</li>
+</ol>
+
+## Adding New Effects
 Easily add new and personalized effects. Basic python knowlege is required.
 <ol>
 <li>Navigate to the <code>effects</code> directory</li>
