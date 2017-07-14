@@ -1,4 +1,5 @@
-# Neopixels-2.0
+# L.I.T.
+***Lit Ilumination Technology***
 ## Synopisis
 This is an improved version of the <a href="http://github.com/nickpesce/neopixels">Neopixels</a> project</br>
 This python script is intended for <a href="https://www.adafruit.com/products/1138">Adafruit Neopixels</a></br>
@@ -20,7 +21,7 @@ Lights can  be controlled from the command line, web interface, or any other pro
   </ol>
 </li>
 <li>Clone this repository to your Raspberry Pi<br/>
-<code>$ git clone https://github.com/nickpesce/Neopixels-2.0.git</code><br/><code>$ cd Neopixels-2.0</code></li>
+<code>$ git clone https://github.com/nickpesce/L.I.T..git</code><br/><code>$ cd L.I.T.</code></li>
 <li><code>$ cp -r defaultconfiguration configuration</code></li>
 <li>Modify username and password in config.ini<br/><code>$ nano configuration/config.ini</code></li>
 <li>Run web_server.py<br/><code>$ sudo python web_server.py</code></li>
@@ -76,7 +77,7 @@ The configuration directory contains four files that can be changed to reflect y
 
 ## Updating
 <ol>
-<li>cd into the neopixels directory</li>
+<li>cd into the L.I.T. directory</li>
 <li><code>git pull</code></li>
 <li>If defaultconfiguration/changes.txt changed, your configuration files must be updated
   <ol>
@@ -88,7 +89,7 @@ The configuration directory contains four files that can be changed to reflect y
 </ol>
 
 ## Api.Ai Integration
-<a href="https://api.ai/Api.Ai">Api.Ai</a> is a free and easy artificial intelligence API. It can easily be integrated into Neopixels to enable natural language commands!
+<a href="https://api.ai/Api.Ai">Api.Ai</a> is a free and easy artificial intelligence API. It can easily be integrated into L.I.T. to enable natural language commands!
 <ol>
 <li>Run generate.py and get the files from the api-ai directory<br/>
 <code>$ sudo python generate.py</code></li>
@@ -122,7 +123,7 @@ The configuration directory contains four files that can be changed to reflect y
 ### Custom Api.Ai Fulfillment
 Define custom actions for your api.ai agent. Allows you to override all of the Smalltalk responses.
 <ol>
-<li>In the Neopixels directory, create a new file called fulfillment.py</li>
+<li>In the L.I.T. directory, create a new file called fulfillment.py</li>
 <li>Create a 'process' function <br><code>def process(json)</code></li>
 <li>The json parameter contains the Api.Ai request (If the action was not lights)</li>
 <li>In the process function, either return the response text, or <code>None</code> if the action should not be handled</li>
