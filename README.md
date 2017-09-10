@@ -20,6 +20,8 @@ Lights can  be controlled from the command line, web interface, or any other pro
   <li><code>$ sudo rm -rf rpi_ws281x</code></li>
   </ol>
 </li>
+<li><code>sudo apt-get install python-pip</code></li>
+<li><code>sudo pip install flask</code></li>
 <li>Clone this repository to your Raspberry Pi<br/>
 <code>$ git clone https://github.com/nickpesce/L.I.T..git</code><br/><code>$ cd L.I.T.</code></li>
 <li><code>$ cp -r defaultconfiguration configuration</code></li>
