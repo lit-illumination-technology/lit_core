@@ -5,7 +5,7 @@ import ConfigParser
 import commands as np
 
 app = Flask(__name__)
-app.config['DEBUG'] = True
+app.config['DEBUG'] = False
 
 config = ConfigParser.ConfigParser()
 config.read("configuration/config.ini")

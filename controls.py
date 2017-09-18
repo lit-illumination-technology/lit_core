@@ -122,6 +122,13 @@ class Led_Controller:
             r, g, b = pixels[n]
             self.set_pixel(n, r, g, b)
 
+    def set_pixels_hsv(self, pixels):
+        """Sets the pixels to corresponding pixels in an array of pixel tuples. Pixel array must be >= than the string length"""
+        self.clear()
+        for n in range(0, len(pixels)):
+            r, g, b = [int(p*255) for p in colorsys.hsv_to_rgb(*pixels[n])]
+            self.set_pixel(n, r, g, b)
+
     def set_all_pixels(self, r, g, b):
         """Sets all of the pixels to a color in the RGB colorspace"""
         for n in self.all_lights():
