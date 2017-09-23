@@ -96,7 +96,7 @@
                 $.get("/get_ranges.json", function(result) {
                     $.each(result.sections, function() {
                         var name = this;
-                        $range_input = $("<input type='checkbox' data-toggle='toggle' data-off='" + name + "' data-on='" + name + "' data-width='72' data-height='32'>");
+			$range_input = $("<input type='checkbox' data-toggle='toggle' data-off='" + name + "' data-on='" + name + "' data-width='72' data-height='32' checked>");
                         $range_input.change(function(){
                             if($(this).prop("checked")) {
                                 ranges.push(name);
