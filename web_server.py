@@ -2,10 +2,11 @@ from flask import Flask, render_template, request, abort, Response, json, jsonif
 from functools import wraps
 import threading, os.path
 import ConfigParser
+import operator
 import commands as np
 
 app = Flask(__name__)
-app.config['DEBUG'] = False
+app.config['DEBUG'] = True
 
 config = ConfigParser.ConfigParser()
 config.read("configuration/config.ini")
@@ -104,7 +105,7 @@ def has_ai():
 
 @app.route("/get_effects.json", methods = ['GET'])
 def effects():
-    return jsonify(effects=np.get_effects())
+    return jsonify(effects=sorted(np.get_effects(), key=operator.itemgetter('name')))
 
 @app.route("/get_colors.json", methods = ['GET'])
 def colors():
