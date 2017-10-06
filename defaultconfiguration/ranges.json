@@ -8,5 +8,7 @@
         "all" : ["range 1", "range 2", "range 3"],
         "one and two" : ["range 1", "range 2"]
     },
+    "virtual_sections": {
+    },
     "default" : "all"
 }

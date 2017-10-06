@@ -165,6 +165,7 @@ stop_event = threading.Event()
 effects = {}
 commands = []
 sections = {}
+virtual_sections = {}
 zones = {}
 default_range = None
 history = []
@@ -179,14 +180,18 @@ with open('configuration/ranges.json') as data_file:
     rangeJson = json.load(data_file)
     sectionJson = rangeJson['sections']
     zoneJson = rangeJson['zones']
+    virtualSectionJson = rangeJson['virtual_sections']
     default_range = rangeJson['default']
     for k in sectionJson:
         r = sectionJson[k]
         sections[k] = range(r['start'], r['end'])
     for k in zoneJson:
         zones[k] = zoneJson[k]
+    for k in virtualSectionJson:
+        v = virtualSectionJson[k]
+        virtual_sections[k] = controls.Virtual_Section(v['num_pixels'], v['ip'], v['port'])
 
-np = controls.Led_Controller(sections)
+np = controls.Led_Controller(sections, virtual_sections)
 np.set_ranges(get_sections_from_ranges(default_range))
 
 import_effects()
