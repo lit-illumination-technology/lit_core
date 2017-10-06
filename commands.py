@@ -189,7 +189,7 @@ with open('configuration/ranges.json') as data_file:
         zones[k] = zoneJson[k]
     for k in virtualSectionJson:
         v = virtualSectionJson[k]
-        virtual_sections[k] = controls.Virtual_Section(v['num_pixels'], v['ip'], v['port'])
+        virtual_sections[k] = controls.Virtual_Range(v['num_pixels'], v['ip'], v['port'])
 
 np = controls.Led_Controller(sections, virtual_sections)
 np.set_ranges(get_sections_from_ranges(default_range))

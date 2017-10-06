@@ -41,9 +41,6 @@ ws2812 = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT,
 ws2812.begin()
 
 
-def show():
-    """Update lights with the contents of the display buffer"""
-    ws2812.show()
 
 class Led_Controller:
     def __init__(self, ranges = {'default' : range(0, 60)}, virtual_ranges = {}):
@@ -52,7 +49,8 @@ class Led_Controller:
         virtual_ranges: The names of the ranges that are not connected to this device
         and their respective controller modules.
         """
-        self.ranges = sorted(ranges, key=lambda e: self.ranges[e][-1])
+        self.ranges = ranges
+        self.range_ordered = sorted(ranges, key=lambda e: ranges[e][-1])
         self.virtual_ranges = virtual_ranges
         #Currently active ranges sorted by end location
         self.active_ranges = []
@@ -65,19 +63,17 @@ class Led_Controller:
         #A mapping from absolute index to (local index, controller)
         #"Local pixels" will be formatted as (index, ws2182)
         self.pixel_locations = [-1]*self.total_leds
-        for range_name in self.ranges:
+        for range_name in self.range_ordered:
             local_index = 0
             if virtual_ranges.has_key(range_name):
                 virtual_index = 0
-                for i in self.virtual_ranges[range_name].range:
+                for i in self.ranges[range_name]:
                     self.pixel_locations[i] = (virtual_index, self.virtual_ranges[range_name])
+                    virtual_index += 1
             else:
                 for i in self.ranges[range_name]:
                     self.pixel_locations[i] = (local_index, ws2812)
                     local_index += 1
-
-        print self.pixel_locations
-
 
     def set_ranges(self, new_ranges):
         """Sets the currently active ranges to new_ranges and updates other dependent fields"""
@@ -190,7 +186,9 @@ class Led_Controller:
 
     def show(self):
         """Pushes the led array to the actual lights"""
-        show()
+        ws2812.show()
+        for vr in self.virtual_ranges:
+            self.virtual_ranges[vr].show()
 
 class Virtual_Range:
     def __init__(self, num_pixels, ip, port):
@@ -200,8 +198,8 @@ class Virtual_Range:
         self.pixels = [(0, 0, 0)]*num_pixels
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-    def setPixelColorRGB(n, r, g, b):
+    def setPixelColorRGB(self, n, r, g, b):
         self.pixels[n] = (r, g, b)
 
-    def show():
+    def show(self):
         self.socket.sendto(bytes(self.pixels), (self.ip, self.port))
