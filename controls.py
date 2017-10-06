@@ -1,6 +1,5 @@
 from neopixel import *
-import colorsys
-import ConfigParser
+import colorsys, ConfigParser, socket
 
 """Mapping to make RGB values appear more natural"""
 GAMMA = [
@@ -25,7 +24,7 @@ GAMMA = [
 config = ConfigParser.ConfigParser()
 config.read("configuration/config.ini")
 # LED strip configuration:
-LED_COUNT	= config.getint("General", "leds")     # Total number of LED pixels.
+LED_COUNT	= config.getint("General", "leds")     # Total number of LED pixels physically connected to this Pi
 LED_PIN		= config.getint("General", "pin")      # GPIO pin connected to the pixels (must support PWM!).
 LED_FREQ_HZ	= 800000  # LED signal frequency in hertz (usually 800khz)
 LED_DMA		= 5       # DMA channel to use for generating signal (try 5)
@@ -47,13 +46,38 @@ def show():
     ws2812.show()
 
 class Led_Controller:
-    def __init__(self, ranges = {'default' : range(0, 60)}):
-        self.ranges = ranges
+    def __init__(self, ranges = {'default' : range(0, 60)}, virtual_ranges = {}):
+        """Creates a new Led_Controller.
+        ranges: The named led ranges that can be controlled
+        virtual_ranges: The names of the ranges that are not connected to this device
+        and their respective controller modules.
+        """
+        self.ranges = sorted(ranges, key=lambda e: self.ranges[e][-1])
+        self.virtual_ranges = virtual_ranges
+        #Currently active ranges sorted by end location
         self.active_ranges = []
         self.inactive_ranges = list(ranges)
+        #Number of currently active leds
         self.num_leds = 0
+        #Number of leds in all ranges, local and virtual
         self.total_leds = max(r[-1]+1 for r in self.ranges.itervalues())
         self.pixels = [0]*self.total_leds
+        #A mapping from absolute index to (local index, controller)
+        #"Local pixels" will be formatted as (index, ws2182)
+        self.pixel_locations = [-1]*self.total_leds
+        for range_name in self.ranges:
+            local_index = 0
+            if virtual_ranges.has_key(range_name):
+                virtual_index = 0
+                for i in self.virtual_ranges[range_name].range:
+                    self.pixel_locations[i] = (virtual_index, self.virtual_ranges[range_name])
+            else:
+                for i in self.ranges[range_name]:
+                    self.pixel_locations[i] = (local_index, ws2812)
+                    local_index += 1
+
+        print self.pixel_locations
+
 
     def set_ranges(self, new_ranges):
         """Sets the currently active ranges to new_ranges and updates other dependent fields"""
@@ -116,7 +140,8 @@ class Led_Controller:
     def set_pixel(self, n, r, g, b):
         """Set a single pixel to RGB colour"""
         self.pixels[n] = (r, g, b)
-        ws2812.setPixelColorRGB(n, GAMMA[r], GAMMA[g], GAMMA[b])
+        location = self.pixel_locations[n]
+        location[1].setPixelColorRGB(location[0], GAMMA[r], GAMMA[g], GAMMA[b])
 
 
     def get_pixel(self, n):
@@ -166,3 +191,17 @@ class Led_Controller:
     def show(self):
         """Pushes the led array to the actual lights"""
         show()
+
+class Virtual_Range:
+    def __init__(self, num_pixels, ip, port):
+        self.range = range(0, num_pixels) 
+        self.ip = ip
+        self.port = port
+        self.pixels = [(0, 0, 0)]*num_pixels
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    def setPixelColorRGB(n, r, g, b):
+        self.pixels[n] = (r, g, b)
+
+    def show():
+        self.socket.sendto(bytes(self.pixels), (self.ip, self.port))
