@@ -2,6 +2,7 @@ from neopixel import *
 import colorsys
 import ConfigParser
 
+"""Mapping to make RGB values appear more natural"""
 GAMMA = [
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1,
@@ -55,19 +56,25 @@ class Led_Controller:
         self.pixels = [0]*self.total_leds
 
     def set_ranges(self, new_ranges):
+        """Sets the currently active ranges to new_ranges and updates other dependent fields"""
         self.active_ranges = sorted(new_ranges, key=lambda e: self.ranges[e][-1])
         self.inactive_ranges = [x for x in self.ranges if x not in self.active_ranges]
         self.num_leds = sum(len(self.ranges[r]) for r in self.active_ranges)
 
     def get_ranges(self):
+        """Returns a list of currently active ranges"""
         return [self.ranges[k] for k in self.active_ranges]
 
     def all_lights(self):
+        """Generator for all currently active light indicies"""
         for ri in self.active_ranges:
             for n in self.ranges[ri]:
                 yield n
 
     def all_lights_with_count(self):
+        """Generator for all currently active light indicies
+        with count for relative light position in currently
+        active lights"""
         n = 0
         for ri in self.active_ranges:
             for i in self.ranges[ri]:
@@ -75,11 +82,14 @@ class Led_Controller:
                 n += 1
 
     def all_other_lights(self):
+        """Generator for all lights that are not in an active range"""
         for ri in self.inactive_ranges:
             for n in self.ranges[ri]:
                 yield n
 
     def all_other_lights_with_count(self):
+        """Generator for all lights that are not in an active range
+        with count for relative light position"""
         n = 0
         for ri in self.inactive_ranges:
             for i in self.ranges[ri]:
@@ -154,4 +164,5 @@ class Led_Controller:
         return self.pixels
 
     def show(self):
+        """Pushes the led array to the actual lights"""
         show()
