@@ -63,8 +63,8 @@ class Led_Controller:
         #A mapping from absolute index to (local index, controller)
         #"Local pixels" will be formatted as (index, ws2182)
         self.pixel_locations = [-1]*self.total_leds
+        local_index = 0
         for range_name in self.range_ordered:
-            local_index = 0
             if virtual_ranges.has_key(range_name):
                 virtual_index = 0
                 for i in self.ranges[range_name]:
@@ -125,7 +125,7 @@ class Led_Controller:
         """Clear the buffer and immediately update lights
         Turns off all pixels."""
         self.clear()
-        show()
+        self.show()
 
     def set_pixel_hsv(self, index, h, s, v):
         """Set a single pixel to a colour using HSV"""
@@ -195,11 +195,13 @@ class Virtual_Range:
         self.range = range(0, num_pixels) 
         self.ip = ip
         self.port = port
-        self.pixels = [(0, 0, 0)]*num_pixels
+        self.pixels = [(0, 0, 0)]*num_pixels*3
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
     def setPixelColorRGB(self, n, r, g, b):
-        self.pixels[n] = (r, g, b)
+        self.pixels[3 * n] = r
+        self.pixels[3 * n + 1] = g
+        self.pixels[3 * n + 2] = b
 
     def show(self):
-        self.socket.sendto(bytes(self.pixels), (self.ip, self.port))
+        self.socket.sendto(bytearray(self.pixels), (self.ip, self.port))
