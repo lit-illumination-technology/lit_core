@@ -59,7 +59,7 @@ class Led_Controller:
         self.num_leds = 0
         #Number of leds in all ranges, local and virtual
         self.total_leds = max(r[-1]+1 for r in self.ranges.itervalues())
-        self.pixels = [0]*self.total_leds
+        self.pixels = [(0, 0, 0)]*self.total_leds
         #A mapping from absolute index to (local index, controller)
         #"Local pixels" will be formatted as (index, ws2182)
         self.pixel_locations = [-1]*self.total_leds

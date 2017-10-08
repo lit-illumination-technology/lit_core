@@ -25,14 +25,27 @@ modifiers = COLOR | SPEED
 #   **extras: Any other parameters that may have been passed. Do not use, but do not remove.
 def start(lights, stop_event, color = [0, 0, 0], speed = 1, **extras):
     h = 0
-    pixels = [(float(r), float(g), float(b)) for (r, g, b) in lights.get_pixels()]
     n = int(100/speed)
-    ds = [((color[0]-r)/n, (color[1]-g)/n, (color[2]-b)/n) for (r, g, b) in pixels]
+    pixels = [(0, 0, 0)] * lights.total_leds
+    pixelsi = [(0, 0, 0)] * lights.total_leds
+    ds = [(0, 0, 0)]*lights.total_leds
+
+    for i in lights.all_lights():
+        r, g, b = lights.get_pixels()[i]
+        pixels[i] = (float(r), float(g), float(b))
+        ds[i] = ((color[0]-r)/n, (color[1]-g)/n, (color[2]-b)/n)
+
     for i in range(0, n):
-        pixels = [(pixels[p][0]+ds[p][0], pixels[p][1]+ds[p][1], pixels[p][2]+ds[p][2]) for p in range(0, len(pixels))]
-        pixelsi = [(max(0,int(r)), max(0,int(g)), max(0,int(b))) for (r, g, b) in pixels]
+        for p in lights.all_lights():
+            r = pixels[p][0]+ds[p][0]
+            g = pixels[p][1]+ds[p][1]
+            b = pixels[p][2]+ds[p][2]
+            pixels[p] = (r, g, b)
+            pixelsi[p] = (max(0,int(r)), max(0,int(g)), max(0,int(b)))
+
         lights.set_pixels(pixelsi)
         lights.show()
         stop_event.wait(.02)
+
     lights.set_all_pixels(color[0], color[1], color[2])
     lights.show()
