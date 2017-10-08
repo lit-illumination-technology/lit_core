@@ -66,6 +66,7 @@ The configuration directory contains four files that can be changed to reflect y
   <ul>
   <li>sections: Contiguous sections of leds defined by a name mapped to a start and end index.</li>
   <li>zones: Groups of sections that can all be controlled at once. Defined by a name mapped to a list of sections.</li>
+  <li><a href="#virtual-sections">virtual_sections</a>: Light sections that are connected through a udp interface.</li>
   <li>default: The section or zone that should be used if none are explictly chosen.
   </ul>
 </li>
@@ -76,6 +77,17 @@ The configuration directory contains four files that can be changed to reflect y
 <li>speeds.json: Preset speed values. An object containing a mapping between names and speeds. 0 is the slowest possible, and 50 is the default.
 </li>
 </ul>
+
+## Virtual Sections
+If your leds can't all be connected by one wire, a udp connection can be made. This can work with any device, but the only officially supported device is the Arduino 8266 with [this library](https://github.com/nickpesce/lit_arduino). To set a virtual section, add an entry in the "virtual_sections" section of ranges.json. The format is as follows:
+
+<code>
+"virtual_sections": {"section_name": {"num_leds": 60, "ip": "192.168.1.2", "port": 9000}}
+</code>
+
+
+
+_**Note: The virtual section must be named exactly the same as an already defined section. The start and end of the section specifies where the lights will be relative to the other "local" sections. The virtual_section will specify how that section is controlled.**_
 
 ## Updating
 <ol>
