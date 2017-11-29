@@ -28,6 +28,7 @@ modifiers = SPEED
 #   **extras: Any other parameters that may have been passed. Do not use, but do not remove.
 def start(lights, stop_event, speed = 1, **extras):
     lights.set_all_other_pixels(0, 0, 0)
+    #TODO constant number of projectiles. Reuse when go fall off strip. Avoids O(n) remove and inserts.
     projectiles = []
     while not stop_event.is_set():
         if random.random() < .05:
@@ -37,21 +38,24 @@ def start(lights, stop_event, speed = 1, **extras):
                 random.random()])
 
         lights.set_all_pixels(0, 0, 0)
-        rgbs = [[0, 0, 0] for _ in range(0, lights.num_leds)]
+        hsvs = [[0, 0, 0] for _ in range(0, lights.num_leds)]
+        #Total of value(HSV) at each position
         count = [0] * lights.num_leds
-        for i, v in enumerate(projectiles):
-            tail_length = int(15 * abs(v[1]))
+        for i, val in enumerate(projectiles):
+            tail_length = int(15 * abs(val[1]))
             for t in range(0, tail_length):
-                tail_pixel = int(v[0] + t * (1 if v[1] < 0 else -1))
+                tail_pixel = int(val[0] + t * (1 if val[1] < 0 else -1))
                 if tail_pixel >=0 and tail_pixel < lights.num_leds:
-                    r, g, b = [int(n*255) for n in colorsys.hsv_to_rgb(v[2], 1, (tail_length - 1.0 * t) / tail_length)]
-                    rgbs[tail_pixel][0] = ((rgbs[tail_pixel][0] * count[tail_pixel]) + r) / (count[tail_pixel] + 1)
-                    rgbs[tail_pixel][1] = ((rgbs[tail_pixel][1] * count[tail_pixel]) + g) / (count[tail_pixel] + 1)
-                    rgbs[tail_pixel][2] = ((rgbs[tail_pixel][2] * count[tail_pixel]) + b) / (count[tail_pixel] + 1)
-                    count[tail_pixel] = count[tail_pixel] + 1;
+                    (h, s, v) = (val[2], 1, (tail_length - 1.0 * t) / tail_length)
+                    hsvs[tail_pixel][0] = (hsvs[tail_pixel][0] * count[tail_pixel] + (h*v)) / (count[tail_pixel] + v)
+                    hsvs[tail_pixel][2] = max(hsvs[tail_pixel][2], v)
+                    #rgbs[tail_pixel] = ((rgbs[tail_pixel][0] * count[tail_pixel]) + r) / (count[tail_pixel] + 1)
+                    #rgbs[tail_pixel][1] = ((rgbs[tail_pixel][1] * count[tail_pixel]) + g) / (count[tail_pixel] + 1)
+                    #rgbs[tail_pixel][2] = ((rgbs[tail_pixel][2] * count[tail_pixel]) + b) / (count[tail_pixel] + 1)
+                    count[tail_pixel] = count[tail_pixel] + v 
             projectiles[i][0] = projectiles[i][0] + projectiles[i][1]
-            if v[0] + tail_length < 0 or v[0] - tail_length >= lights.num_leds:
-                projectiles.remove(v)
-        lights.set_pixels(rgbs)
+            if val[0] + tail_length < 0 or val[0] - tail_length >= lights.num_leds:
+                projectiles.remove(val)
+        lights.set_pixels_hsv(hsvs)
         lights.show()
         stop_event.wait(.02/speed)
