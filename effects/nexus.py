@@ -38,7 +38,7 @@ def start(lights, stop_event, speed = 1, **extras):
                 random.random()])
 
         lights.set_all_pixels(0, 0, 0)
-        hsvs = [[0, 0, 0] for _ in range(0, lights.num_leds)]
+        hsvs = [[0, 1, 0] for _ in range(0, lights.num_leds)]
         #Total of value(HSV) at each position
         count = [0] * lights.num_leds
         for i, val in enumerate(projectiles):
