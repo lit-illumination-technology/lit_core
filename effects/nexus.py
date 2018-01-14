@@ -38,7 +38,7 @@ def start(lights, stop_event, speed = 1, **extras):
                 random.random()])
 
         lights.set_all_pixels(0, 0, 0)
-        hsvs = [[0, 1, 0] for _ in range(0, lights.num_leds)]
+        hsvs = [[0, 0, 0] for _ in range(0, lights.num_leds)]
         #Total of value(HSV) at each position
         count = [0] * lights.num_leds
         for i, val in enumerate(projectiles):
@@ -48,6 +48,7 @@ def start(lights, stop_event, speed = 1, **extras):
                 if tail_pixel >=0 and tail_pixel < lights.num_leds:
                     (h, s, v) = (val[2], 1, (tail_length - 1.0 * t) / tail_length)
                     hsvs[tail_pixel][0] = (hsvs[tail_pixel][0] * count[tail_pixel] + (h*v)) / (count[tail_pixel] + v)
+                    hsvs[tail_pixel][1] = s
                     hsvs[tail_pixel][2] = max(hsvs[tail_pixel][2], v)
                     #rgbs[tail_pixel] = ((rgbs[tail_pixel][0] * count[tail_pixel]) + r) / (count[tail_pixel] + 1)
                     #rgbs[tail_pixel][1] = ((rgbs[tail_pixel][1] * count[tail_pixel]) + g) / (count[tail_pixel] + 1)
