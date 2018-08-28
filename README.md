@@ -1,5 +1,5 @@
 # L.I.T.
-***Lit Ilumination Technology***
+***Lit Illumination Technology***
 ## Synopisis
 This is an improved version of the <a href="http://github.com/nickpesce/neopixels">Neopixels</a> project</br>
 This python script is intended for <a href="https://www.adafruit.com/products/1138">Adafruit Neopixels</a></br>
