@@ -12,7 +12,7 @@ NONE = 0b0          #
 #####################
 
 #This is what will appear in all interfaces
-name = "Music Flash"
+name = "Music Bands"
 
 #This is what the user will see after the effect starts
 start_string = name + " started!"
@@ -23,8 +23,6 @@ description = "Changes color and brightness with music"
 #This defines which additional arguments this effect can take.
 #Combine multiple options with a '|'
 modifiers = NONE
- 
-color = (255, 255, 255)
 
 #This is the function that controls the effect. Look at the included effects for examples.
 #Params:
@@ -35,24 +33,14 @@ color = (255, 255, 255)
 #   **extras: Any other parameters that may have been passed. Do not use, but do not remove.
 def start(lights, stop_event, speed = 1, **extras):
     lights.set_all_other_pixels(0, 0, 0)
-    app = music_analyzer.Analyzer("/dev/ttyACM0", threshold_acceleration=0.05, smoothing=.7)
-    MIN_BRIGHTNESS = 0.3
+    app = music_analyzer.Analyzer("/dev/ttyACM0")
     @app.decorators.on_level_change()
     def update():
-        global color
-        if app.total_volume_beat:
-            color = tuple([int(255*x) for x in colorsys.hsv_to_rgb(random.random(), 1, 1)])
-            #color=(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
-            vol = 1
-        elif color is None:
-            color = (255, 255, 255)
-        else:
-            #vol = math.sqrt((app.total_volume / (1023 *  app.num_bands)))
-            #vol = (app.total_volume / (1023 *  app.num_bands))
-            vol = (app.bands[0] / 1023)
-            #vol = (1 - MIN_BRIGHTNESS) * np.tanh((app.total_volume / (1023 *  app.num_bands))) + MIN_BRIGHTNESS
-
-        display_color = tuple([int(vol*x) for x in color])
-        lights.set_all_pixels(*display_color)
+	lights_per_band = lights.num_leds / len(app.bands)
+        for i, band in enumerate(app.bands):
+            color_h = float(i)/len(app.bands)
+            for n in range(int(lights_per_band * i), int(lights_per_band * (i + 1))):
+                val = 1/(1+math.exp(-(10*(band/1023)-7)))
+                lights.set_pixel_hsv(n, color_h, 1, val)
         lights.show()
     app.start(stop_event)
