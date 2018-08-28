@@ -139,12 +139,24 @@ class Led_Controller:
         location = self.pixel_locations[n]
         location[1].setPixelColorRGB(location[0], GAMMA[r], GAMMA[g], GAMMA[b])
 
+    def set_active_pixel(self, n, r, g, b):
+        """Set a single pixel to RGB colour, with index only counting active ranges"""
+        remaining = n
+        i = 0
+        for ri in self.active_ranges:
+            if remaining < len(self.ranges[ri]):
+                i = ranges[0] + remaining
+                break
+            else:
+                remaining -= len(self.ranges[ri])
+        self.pixels[i] = (r, g, b)
+        location = self.pixel_locations[i]
+        location[1].setPixelColorRGB(location[0], GAMMA[r], GAMMA[g], GAMMA[b])
 
     def get_pixel(self, n):
         """Get the RGB value of a single pixel"""
         if n is not None:
             return self.pixels[n]
-
 
     def set_pixels(self, pixels):
         """Sets the pixels to corresponding pixels in an array of pixel tuples. Pixel array must be >= than the string length"""
