@@ -1,11 +1,14 @@
 import controls
 from os.path import dirname, abspath, basename, isfile
-import  math, sys, getopt, threading, atexit, json, importlib, glob
+import  math, sys, getopt, threading, atexit, json, importlib, glob, logging
 __author__="Nick Pesce"
 __email__="npesce@terpmail.umd.edu"
 
+logger = logging.getLogger(__name__)
+
 def start(effect_name, **args): 
     global t
+    args = {k:v for (k,v) in args.items() if v!=None}
     if not is_effect(effect_name):
         #Modify command
         if effect_name.lower() == 'modify':
@@ -56,7 +59,7 @@ def start(effect_name, **args):
         t.daemon = True
         t.start()
         return (effect.start_string,  True)
-    except Exception, e:
+    except (Exception, e):
         history.pop()
         return (str(e), False)
 
@@ -98,7 +101,7 @@ def get_sections_from_ranges(lst):
 
 def get_value_from_string(type, string):
     """Given a attribute represented as a string, convert it to the appropriate value"""
-    if not isinstance(string, basestring):
+    if not isinstance(string, str):
         return string
     if type.lower() == 'color':
         for c in colors:
@@ -136,7 +139,7 @@ def is_effect(name):
 def import_effects():
     files = glob.glob(dirname(abspath(__file__))+'/effects/*.py')
     module_names = [ basename(f)[:-3] for f in files if isfile(f) and basename(f) != '__init__.py' and basename(f) != 'template.py']
-    package = __import__('effects', globals(), locals(), module_names, -1)
+    package = __import__('effects',[], [], module_names, 0)
     modules = []
 
     for m in module_names:
@@ -155,7 +158,7 @@ def _clean_shutdown():
     np.off()
 
 if __name__ == "__main__":
-    print "This is module can not be run. Import it and call start()"
+    logger.error("This is module can not be run. Import it and call start()")
     sys.exit()
 
 SPEED = 0b10

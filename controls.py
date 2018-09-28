@@ -1,5 +1,5 @@
 from neopixel import *
-import colorsys, ConfigParser, socket
+import colorsys, configparser, socket
 
 """Mapping to make RGB values appear more natural"""
 GAMMA = [
@@ -21,7 +21,7 @@ GAMMA = [
     215,218,220,223,225,228,231,233,236,239,241,244,247,249,252,255 ];
 
 
-config = ConfigParser.ConfigParser()
+config = configparser.ConfigParser()
 config.read("configuration/config.ini")
 # LED strip configuration:
 LED_COUNT	= config.getint("General", "leds")     # Total number of LED pixels physically connected to this Pi
@@ -58,14 +58,14 @@ class Led_Controller:
         #Number of currently active leds
         self.num_leds = 0
         #Number of leds in all ranges, local and virtual
-        self.total_leds = max(r[-1]+1 for r in self.ranges.itervalues())
+        self.total_leds = max(r[-1]+1 for r in self.ranges.values())
         self.pixels = [(0, 0, 0)]*self.total_leds
         #A mapping from absolute index to (local index, controller)
         #"Local pixels" will be formatted as (index, ws2182)
         self.pixel_locations = [-1]*self.total_leds
         local_index = 0
         for range_name in self.range_ordered:
-            if virtual_ranges.has_key(range_name):
+            if range_name in virtual_ranges:
                 virtual_index = 0
                 for i in self.ranges[range_name]:
                     self.pixel_locations[i] = (virtual_index, self.virtual_ranges[range_name])

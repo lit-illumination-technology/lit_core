@@ -1,4 +1,4 @@
-import socket, threading, time, ConfigParser
+import socket, threading, time, configparser
 #DO NOT CHANGE THESE#
 SPEED = 0b10        #
 COLOR = 0b1         #
@@ -42,7 +42,7 @@ def start(lights, stop_event, color = [255, 255, 255], speed = 1, **extras):
         except socket.error:
             pass
 
-config = ConfigParser.ConfigParser()
+config = configparser.ConfigParser()
 config.read("configuration/config.ini")
 username = config.get("Link", "username")
 password = config.get("Link", "password")

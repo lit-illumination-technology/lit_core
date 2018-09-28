@@ -45,8 +45,6 @@ def start(lights, stop_event, speed = 1, **extras):
                 if (p1 is not p2):
                     prev1 = p1[0] - p1[1]
                     prev2 = p2[0] - p2[1]
-                    print prev1-prev2
-                    print p1[0] - p2[0]
                     if (prev1 - prev2 < 0) != (p1[0] - p2[0] < 0):
                         explode(lights, stop_event, speed, p1[0], p1[2], p2[2])
                         projectiles.remove(p1)

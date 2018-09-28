@@ -36,7 +36,7 @@ def start(lights, stop_event, speed = 1, **extras):
     app = music_analyzer.Analyzer("/dev/ttyACM0")
     @app.decorators.on_level_change()
     def update():
-	lights_per_band = lights.num_leds / len(app.bands)
+        lights_per_band = lights.num_leds / len(app.bands)
         for i, band in enumerate(app.bands):
             color_h = float(i)/len(app.bands)
             for n in range(int(lights_per_band * i), int(lights_per_band * (i + 1))):
