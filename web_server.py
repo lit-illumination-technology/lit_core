@@ -1,14 +1,14 @@
 from flask import Flask, render_template, request, abort, Response, json, jsonify
 from functools import wraps
 import threading, os.path
-import ConfigParser
+import configparser
 import operator
-import commands as np
+import lit
 
 app = Flask(__name__)
 app.config['DEBUG'] = False
 
-config = ConfigParser.ConfigParser()
+config = configparser.ConfigParser()
 config.read("configuration/config.ini")
 password = config.get("General", "password")
 username = config.get("General", "username")
@@ -57,10 +57,10 @@ def hello():
 def command():
     json = request.get_json();
     if "args" in json:
-        ret, status = np.start(json["effect"], **json["args"])
+        res = lit.start(json["effect"], **json["args"])
     else:
-        ret, status = np.start(json["effect"])
-    return jsonify(result=ret, status=status)
+        res = lit.start(json["effect"])
+    return res
 
 @app.route("/ai_action", methods = ['POST'])
 @requires_auth
@@ -71,16 +71,16 @@ def ai_action():
     if action == 'Lights':
         args = {k.lower():data[k] for k in data if k.lower() != "effect" and data[k] != ''}
         if len(args) == 0:
-            ret, status = np.start(data['Effect'])
+            res = lit.start(data['Effect'])
         else:
-            ret, status = np.start(data['Effect'], **args)
-        return jsonify(speech=ret, displayText=ret)
+            res = lit.start(data['Effect'], **args)
+        return jsonify(speech=res['result'], displayText=res['result'])
     elif has_fulfillment:
         result = fulfillment.process(json)
         if result is None:
             abort(404)
         else:
-            return jsonify(speech=result, displayText=result)
+            return jsonify(speech=res['result'], displayText=res['result'])
     else:
         abort(404)
 
@@ -105,19 +105,19 @@ def has_ai():
 
 @app.route("/get_effects.json", methods = ['GET'])
 def effects():
-    return jsonify(effects=sorted(np.get_effects(), key=operator.itemgetter('name')))
+    return jsonify(effects=sorted(lit.get_effects(), key=operator.itemgetter('name')))
 
 @app.route("/get_colors.json", methods = ['GET'])
 def colors():
-    return jsonify(colors=np.get_colors())
+    return jsonify(colors=lit.get_colors())
 
 @app.route("/get_ranges.json", methods = ['GET'])
 def ranges():
-    return jsonify(sections=[k for k in np.get_sections()], zones=[k for k in np.get_zones()])
+    return jsonify(sections=[k for k in lit.get_sections()], zones=[k for k in lit.get_zones()])
 
 @app.route("/get_speeds.json", methods = ['GET'])
 def speeds():
-    return jsonify(speeds=np.get_speeds())
+    return jsonify(speeds=lit.get_speeds())
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=port, threaded=True)
