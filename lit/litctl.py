@@ -14,4 +14,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
     resp = lit.start(effect=args.effect, args={'speed': args.speed, 'color': args.color})
     print(resp['result'])
-    exit(resp['status'])
+    exit(resp['rc'])

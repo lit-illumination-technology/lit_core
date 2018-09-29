@@ -1,0 +1,14 @@
+{
+    "sections" : {
+        "range 1" : {"start" : 0, "end" : 60},
+        "range 2" : {"start" : 60, "end" : 90},
+        "range 3" : {"start" : 90, "end" : 120}
+    },
+    "zones" : {
+        "all" : ["range 1", "range 2", "range 3"],
+        "one and two" : ["range 1", "range 2"]
+    },
+    "virtual_sections": {
+    },
+    "default" : "all"
+}

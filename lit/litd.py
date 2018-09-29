@@ -1,14 +1,16 @@
+#! /usr/bin/python3
 import json
 import os
 import operator
 import socket
 import threading
 
-import commands as np
+import commands
 
 MAX_CONNECTIONS = 5
 socket_path = '/tmp/litd'
 queries = {}
+np = commands.commands()
 
 def setup():
     queries.update({
@@ -78,10 +80,10 @@ def result(data):
 
 def command(msg):
     if 'args' in msg:
-        ret, status = np.start(msg['effect'], **msg['args'])
+        ret, rc = np.start(msg['effect'], **msg['args'])
     else:
-        ret, status = np.start(msg['effect'])
-    return json.dumps({'result': ret, 'rc': status})
+        ret, rc = np.start(msg['effect'])
+    return json.dumps({'result': ret, 'rc': rc})
 
 def query(msg):
     return queries[msg.get('query', 'error')]
