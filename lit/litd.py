@@ -20,14 +20,11 @@ def setup():
     logging.basicConfig(level=logging.INFO, format='%(asctime)s:%(name)s:%(levelname)s:%(message)s')
     logger.info('setting up')
 
-    sudo_user = os.getenv('SUDO_USER') or ''
-    home = os.path.expanduser('~{}'.format(sudo_user))
     parser = argparse.ArgumentParser(description='Start the L.I.T. daemon')
     parser.add_argument('--config', '-c', dest='base_path', type=str, 
-                                default=os.path.join(home, '.lit', 'litd'),
                                 help='specify the directory containing the config directory')
     args = parser.parse_args()
-    base_path = args.base_path if os.path.isdir(args.base_path) else None
+    base_path = args.base_path if args.base_path and os.path.isdir(args.base_path) else None
     np = commands.commands(base_path=base_path)
 
     queries.update({
