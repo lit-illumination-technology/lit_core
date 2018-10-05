@@ -16,17 +16,12 @@ __email__="npesce@terpmail.umd.edu"
 
 SPEED = 0b10
 COLOR = 0b1
-LOCK_FILE = '/tmp/lit.lock'
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 BASE_CONFIG = os.path.join(BASE_PATH, 'config')
 logger = logging.getLogger(__name__)
 
 class commands:
     def __init__(self, base_path=None):
-        if os.path.isfile(LOCK_FILE):
-            logger.error('{} exists. {} can only be imported by one process at a time.'.format(LOCK_FILE, os.path.basename(__file__)))
-            sys.exit(1)
-        os.mknod(LOCK_FILE)
         self.base_path = base_path
         self.config_path = os.path.join(base_path, 'config') if base_path else None
         logger.info('Using config directories: {}'.format(', '.join(filter(None, [BASE_CONFIG, self.config_path]))))
@@ -217,7 +212,6 @@ class commands:
             self.commands.append({'name' : name, 'modifiers' : modifiers})
 
     def _clean_shutdown(self):
-        os.remove(LOCK_FILE)
         self.stop_event.set()
         if self.t is not None:
             self.t.join()
