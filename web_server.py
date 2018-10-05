@@ -9,7 +9,7 @@ app = Flask(__name__)
 app.config['DEBUG'] = False
 
 config = configparser.ConfigParser()
-config.read("configuration/config.ini")
+config.read('/home/pi/.lit/webserver/config.ini')
 password = config.get("General", "password")
 username = config.get("General", "username")
 port = config.getint("General", "port")
@@ -57,9 +57,9 @@ def hello():
 def command():
     json = request.get_json();
     if "args" in json:
-        res = lit.start(json["effect"], **json["args"])
+        res = lit.start(effect=json["effect"], args=json["args"])
     else:
-        res = lit.start(json["effect"])
+        res = lit.start(effect=json["effect"])
     return res
 
 @app.route("/ai_action", methods = ['POST'])
@@ -71,9 +71,9 @@ def ai_action():
     if action == 'Lights':
         args = {k.lower():data[k] for k in data if k.lower() != "effect" and data[k] != ''}
         if len(args) == 0:
-            res = lit.start(data['Effect'])
+            res = lit.start(effect=data['Effect'])
         else:
-            res = lit.start(data['Effect'], **args)
+            res = lit.start(effect=data['Effect'], args=args)
         return jsonify(speech=res['result'], displayText=res['result'])
     elif has_fulfillment:
         result = fulfillment.process(json)

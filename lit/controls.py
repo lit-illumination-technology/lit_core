@@ -1,5 +1,6 @@
 from neopixel import *
-import colorsys, configparser, socket
+import colorsys
+import socket
 
 """Mapping to make RGB values appear more natural"""
 GAMMA = [
@@ -21,74 +22,75 @@ GAMMA = [
     215,218,220,223,225,228,231,233,236,239,241,244,247,249,252,255 ];
 
 
-config = configparser.ConfigParser()
-config.read("configuration/config.ini")
 # LED strip configuration:
-LED_COUNT	= config.getint("General", "leds")     # Total number of LED pixels physically connected to this Pi
-LED_PIN		= config.getint("General", "pin")      # GPIO pin connected to the pixels (must support PWM!).
 LED_FREQ_HZ	= 800000  # LED signal frequency in hertz (usually 800khz)
 LED_DMA		= 5       # DMA channel to use for generating signal (try 5)
 LED_BRIGHTNESS	= 255     # Set to 0 for darkest and 255 for brightest
 LED_INVERT	= False   # True to invert the signal (when using NPN transistor level shift)
 LED_CHANNEL	= 0
 LED_STRIP	= ws.WS2812_STRIP	#Uses GBR instead of RGB
+#TODO add to config
 #Comment the above line and uncomment line that matches your model
 #LED_STRIP	= ws.WS2811_STRIP_RGB
 #LED_STRIP	= ws.SK6812_STRIP
 #LED_STRIP	= ws.SK6812W_STRIP
 
-ws2812 = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL, LED_STRIP)
-ws2812.begin()
 
 
 
 class Led_Controller:
-    def __init__(self, ranges = {'default' : range(0, 60)}, virtual_ranges = {}):
+    def __init__(self, led_count = 60, led_pin = 18, sections= {'default' : range(0, 60)}, virtual_sections= {}):
         """Creates a new Led_Controller.
-        ranges: The named led ranges that can be controlled
-        virtual_ranges: The names of the ranges that are not connected to this device
+        led_count: Total number of LED pixels physically connected to this Pi
+        led_pin: GPIO pin connected to the pixels (must support PWM!)
+        sections: The named led sections that can be controlled
+        virtual_sections: The names of the sections that are not connected to this device
         and their respective controller modules.
         """
-        self.ranges = ranges
-        self.range_ordered = sorted(ranges, key=lambda e: ranges[e][-1])
-        self.virtual_ranges = virtual_ranges
-        #Currently active ranges sorted by end location
-        self.active_ranges = []
-        self.inactive_ranges = list(ranges)
+        self.ws2812 = Adafruit_NeoPixel(led_count, led_pin, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL, LED_STRIP)
+        self.ws2812.begin()
+        self.led_count = led_count
+        self.led_pin = led_pin
+        self.sections = sections
+        self.section_ordered = sorted(sections, key=lambda e: sections[e][-1])
+        self.virtual_sections = virtual_sections
+        #Currently active sections sorted by end location
+        self.active_sections = []
+        self.inactive_sections = list(sections)
         #Number of currently active leds
         self.num_leds = 0
-        #Number of leds in all ranges, local and virtual
-        self.total_leds = max(r[-1]+1 for r in self.ranges.values())
+        #Number of leds in all sections, local and virtual
+        self.total_leds = max(r[-1]+1 for r in self.sections.values())
         self.pixels = [(0, 0, 0)]*self.total_leds
         #A mapping from absolute index to (local index, controller)
-        #"Local pixels" will be formatted as (index, ws2182)
+        #"Local pixels" will be formatted as (index, self.ws2182)
         self.pixel_locations = [-1]*self.total_leds
         local_index = 0
-        for range_name in self.range_ordered:
-            if range_name in virtual_ranges:
+        for section_name in self.section_ordered:
+            if section_name in virtual_sections:
                 virtual_index = 0
-                for i in self.ranges[range_name]:
-                    self.pixel_locations[i] = (virtual_index, self.virtual_ranges[range_name])
+                for i in self.sections[section_name]:
+                    self.pixel_locations[i] = (virtual_index, self.virtual_sections[section_name])
                     virtual_index += 1
             else:
-                for i in self.ranges[range_name]:
-                    self.pixel_locations[i] = (local_index, ws2812)
+                for i in self.sections[section_name]:
+                    self.pixel_locations[i] = (local_index, self.ws2812)
                     local_index += 1
 
-    def set_ranges(self, new_ranges):
-        """Sets the currently active ranges to new_ranges and updates other dependent fields"""
-        self.active_ranges = sorted(new_ranges, key=lambda e: self.ranges[e][-1])
-        self.inactive_ranges = [x for x in self.ranges if x not in self.active_ranges]
-        self.num_leds = sum(len(self.ranges[r]) for r in self.active_ranges)
+    def set_sections(self, new_sections):
+        """Sets the currently active sections to new_sections and updates other dependent fields"""
+        self.active_sections = sorted(new_sections, key=lambda e: self.sections[e][-1])
+        self.inactive_sections = [x for x in self.sections if x not in self.active_sections]
+        self.num_leds = sum(len(self.sections[r]) for r in self.active_sections)
 
-    def get_ranges(self):
-        """Returns a list of currently active ranges"""
-        return [self.ranges[k] for k in self.active_ranges]
+    def get_sections(self):
+        """Returns a list of currently active sections"""
+        return [self.sections[k] for k in self.active_sections]
 
     def all_lights(self):
         """Generator for all currently active light indicies"""
-        for ri in self.active_ranges:
-            for n in self.ranges[ri]:
+        for ri in self.active_sections:
+            for n in self.sections[ri]:
                 yield n
 
     def all_lights_with_count(self):
@@ -96,23 +98,23 @@ class Led_Controller:
         with count for relative light position in currently
         active lights"""
         n = 0
-        for ri in self.active_ranges:
-            for i in self.ranges[ri]:
+        for ri in self.active_sections:
+            for i in self.sections[ri]:
                 yield (i, n)
                 n += 1
 
     def all_other_lights(self):
-        """Generator for all lights that are not in an active range"""
-        for ri in self.inactive_ranges:
-            for n in self.ranges[ri]:
+        """Generator for all lights that are not in an active section"""
+        for ri in self.inactive_sections:
+            for n in self.sections[ri]:
                 yield n
 
     def all_other_lights_with_count(self):
-        """Generator for all lights that are not in an active range
+        """Generator for all lights that are not in an active section
         with count for relative light position"""
         n = 0
-        for ri in self.inactive_ranges:
-            for i in self.ranges[ri]:
+        for ri in self.inactive_sections:
+            for i in self.sections[ri]:
                 yield (i, n)
                 n += 1
 
@@ -140,15 +142,15 @@ class Led_Controller:
         location[1].setPixelColorRGB(location[0], GAMMA[r], GAMMA[g], GAMMA[b])
 
     def set_active_pixel(self, n, r, g, b):
-        """Set a single pixel to RGB colour, with index only counting active ranges"""
+        """Set a single pixel to RGB colour, with index only counting active sections"""
         remaining = n
         i = 0
-        for ri in self.active_ranges:
-            if remaining < len(self.ranges[ri]):
-                i = ranges[0] + remaining
+        for ri in self.active_sections:
+            if remaining < len(self.sections[ri]):
+                i = sections[0] + remaining
                 break
             else:
-                remaining -= len(self.ranges[ri])
+                remaining -= len(self.sections[ri])
         self.pixels[i] = (r, g, b)
         location = self.pixel_locations[i]
         location[1].setPixelColorRGB(location[0], GAMMA[r], GAMMA[g], GAMMA[b])
@@ -198,13 +200,13 @@ class Led_Controller:
 
     def show(self):
         """Pushes the led array to the actual lights"""
-        ws2812.show()
-        for vr in self.virtual_ranges:
-            self.virtual_ranges[vr].show()
+        self.ws2812.show()
+        for vr in self.virtual_sections:
+            self.virtual_sections[vr].show()
 
 class Virtual_Range:
     def __init__(self, num_pixels, ip, port):
-        self.range = range(0, num_pixels) 
+        self.section = range(0, num_pixels) 
         self.ip = ip
         self.port = port
         self.pixels = [(0, 0, 0)]*num_pixels*3

@@ -1,4 +1,5 @@
 import atexit
+import configparser
 import getopt
 import glob
 import importlib
@@ -15,11 +16,22 @@ __email__="npesce@terpmail.umd.edu"
 
 SPEED = 0b10
 COLOR = 0b1
+LOCK_FILE = '/tmp/lit.lock'
+BASE_PATH = os.path.dirname(os.path.abspath(__file__))
+BASE_CONFIG = os.path.join(BASE_PATH, 'config')
 logger = logging.getLogger(__name__)
 
 class commands:
-    def __init__(self, config_path='./configuration'):
-        self.config_path = config_path
+    def __init__(self, base_path=None):
+        if os.path.isfile(LOCK_FILE):
+            logger.error('{} exists. {} can only be imported by one process at a time.'.format(LOCK_FILE, os.path.basename(__file__)))
+            sys.exit(1)
+        os.mknod(LOCK_FILE)
+        self.base_path = base_path
+        self.config_path = os.path.join(base_path, 'config') if base_path else None
+        logger.info('Using config directories: {}'.format(', '.join(filter(None, [BASE_CONFIG, self.config_path]))))
+        self.config = configparser.ConfigParser()
+        self.config.read(os.path.join(self.config_path or BASE_CONFIG, 'config.ini')) 
         self.t = None
         self.stop_event = threading.Event()
         self.effects = {}
@@ -30,13 +42,13 @@ class commands:
         self.default_range = None
         self.history = []
 
-        with open(os.path.join(self.config_path, 'speeds.json')) as data_file:    
+        with open(os.path.join(self.config_path or BASE_CONFIG, 'speeds.json')) as data_file:    
             self.speeds = json.load(data_file)
 
-        with open(os.path.join(self.config_path, 'colors.json')) as data_file:    
+        with open(os.path.join(self.config_path or BASE_CONFIG, 'colors.json')) as data_file:    
             self.colors = json.load(data_file)
 
-        with open(os.path.join(self.config_path, 'ranges.json')) as data_file:    
+        with open(os.path.join(self.config_path or BASE_CONFIG, 'ranges.json')) as data_file:    
             rangeJson = json.load(data_file)
             sectionJson = rangeJson['sections']
             zoneJson = rangeJson['zones']
@@ -51,8 +63,8 @@ class commands:
                 v = virtualSectionJson[k]
                 self.virtual_sections[k] = controls.Virtual_Range(v['num_pixels'], v['ip'], v['port'])
 
-        self.np = controls.Led_Controller(self.sections, self.virtual_sections)
-        self.np.set_ranges(self.get_sections_from_ranges(self.default_range))
+        self.np = controls.Led_Controller(led_count=self.config.getint('General','leds') , led_pin=self.config.getint('General', 'pin'), sections=self.sections, virtual_sections=self.virtual_sections)
+        self.np.set_sections(self.get_sections_from_ranges(self.default_range))
 
         self.import_effects()
         atexit.register(self._clean_shutdown)
@@ -82,7 +94,7 @@ class commands:
                 prev = self.history.pop()
                 return self.start(prev['effect'], **prev['args'])
             #Incorrect effect name
-            return (help(), 1)
+            return (self.help(), 1)
 
         args = {k:self.get_value_from_string(k, args[k]) for k in args}
         self.history.append({'effect' : effect_name.lower(), 'args' : args.copy()})
@@ -96,9 +108,9 @@ class commands:
         self.stop_event.clear()
 
         if 'ranges' in args:
-            self.np.set_ranges(self.get_sections_from_ranges(args['ranges']))
+            self.np.set_sections(self.get_sections_from_ranges(args['ranges']))
         else:
-            self.np.set_ranges(self.get_sections_from_ranges([self.default_range]))
+            self.np.set_sections(self.get_sections_from_ranges([self.default_range]))
 
         args['lights'] = self.np
         args['stop_event'] = self.stop_event
@@ -187,9 +199,11 @@ class commands:
         return name.lower() in self.effects
 
     def import_effects(self):
-        files = glob.glob(os.path.dirname(os.path.abspath(__file__))+'/effects/*.py')
+        files = glob.glob(os.path.join(BASE_PATH, 'effects', '*.py'))
+        if self.base_path:
+            files += glob.glob(os.path.join(self.base_path, 'effects', '*.py'))
         ignored = ['__init__.py', 'template.py']
-        module_names = [ os.path.basename(f)[:-3] for f in files if os.path.isfile(f) and os.path.basename(f) not in ignored]
+        module_names = [os.path.basename(f)[:-3] for f in files if os.path.isfile(f) and os.path.basename(f) not in ignored]
         package = __import__('effects',[], [], module_names, 0)
         modules = []
 
@@ -203,6 +217,7 @@ class commands:
             self.commands.append({'name' : name, 'modifiers' : modifiers})
 
     def _clean_shutdown(self):
+        os.remove(LOCK_FILE)
         self.stop_event.set()
         if self.t is not None:
             self.t.join()

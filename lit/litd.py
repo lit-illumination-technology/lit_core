@@ -1,5 +1,7 @@
 #! /usr/bin/python3
+import argparse
 import json
+import logging
 import os
 import operator
 import socket
@@ -10,9 +12,24 @@ import commands
 MAX_CONNECTIONS = 5
 socket_path = '/tmp/litd'
 queries = {}
-np = commands.commands()
+np = None
+logger = logging.getLogger(__name__)
 
 def setup():
+    global np
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s:%(name)s:%(levelname)s:%(message)s')
+    logger.info('setting up')
+
+    sudo_user = os.getenv('SUDO_USER') or ''
+    home = os.path.expanduser('~{}'.format(sudo_user))
+    parser = argparse.ArgumentParser(description='Start the L.I.T. daemon')
+    parser.add_argument('--config', '-c', dest='base_path', type=str, 
+                                default=os.path.join(home, '.lit', 'litd'),
+                                help='specify the directory containing the config directory')
+    args = parser.parse_args()
+    base_path = args.base_path if os.path.isdir(args.base_path) else None
+    np = commands.commands(base_path=base_path)
+
     queries.update({
         'effects': effects(),
         'colors': colors(),
@@ -24,6 +41,7 @@ def setup():
     })
 
 def start():
+    logger.info('Starting lit daemon')
     running = True
     serv = socket.socket(socket.AF_UNIX)
     try:
@@ -39,7 +57,7 @@ def start():
            conn, address = serv.accept()
            start_conn_thread(conn)
     except Exception as e:
-        print('litd socket error: {}'.format(e))
+        logger.error('litd socket error: {}'.format(e))
 
 def start_conn_thread(conn):
     def listener():
@@ -52,7 +70,7 @@ def start_conn_thread(conn):
                 conn.send(str(len(resp)).zfill(32).encode())
                 conn.send(resp)
             except Exception as e:
-                print('litd connection error: {}'.format(e))
+                logger.error('litd connection error: {}'.format(e))
 
     thread = threading.Thread(target=listener)
     thread.start()
@@ -63,7 +81,7 @@ def handle_command(data):
     if not 'type' in msg:
         return type_error
     msg_type = msg['type']
-    print('processing {}'.format(msg))
+    logger.debug('processing {}'.format(msg))
     if msg_type == 'command':
         return command(msg)
     elif msg_type == 'query':

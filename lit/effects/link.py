@@ -43,7 +43,7 @@ def start(lights, stop_event, color = [255, 255, 255], speed = 1, **extras):
             pass
 
 config = configparser.ConfigParser()
-config.read("configuration/config.ini")
+config.read("config/config.ini")
 username = config.get("Link", "username")
 password = config.get("Link", "password")
 port = config.getint("Link", "port")
