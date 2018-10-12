@@ -72,8 +72,8 @@
                 </div>
                 <div class="col-sm-4"></div>
             </div>
+            <h4 class="row centered_hor" id="result"></h4>
         </div>
-        <p id="result"></p>
 
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
         <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
@@ -227,7 +227,19 @@
                         contentType: "application/json",
                         dataType: 'json'
                     }).done(function(data) {
-                        $("#result").html(data.ret)
+                        if ( $(window).width() > 768) {
+                            $("#result").html("")
+                            $.notify({
+                                // options
+                                message: data.result
+                            },{
+                                // settings
+                                type: 'success'
+                            });
+                        } 
+                        else {
+                            $("#result").html(data.result)
+                        }
                     });
                 });
 

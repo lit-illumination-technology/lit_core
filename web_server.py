@@ -60,7 +60,7 @@ def command():
         res = lit.start(effect=json["effect"], args=json["args"])
     else:
         res = lit.start(effect=json["effect"])
-    return res
+    return jsonify(res)
 
 @app.route("/ai_action", methods = ['POST'])
 @requires_auth
