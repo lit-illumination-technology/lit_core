@@ -10,7 +10,8 @@ import os
 import sys
 import threading
 
-import controls
+from . import controls
+from . import effects
 __author__="Nick Pesce"
 __email__="npesce@terpmail.umd.edu"
 
@@ -116,7 +117,7 @@ class commands:
             self.t.daemon = True
             self.t.start()
             return (effect.start_string,  0)
-        except (Exception, e):
+        except Exception as e:
             self.history.pop()
             return (str(e), 1)
 
@@ -194,16 +195,19 @@ class commands:
         return name.lower() in self.effects
 
     def import_effects(self):
+        #TODO effects -> json with script as string. use exec()
         files = glob.glob(os.path.join(BASE_PATH, 'effects', '*.py'))
-        if self.base_path:
-            files += glob.glob(os.path.join(self.base_path, 'effects', '*.py'))
-        ignored = ['__init__.py', 'template.py']
-        module_names = [os.path.basename(f)[:-3] for f in files if os.path.isfile(f) and os.path.basename(f) not in ignored]
-        package = __import__('effects',[], [], module_names, 0)
+        #if self.base_path:
+        #    files += glob.glob(os.path.join(self.base_path, 'effects', '*.py'))
+        ignored = ['__init__', 'template']
+        module_names = [m for m in effects.__all__ if m not in ignored]
         modules = []
-
         for m in module_names:
-            modules.append(getattr(package, m))
+            try:
+                module = importlib.import_module('lit.effects.{}'.format(m))
+                modules.append(module)
+            except Exception as e:
+                print("Could not import {} because {}".format(m, e))
 
         for m in modules:
             name = getattr(m, 'name')

@@ -7,7 +7,7 @@ import operator
 import socket
 import threading
 
-import commands
+from . import commands
 
 MAX_CONNECTIONS = 5
 socket_path = '/tmp/litd'
@@ -38,6 +38,7 @@ def setup():
     })
 
 def start():
+    setup()
     logger.info('Starting lit daemon')
     running = True
     serv = socket.socket(socket.AF_UNIX)
@@ -119,5 +120,4 @@ def speeds():
     return result({'rc': 0, 'speeds': np.get_speeds()})
 
 if __name__ == '__main__':
-    setup()
     start()
