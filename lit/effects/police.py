@@ -32,10 +32,10 @@ def start(lights, stop_event, color = [255, 255, 255], speed = 1, **extras):
     lights.set_all_other_pixels(0, 0, 0)
     state = 0
     while not stop_event.is_set():
-        lights.off()
+        lights.set_all_pixels(0, 0, 0)
         if state < 1000:
             if state % 3 != 0:
-                if (state/10) % 2 == 0:
+                if (state//10) % 2 == 0:
                     set_section(lights, LEFT, (255, 0, 0))
                     set_section(lights, CENTER_R, (255, 255, 255))
                 else:
@@ -47,18 +47,18 @@ def start(lights, stop_event, color = [255, 255, 255], speed = 1, **extras):
 
 def set_section(lights, section, color):
     if section == LEFT:
-        for r in lights.get_ranges():
+        for r in lights.get_sections():
             for n in range(r[0], r[0] + int(len(r) * (5.0/12))):
                 lights.set_pixel(n, *color)
     elif section == RIGHT:
-        for r in lights.get_ranges():
+        for r in lights.get_sections():
             for n in range(r[0] + int(len(r)*(7.0/12)), r[0] + len(r)):
                 lights.set_pixel(n, *color)
     elif section == CENTER_L:
-        for r in lights.get_ranges():
+        for r in lights.get_sections():
             for n in range(r[0] + int(len(r)*(5.0/12)), r[0] + int(len(r)*(1.0/2))):
                 lights.set_pixel(n, *color)
     elif section == CENTER_R:
-        for r in lights.get_ranges():
+        for r in lights.get_sections():
             for n in range(r[0] + int(len(r)*(1.0/2)), r[0] + int(len(r)*(7.0/12))):
                 lights.set_pixel(n, *color)
