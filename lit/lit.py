@@ -17,8 +17,9 @@ def start(effect, args):
 
     res = get_response(s)
     s.close()
+    # rc 0: success, rc 2: command usage error
     if res.get('rc', 1) != 0:
-        raise response_error(res)
+        print(response_error(res))
     return res
 
 def query(query):
@@ -35,7 +36,7 @@ def query(query):
     res = get_response(s)
     s.close()
     if res.get('rc', 1) != 0:
-        raise response_error(res)
+        print(response_error(res))
     return res
 
 def get_response(s):

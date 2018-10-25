@@ -96,9 +96,9 @@ def result(data):
 
 def command(msg):
     if 'args' in msg:
-        ret, rc = np.start(msg['effect'], **msg['args'])
+        ret, rc = np.start_effect(msg['effect'], **msg['args'])
     else:
-        ret, rc = np.start(msg['effect'])
+        ret, rc = np.start_effect(msg['effect'])
     return json.dumps({'result': ret, 'rc': rc})
 
 def query(msg):

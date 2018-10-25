@@ -8,15 +8,17 @@ import logging
 import math
 import os
 import sys
+import time
 import threading
 
 from . import controls
 from . import effects
 __author__="Nick Pesce"
-__email__="npesce@terpmail.umd.edu"
+__email__="nickpesce22@gmail.com"
 
 SPEED = 0b10
 COLOR = 0b1
+DEFAULT_SPEED = 50
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 BASE_CONFIG = os.path.join(BASE_PATH, 'config')
 logger = logging.getLogger(__name__)
@@ -38,6 +40,7 @@ class commands:
         self.default_range = None
         self.history = []
 
+        # Load config files
         with open(os.path.join(self.config_path or BASE_CONFIG, 'speeds.json')) as data_file:    
             self.speeds = json.load(data_file)
 
@@ -59,67 +62,78 @@ class commands:
                 v = virtualSectionJson[k]
                 self.virtual_sections[k] = controls.Virtual_Range(v['num_pixels'], v['ip'], v['port'])
 
-        self.np = controls.Led_Controller(led_count=self.config.getint('General','leds') , led_pin=self.config.getint('General', 'pin'), sections=self.sections, virtual_sections=self.virtual_sections)
-        self.np.set_sections(self.get_sections_from_ranges(self.default_range))
+        self.controller_manager = controls.Led_Controller_Manager(led_count=self.config.getint('General','leds') , led_pin=self.config.getint('General', 'pin'), sections=self.sections, virtual_sections=self.virtual_sections)
+        initial_controller = self.controller_manager.create_controller(self.sections.keys())
 
         self.import_effects()
+        self.controller_effects = {initial_controller:{'effect': self.effects['off'], 'args': {}, 'speed': DEFAULT_SPEED, 'step': 0}}
         atexit.register(self._clean_shutdown)
+        self.start_loop()
 
-    def start(self, effect_name, **args): 
+    def start_loop(self):
+        self.stop_event.clear()
+        def loop(self):
+            total_steps = 0
+            while not self.stop_event.is_set():
+                try:
+                    # Remove empty controllers
+                    self.controller_effects = {c:self.controller_effects[c] for c in self.controller_effects if c.num_leds != 0}
+                    for controller, effect in self.controller_effects.items():
+                        if total_steps % (101-effect['speed']) == 0:
+                            effect['effect'].update(controller, effect['step'], **effect['args'])
+                            effect['step'] += 1
+                            controller.show()
+                    self.stop_event.wait(1/100) #TODO time 100/sec
+                    total_steps += 1
+                except Exception as e:
+                    logger.error(e)
+        self.loop_thread = threading.Thread(target=loop, args=(self,))
+        self.loop_thread.start()
+    
+    def stop_loop(self):
+        self.stop_event.set()
+        self.loop_thread.join()
+
+    def start_effect(self, effect_name, **args): 
+        effect_name = effect_name.lower()
+        if effect_name not in self.effects:
+            return (self.help(), 2)
+        # remove any 'None' args
         args = {k:v for (k,v) in args.items() if v!=None}
-        if not self.is_effect(effect_name):
-            #Modify command
-            if effect_name.lower() == 'modify':
-                if not history:
-                    return ("There is no current effect", 1)
-                current = self.history.pop()
-                if 'speed' in args:
-                    if args['speed'] == 'faster':
-                        args['speed'] = current['args'].get('speed', 50)+10
-                    if args['speed'] == 'slower':
-                        args['speed'] =  current['args'].get('speed', 50)-10
-
-                current['args'].update(args)
-                self.start(current['effect'], **current['args'])
-                return ("Effect modified!", 0)
-            #Back command
-            if effect_name.lower() == 'back':
-                if len(self.history) < 2:
-                    return ("There are no previous effects!", 1)
-                self.history.pop()
-                prev = self.history.pop()
-                return self.start(prev['effect'], **prev['args'])
-            #Incorrect effect name
-            return (self.help(), 1)
-
+        # attempt to parse arg values
         args = {k:self.get_value_from_string(k, args[k]) for k in args}
         self.history.append({'effect' : effect_name.lower(), 'args' : args.copy()})
+
+        sections = self.get_sections_from_ranges(args.get('ranges', [self.default_range]))
+
+        controller = self.controller_manager.create_controller(sections)
+
+        effect = self.effects[effect_name.lower()]
+        self.controller_effects[controller] = {'effect': effect, 'args': args.copy(), 'step': 0, 'speed': args.get('speed', DEFAULT_SPEED)}
+        return (effect.start_string,  0)
+
+    def modify(self, range):
+        #Modify command
+        if not history:
+            return ("There is no current effect", 1)
+        current = self.history.pop()
         if 'speed' in args:
-            args['speed'] = 10**((args['speed']-50)/50.0)
+            if args['speed'] == 'faster':
+                args['speed'] = current['args'].get('speed', 50)+10
+            if args['speed'] == 'slower':
+                args['speed'] =  current['args'].get('speed', 50)-10
 
-        #Stop previous effect
-        self.stop_event.set()
-        if self.t is not None:
-            self.t.join()
-        self.stop_event.clear()
+        current['args'].update(args)
+        self.start(current['effect'], **current['args'])
+        return ("Effect modified!", 0)
 
-        if 'ranges' in args:
-            self.np.set_sections(self.get_sections_from_ranges(args['ranges']))
-        else:
-            self.np.set_sections(self.get_sections_from_ranges([self.default_range]))
-
-        args['lights'] = self.np
-        args['stop_event'] = self.stop_event
-
-        try:
-            effect = self.effects[effect_name.lower()]
-            self.t = threading.Thread(target=effect.start, kwargs=args)
-            self.t.daemon = True
-            self.t.start()
-            return (effect.start_string,  0)
-        except Exception as e:
-            self.history.pop()
-            return (str(e), 1)
+    def back(self, range):
+        #Back command
+        if len(self.history) < 2:
+            return ("There are no previous effects!", 1)
+        self.history.pop()
+        prev = self.history.pop()
+        return self.start(prev['effect'], **prev['args'])
 
     def help(self):
         return """Effects:\n    ~ """ + ("\n    ~ ".join(d["name"] + " " + self.modifiers_to_string(d["modifiers"]) for d in self.commands))
@@ -167,7 +181,7 @@ class commands:
                     return c['color']
             return [255, 255, 255]
         elif type.lower() == 'speed':
-            return self.speeds.get(string.lower(), 50)
+            return self.speeds.get(string.lower(), DEFAULT_SPEED)
         elif type.lower() == 'ranges':
             return string.split(",")
         return string
@@ -195,7 +209,6 @@ class commands:
         return name.lower() in self.effects
 
     def import_effects(self):
-        #TODO effects -> json with script as string. use exec()
         files = glob.glob(os.path.join(BASE_PATH, 'effects', '*.py'))
         #if self.base_path:
         #    files += glob.glob(os.path.join(self.base_path, 'effects', '*.py'))
@@ -216,10 +229,10 @@ class commands:
             self.commands.append({'name' : name, 'modifiers' : modifiers})
 
     def _clean_shutdown(self):
-        self.stop_event.set()
-        if self.t is not None:
-            self.t.join()
-        self.np.off()
+        logger.info('Shutting down')
+        self.stop_loop()
+        for c in self.controller_manager.get_controllers():
+            c.off()
 
 if __name__ == "__main__":
     logger.error("This is module can not be run. Import it and call start()")

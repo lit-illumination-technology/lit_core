@@ -1,6 +1,7 @@
 from neopixel import *
 import colorsys
 import socket
+import logging
 
 """Mapping to make RGB values appear more natural"""
 GAMMA = [
@@ -35,12 +36,11 @@ LED_STRIP	= ws.WS2812_STRIP	#Uses GBR instead of RGB
 #LED_STRIP	= ws.SK6812_STRIP
 #LED_STRIP	= ws.SK6812W_STRIP
 
+logger = logging.getLogger(__name__)
 
-
-
-class Led_Controller:
+class Led_Controller_Manager:
     def __init__(self, led_count = 60, led_pin = 18, sections= {'default' : range(0, 60)}, virtual_sections= {}):
-        """Creates a new Led_Controller.
+        """Creates a new Led_Controller Manager.
         led_count: Total number of LED pixels physically connected to this Pi
         led_pin: GPIO pin connected to the pixels (must support PWM!)
         sections: The named led sections that can be controlled
@@ -51,17 +51,12 @@ class Led_Controller:
         self.ws2812.begin()
         self.led_count = led_count
         self.led_pin = led_pin
+        self.controllers = []
         self.sections = sections
-        self.section_ordered = sorted(sections, key=lambda e: sections[e][-1])
+        self.section_ordered = sorted(self.sections, key=lambda e: self.sections[e][-1])
         self.virtual_sections = virtual_sections
-        #Currently active sections sorted by end location
-        self.active_sections = []
-        self.inactive_sections = list(sections)
-        #Number of currently active leds
-        self.num_leds = 0
         #Number of leds in all sections, local and virtual
         self.total_leds = max(r[-1]+1 for r in self.sections.values())
-        self.pixels = [(0, 0, 0)]*self.total_leds
         #A mapping from absolute index to (local index, controller)
         #"Local pixels" will be formatted as (index, self.ws2182)
         self.pixel_locations = [-1]*self.total_leds
@@ -77,8 +72,43 @@ class Led_Controller:
                     self.pixel_locations[i] = (local_index, self.ws2812)
                     local_index += 1
 
+    # Creates a new Led_Controller for the sections, and removes intersecting sections from other controllers
+    def create_controller(self, sections):
+        controller = Led_Controller(self)
+        controller.set_sections(sections)
+        for c in self.controllers:
+            if any(s in sections for s in c.active_sections):
+                c.set_sections([s for s in c.active_sections if s not in sections])
+        self.controllers.append(controller)
+        # Remove any empty controllers
+        self.controllers = [c for c in self.controllers if c.num_leds != 0]
+        return controller
+
+    def get_controllers(self):
+        return self.controllers
+
+class Led_Controller:
+    def __init__(self, manager):
+        """Creates a new Led_Controller with no active ranges"""
+        self.ws2812 = manager.ws2812
+        self.sections = manager.sections
+        self.section_ordered = sorted(self.sections, key=lambda e: self.sections[e][-1])
+        self.virtual_sections = manager.virtual_sections
+        #Currently active sections sorted by end location
+        self.active_sections = []
+        self.inactive_sections = list(self.sections)
+        #Number of currently active leds
+        self.num_leds = 0
+        #Number of leds in all sections, local and virtual
+        self.total_leds = manager.total_leds
+        self.pixels = [(0, 0, 0)]*self.total_leds
+        #A mapping from absolute index to (local index, controller)
+        #"Local pixels" will be formatted as (index, self.ws2182)
+        self.pixel_locations = manager.pixel_locations
+
     def set_sections(self, new_sections):
-        """Sets the currently active sections to new_sections and updates other dependent fields"""
+        """Sets the currently active sections to new_sections and updates other dependent fields.
+        new_sections is a list of section names corresponding to the sections dict keys"""
         self.active_sections = sorted(new_sections, key=lambda e: self.sections[e][-1])
         self.inactive_sections = [x for x in self.sections if x not in self.active_sections]
         self.num_leds = sum(len(self.sections[r]) for r in self.active_sections)
@@ -103,12 +133,14 @@ class Led_Controller:
                 yield (i, n)
                 n += 1
 
+    # Deprecated. DO NOT USE
     def all_other_lights(self):
         """Generator for all lights that are not in an active section"""
         for ri in self.inactive_sections:
             for n in self.sections[ri]:
                 yield n
 
+    # Deprecated. DO NOT USE
     def all_other_lights_with_count(self):
         """Generator for all lights that are not in an active section
         with count for relative light position"""
@@ -121,7 +153,6 @@ class Led_Controller:
     def clear(self):
         """Clear the buffer"""
         self.set_all_pixels(0, 0, 0)
-        self.set_all_other_pixels(0, 0, 0)
 
     def off(self):
         """Clear the buffer and immediately update lights
@@ -135,6 +166,7 @@ class Led_Controller:
             r, g, b = [int(n*255) for n in colorsys.hsv_to_rgb(h, s, v)]
             self.set_pixel(index, r, g, b)
 
+    #Deprecated: DO NOT USE
     def set_pixel(self, n, r, g, b):
         """Set a single pixel to RGB colour"""
         self.pixels[n] = (r, g, b)
@@ -142,18 +174,25 @@ class Led_Controller:
         location[1].setPixelColorRGB(location[0], GAMMA[r], GAMMA[g], GAMMA[b])
 
     def set_active_pixel(self, n, r, g, b):
-        """Set a single pixel to RGB colour, with index only counting active sections"""
+        """Set a single pixel to RGB colour, with index only counting active sections.
+        O(s) where s is the number of active sections"""
         remaining = n
         i = 0
-        for ri in self.active_sections:
-            if remaining < len(self.sections[ri]):
-                i = sections[0] + remaining
+        for section_name in self.active_sections:
+            if remaining < len(self.sections[section_name]):
+                i = self.sections[section_name][0] + remaining
                 break
             else:
-                remaining -= len(self.sections[ri])
+                remaining -= len(self.sections[section_name])
         self.pixels[i] = (r, g, b)
         location = self.pixel_locations[i]
         location[1].setPixelColorRGB(location[0], GAMMA[r], GAMMA[g], GAMMA[b])
+
+    def set_active_pixel_hsv(self, n, h, s, v):
+        """Set a single pixel to RGB colour, with index only counting active sections.
+        O(s) where s is the number of active sections"""
+        r, g, b = [int(n*255) for n in colorsys.hsv_to_rgb(h, s, v)]
+        self.set_active_pixel(n, r, g, b)
 
     def get_pixel(self, n):
         """Get the RGB value of a single pixel"""
@@ -179,6 +218,8 @@ class Led_Controller:
         for n in self.all_lights():
             self.set_pixel(n, r, g, b)
 
+
+    # Deprecated: DO NOT USE
     def set_all_other_pixels(self, r, g, b):
         """Sets all of the pixels to a color in the RGB colorspace"""
         for n in self.all_other_lights():
@@ -189,6 +230,7 @@ class Led_Controller:
         for n in self.all_lights():
             self.set_pixel_hsv(n, h, s, v)
 
+    # Deprecated: DO NOT USE
     def set_all_other_pixels_hsv(self, h, s, v):
         """Sets all of the pixels to a color in the HSV colorspace"""
         for n in self.all_other_lights():
