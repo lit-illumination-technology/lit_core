@@ -1,10 +1,4 @@
 import math
-#DO NOT CHANGE THESE#
-SPEED = 0b10        #
-COLOR = 0b1         #
-NONE = 0b0          #
-#####################
-
 #This is what will appear in all interfaces
 name = "Christmas"
 
@@ -14,29 +8,28 @@ start_string = name + " started!"
 #This is what will appear in tips and help menus
 description = "Red and green pattern slides along the strand"
 
-#This defines which additional arguments this effect can take.
-#Combine multiple options with a '|'
-modifiers = SPEED
+#This defines the format of update's 'state' parameter
+#If a 'speed' key is defined it must be an int and will automatically be used by the daemon.
+schema = {
+    'speed': {
+        'value': {
+            'type': 'int',
+            'min': 1,
+            'max': 1000,
+            'default': 500
+        },
+        'user_input': True,
+        'required': False
+    }
+}
 
-#This is the function that controls the effect. Look at the included effects for examples.
+#This is the function that updates the effect.
 #Params:
 #   lights: A reference to the light controls (the only way to make anything happen).
-#   stop_event: A threading event that allows this effect to be stopped by the parent.
-#   color: The color if passed, otherwise the default color. REMOVE IF COLOR IS NOT A MODIFIER.
-#   speed: The speed multiplier if passed, otherwise the default speed. REMOVE IF SPEED IS NOT A MODIFIER.
-#   **extras: Any other parameters that may have been passed. Do not use, but do not remove.
-def start(lights, stop_event, color = [255, 255, 255], speed = 1, **extras):
-    lights.set_all_other_pixels(0, 0, 0)
+#   step: The number of times that this effect has been updated
+#   state: Dict with information about the state of the effect
+def update(lights, step, state):
     colors = [None]*lights.num_leds
     for n in range(0, lights.num_leds):
         x = math.fabs((lights.num_leds/2 - n)/float(lights.num_leds/2))
-        colors[n] = (int(255-(x*255)), int(x*255), 0)
-
-    off = 0
-    while not stop_event.is_set():
-        for i, n in lights.all_lights_with_count():
-            lights.set_pixel(i, *colors[(n+off)%lights.num_leds])
-        lights.show()
-        off += 1
-        stop_event.wait(.1/speed)
-
+        lights.set_pixel((n+step)%lights.num_leds, int(255-(x*255)), int(x*255), 0)

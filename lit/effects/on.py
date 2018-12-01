@@ -24,8 +24,6 @@ modifiers = COLOR
 #   color: The color if passed, otherwise the default color. REMOVE IF COLOR IS NOT A MODIFIER.
 #   speed: The speed multiplier if passed, otherwise the default speed. REMOVE IF SPEED IS NOT A MODIFIER.
 #   **extras: Any other parameters that may have been passed. Do not use, but do not remove.
-def start(lights, stop_event, color = [255, 255, 255], **extras):
-    lights.set_all_other_pixels(0, 0, 0)
+def update(lights, stop_event, color = [255, 255, 255], **extras):
     lights.set_all_pixels(color[0], color[1], color[2])
     lights.show()
-    stop_event.wait()

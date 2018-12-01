@@ -151,8 +151,12 @@ class Led_Controller:
                 n += 1
 
     def clear(self):
-        """Clear the buffer"""
+        """Clear the currently active buffer"""
         self.set_all_pixels(0, 0, 0)
+
+    def clear_absolute(self):
+        """Clear the buffer for entire strip"""
+        self.set_all_absolute_pixels(0, 0, 0)
 
     def off(self):
         """Clear the buffer and immediately update lights
@@ -160,22 +164,23 @@ class Led_Controller:
         self.clear()
         self.show()
 
-    def set_pixel_hsv(self, index, h, s, v):
+    def set_absolute_pixel_hsv(self, index, h, s, v):
         """Set a single pixel to a colour using HSV"""
         if index is not None:
             r, g, b = [int(n*255) for n in colorsys.hsv_to_rgb(h, s, v)]
-            self.set_pixel(index, r, g, b)
+            self.set_absolute_pixel(index, r, g, b)
 
-    #Deprecated: DO NOT USE
-    def set_pixel(self, n, r, g, b):
+    def set_absolute_pixel(self, n, r, g, b):
         """Set a single pixel to RGB colour"""
         self.pixels[n] = (r, g, b)
         location = self.pixel_locations[n]
         location[1].setPixelColorRGB(location[0], GAMMA[r], GAMMA[g], GAMMA[b])
 
-    def set_active_pixel(self, n, r, g, b):
+    def set_pixel(self, n, r, g, b):
         """Set a single pixel to RGB colour, with index only counting active sections.
         O(s) where s is the number of active sections"""
+        if n >= self.num_leds:
+            return
         remaining = n
         i = 0
         for section_name in self.active_sections:
@@ -188,26 +193,50 @@ class Led_Controller:
         location = self.pixel_locations[i]
         location[1].setPixelColorRGB(location[0], GAMMA[r], GAMMA[g], GAMMA[b])
 
-    def set_active_pixel_hsv(self, n, h, s, v):
+    def set_pixel_hsv(self, n, h, s, v):
         """Set a single pixel to RGB colour, with index only counting active sections.
         O(s) where s is the number of active sections"""
         r, g, b = [int(n*255) for n in colorsys.hsv_to_rgb(h, s, v)]
-        self.set_active_pixel(n, r, g, b)
+        self.set_pixel(n, r, g, b)
 
-    def get_pixel(self, n):
+    def get_absolute_pixel(self, n):
         """Get the RGB value of a single pixel"""
         if n is not None:
             return self.pixels[n]
 
+    def set__all_absolute_pixels(self, r, g, b):
+        """Sets all pixels to the same RGB color"""
+        for n in range(0, len(pixels)):
+            self.set_absolute_pixel(n, r, g, b)
+
+    def set__all_absolute_pixels_hsv(self, h, s, v):
+        """Sets all pixels to the same RGB color"""
+        r, g, b = [int(n*255) for n in colorsys.hsv_to_rgb(h, s, v)]
+        self.set_all_absolute_pixels(r, g, b)
+
+    def set_absolute_pixels(self, pixels):
+        """Sets the pixels to corresponding pixels in an array of pixel tuples."""
+        self.clear_absolute()
+        for n in range(0, len(pixels)):
+            r, g, b = pixels[n]
+            self.set_absolute_pixel(n, r, g, b)
+
+    def set_absolute_pixels_hsv(self, pixels):
+        """Sets the pixels to corresponding pixels in an array of pixel tuples."""
+        self.clear()
+        for n in range(0, len(pixels)):
+            r, g, b = [int(p*255) for p in colorsys.hsv_to_rgb(*pixels[n])]
+            self.set_absolute_pixel(n, r, g, b)
+
     def set_pixels(self, pixels):
-        """Sets the pixels to corresponding pixels in an array of pixel tuples. Pixel array must be >= than the string length"""
+        """Set active pixels to corresponding pixels in array of rgb tuples with size num_leds"""
         self.clear()
         for n in range(0, len(pixels)):
             r, g, b = pixels[n]
             self.set_pixel(n, r, g, b)
 
     def set_pixels_hsv(self, pixels):
-        """Sets the pixels to corresponding pixels in an array of pixel tuples. Pixel array must be >= than the string length"""
+        """Set active pixels to corresponding pixels in array of hsv tuples with size num_leds"""
         self.clear()
         for n in range(0, len(pixels)):
             r, g, b = [int(p*255) for p in colorsys.hsv_to_rgb(*pixels[n])]
@@ -216,27 +245,27 @@ class Led_Controller:
     def set_all_pixels(self, r, g, b):
         """Sets all of the pixels to a color in the RGB colorspace"""
         for n in self.all_lights():
-            self.set_pixel(n, r, g, b)
+            self.set_absolute_pixel(n, r, g, b)
 
 
     # Deprecated: DO NOT USE
     def set_all_other_pixels(self, r, g, b):
         """Sets all of the pixels to a color in the RGB colorspace"""
         for n in self.all_other_lights():
-            self.set_pixel(n, r, g, b)
+            self.set_absolute_pixel(n, r, g, b)
 
     def set_all_pixels_hsv(self, h, s, v):
         """Sets all of the pixels to a color in the HSV colorspace"""
         for n in self.all_lights():
-            self.set_pixel_hsv(n, h, s, v)
+            self.set_absolute_pixel_hsv(n, h, s, v)
 
     # Deprecated: DO NOT USE
     def set_all_other_pixels_hsv(self, h, s, v):
         """Sets all of the pixels to a color in the HSV colorspace"""
         for n in self.all_other_lights():
-            self.set_pixel_hsv(n, h, s, v)
+            self.set_absolute_pixel_hsv(n, h, s, v)
             
-    def get_pixels(self):
+    def get_absolute_pixels(self):
         """Get the RGB value of all pixels in a 1d array of 3d tuples"""
         return self.pixels
 

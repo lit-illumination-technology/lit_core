@@ -1,10 +1,4 @@
 import random
-#DO NOT CHANGE THESE#
-SPEED = 0b10        #
-COLOR = 0b1         #
-NONE = 0b0          #
-#####################
-
 #This is what will appear in all interfaces
 name = "Drip"
 
@@ -14,26 +8,42 @@ start_string = name + " started!"
 #This is what will appear in tips and help menus
 description = "Mimics water droplets accumulating and falling"
 
-#This defines which additional arguments this effect can take.
-#Combine multiple options with a '|'
-modifiers = COLOR | SPEED
 
-#This is the function that controls the effect. Look at the included effects for examples.
+#This defines the format of update's 'state' parameter
+#If a 'speed' key is defined it must be an int and will automatically be used by the daemon.
+schema = {
+    'speed': {
+        'value': {
+            'type': 'int',
+            'min': 1,
+            'max': 1000,
+            'default': 500
+        },
+        'user_input': True,
+        'required': False
+    },
+    'color': {
+        'value': {
+            'type': 'color',
+            'default': '0x0014AF'
+        },
+        'user_input': True,
+        'required': False
+    }
+}
+
+#This is the function that updates the effect.
 #Params:
 #   lights: A reference to the light controls (the only way to make anything happen).
-#   stop_event: A threading event that allows this effect to be stopped by the parent.
-#   color: The color if passed, otherwise the default color. REMOVE IF COLOR IS NOT A MODIFIER.
-#   speed: The speed multiplier if passed, otherwise the default speed. REMOVE IF SPEED IS NOT A MODIFIER.
-#   **extras: Any other parameters that may have been passed. Do not use, but do not remove.
-def start(lights, stop_event, color = [0, 20, 175], speed = 1, **extras):
-    lights.set_all_other_pixels(0, 0, 0)
-    dullness = [15]*lights.num_leds
-    while not stop_event.is_set():
-        for i, n in lights.all_lights_with_count():
-            lights.set_pixel(i, int(color[0]/dullness[n]), int(color[1]/dullness[n]), int(color[2]/dullness[n]))
-            dullness[n] -= random.random()/20
-            if dullness[n]<=1 or random.randint(0, int(dullness[n]*20)) == 0:
-                dullness[n] = (random.random()*2)+4
-        lights.show()
-        stop_event.wait(.05/speed)
-
+#   step: The number of times that this effect has been updated
+#   state: Dict with information about the state of the effect
+def update(lights, step, state):
+    if step == 0:
+        state['dullness'] = [15]*lights.num_leds
+    color = state['color'];
+    dullness = state['dullness']
+    for i, n in lights.all_lights_with_count():
+        lights.set_pixel(i, int(color[0]/dullness[n]), int(color[1]/dullness[n]), int(color[2]/dullness[n]))
+        dullness[n] -= random.random()/20
+        if dullness[n]<=1 or random.randint(0, int(dullness[n]*20)) == 0:
+            dullness[n] = (random.random()*2)+4

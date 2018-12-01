@@ -66,7 +66,7 @@ class commands:
         initial_controller = self.controller_manager.create_controller(self.sections.keys())
 
         self.import_effects()
-        self.controller_effects = {initial_controller:{'effect': self.effects['off'], 'args': {}, 'speed': DEFAULT_SPEED, 'step': 0}}
+        self.controller_effects = {initial_controller:{'effect': self.effects['off'], 'state': {}, 'speed': DEFAULT_SPEED, 'step': 0}}
         atexit.register(self._clean_shutdown)
         self.start_loop()
 
@@ -79,11 +79,14 @@ class commands:
                     # Remove empty controllers
                     self.controller_effects = {c:self.controller_effects[c] for c in self.controller_effects if c.num_leds != 0}
                     for controller, effect in self.controller_effects.items():
-                        if total_steps % (101-effect['speed']) == 0:
-                            effect['effect'].update(controller, effect['step'], **effect['args'])
+                        # NOTE: Speed changes wrt 1/(1000-speed). 
+                        # Changing speed from 1000 to 999 halves rate.
+                        # Changing from 2 to 1 does almost nothing
+                        if total_steps % (1001-effect['speed']) == 0:
+                            effect['effect'].update(controller, effect['step'], effect['state'])
                             effect['step'] += 1
                             controller.show()
-                    self.stop_event.wait(1/100) #TODO time 100/sec
+                    self.stop_event.wait(1/1000) #TODO time 1000/sec
                     total_steps += 1
                 except Exception as e:
                     logger.error(e)
@@ -94,22 +97,32 @@ class commands:
         self.stop_event.set()
         self.loop_thread.join()
 
-    def start_effect(self, effect_name, **args): 
+    def start_effect(self, effect_name, args): 
         effect_name = effect_name.lower()
         if effect_name not in self.effects:
             return (self.help(), 2)
+        effect = self.effects[effect_name.lower()]
         # remove any 'None' args
         args = {k:v for (k,v) in args.items() if v!=None}
         # attempt to parse arg values
         args = {k:self.get_value_from_string(k, args[k]) for k in args}
-        self.history.append({'effect' : effect_name.lower(), 'args' : args.copy()})
+        # fill in default args from schema
+        schema = getattr(effect, 'schema', {})
+        for k in schema:
+            if not k in args and 'default' in schema[k]['value']:
+                args[k] = schema[k]['value']['default']
+
+        self.history.append({'effect' : effect_name.lower(), 'state' : args.copy()})
 
         sections = self.get_sections_from_ranges(args.get('ranges', [self.default_range]))
 
         controller = self.controller_manager.create_controller(sections)
 
-        effect = self.effects[effect_name.lower()]
-        self.controller_effects[controller] = {'effect': effect, 'args': args.copy(), 'step': 0, 'speed': args.get('speed', DEFAULT_SPEED)}
+        # TODO seperate speed and initial state in json
+        # TODO initial state is empty. Args is different (for initial conditions). Store/pass both. Effects 'ask for' args, but not state
+        speed = args.get('speed', DEFAULT_SPEED)
+        self.controller_effects[controller] = {'effect': effect, 'state': args.copy(), 'step': 0, 'speed': speed}
+        #TODO try to call effect setup
         return (effect.start_string,  0)
 
     def modify(self, range):
@@ -119,12 +132,12 @@ class commands:
         current = self.history.pop()
         if 'speed' in args:
             if args['speed'] == 'faster':
-                args['speed'] = current['args'].get('speed', 50)+10
+                args['speed'] = current['state'].get('speed', 50)+10
             if args['speed'] == 'slower':
-                args['speed'] =  current['args'].get('speed', 50)-10
+                args['speed'] =  current['state'].get('speed', 50)-10
 
-        current['args'].update(args)
-        self.start(current['effect'], **current['args'])
+        current['state'].update(args)
+        self.start(current['effect'], current['state'])
         return ("Effect modified!", 0)
 
     def back(self, range):
@@ -133,17 +146,18 @@ class commands:
             return ("There are no previous effects!", 1)
         self.history.pop()
         prev = self.history.pop()
-        return self.start(prev['effect'], **prev['args'])
+        return self.start(prev['effect'], prev['state'])
 
     def help(self):
-        return """Effects:\n    ~ """ + ("\n    ~ ".join(d["name"] + " " + self.modifiers_to_string(d["modifiers"]) for d in self.commands))
+        return """Effects:\n    ~ """ + ("\n    ~ ".join(d["name"] + " " + self.schema_to_string(d["schema"]) for d in self.commands))
 
-    def modifiers_to_string(self, modifiers):
-        ret = ""
-        if(modifiers & SPEED):
-            ret += "[-s speed]"
-        if(modifiers & COLOR):
-            ret += "[-c (r,g,b)]"
+    def schema_to_string(self, schema):
+        ret = str(schema)
+        #ret = ""
+        #if(& SPEED):
+        #    ret += "[-s speed]"
+        #if(modifiers & COLOR):
+        #    ret += "[-c (r,g,b)]"
         return ret
 
     def get_effects(self):
@@ -183,6 +197,8 @@ class commands:
         elif type.lower() == 'speed':
             return self.speeds.get(string.lower(), DEFAULT_SPEED)
         elif type.lower() == 'ranges':
+            if string.lower() == 'all':
+                return self.sections.keys()
             return string.split(",")
         return string
 
@@ -209,7 +225,7 @@ class commands:
         return name.lower() in self.effects
 
     def import_effects(self):
-        files = glob.glob(os.path.join(BASE_PATH, 'effects', '*.py'))
+        #files = glob.glob(os.path.join(BASE_PATH, 'effects', '*.py'))
         #if self.base_path:
         #    files += glob.glob(os.path.join(self.base_path, 'effects', '*.py'))
         ignored = ['__init__', 'template']
@@ -220,13 +236,19 @@ class commands:
                 module = importlib.import_module('lit.effects.{}'.format(m))
                 modules.append(module)
             except Exception as e:
-                print("Could not import {} because {}".format(m, e))
+                logger.error("Could not import {} because {}".format(m, e))
 
+        logger.info('Parsing effects')
         for m in modules:
-            name = getattr(m, 'name')
-            modifiers = getattr(m, 'modifiers')
-            self.effects[name.lower()] = m
-            self.commands.append({'name' : name, 'modifiers' : modifiers})
+            try:
+                logger.info("loading {}".format(str(m)))
+                name = getattr(m, 'name', 'Unnamed')
+                schema= getattr(m, 'schema', {})
+                self.effects[name.lower()] = m
+                self.commands.append({'name' : name, 'schema' : schema})
+            except Exception as e:
+                logger.error('Error loading effect {}. {}'.format(str(m), e))
+
 
     def _clean_shutdown(self):
         logger.info('Shutting down')

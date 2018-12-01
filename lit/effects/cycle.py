@@ -17,18 +17,10 @@ description = "Cycles through the color spectrum."
 #Combine multiple options with a '|'
 modifiers = SPEED
 
-#This is the function that controls the effect. Look at the included effects for examples.
+#This is the function that updates the effect.
 #Params:
 #   lights: A reference to the light controls (the only way to make anything happen).
-#   stop_event: A threading event that allows this effect to be stopped by the parent.
-#   color: The color if passed, otherwise the default color. REMOVE IF COLOR IS NOT A MODIFIER.
-#   speed: The speed multiplier if passed, otherwise the default speed. REMOVE IF SPEED IS NOT A MODIFIER.
-#   **extras: Any other parameters that may have been passed. Do not use, but do not remove.
-def start(lights, stop_event, speed = 1, **extras):
-    lights.set_all_other_pixels(0, 0, 0)
-    h = 0
-    while not stop_event.is_set():
-        lights.set_all_pixels_hsv(h/500.0, 1, 1)
-        lights.show()
-        h = (h+1)%500
-        stop_event.wait(.03/speed)
+#   step: The number of times that this effect has been updated
+#   state: Dict with information about the state of the effect
+def update(lights, step, state):
+    lights.set_all_pixels_hsv((step/500)%1, 1, 1)

@@ -95,10 +95,7 @@ def result(data):
     return json.dumps(data)
 
 def command(msg):
-    if 'args' in msg:
-        ret, rc = np.start_effect(msg['effect'], **msg['args'])
-    else:
-        ret, rc = np.start_effect(msg['effect'])
+    ret, rc = np.start_effect(msg['effect'], msg.get('args', {}))
     return json.dumps({'result': ret, 'rc': rc})
 
 def query(msg):

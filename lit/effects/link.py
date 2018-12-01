@@ -1,10 +1,4 @@
 import socket, threading, time, configparser
-#DO NOT CHANGE THESE#
-SPEED = 0b10        #
-COLOR = 0b1         #
-NONE = 0b0          #
-#####################
-
 #This is what will appear in all interfaces
 name = "Link"
 
@@ -13,10 +7,14 @@ start_string = name + " started!"
 
 #This is what will appear in tips and help menus
 description = "Starts a server for music visualization or screen mirroring" 
-#This defines which additional arguments this effect can take.
-#Combine multiple options with a '|'
-modifiers = NONE
 
+def setup():
+    config = configparser.ConfigParser()
+    config.read("config/config.ini")
+    username = config.get("Link", "username")
+    password = config.get("Link", "password")
+    port = config.getint("Link", "port")
+    data = bytearray(2048)
 #This is the function that controls the effect. Look at the included effects for examples.
 #Params:
 #   lights: A reference to the light controls (the only way to make anything happen).
@@ -42,9 +40,3 @@ def start(lights, stop_event, color = [255, 255, 255], speed = 1, **extras):
         except socket.error:
             pass
 
-config = configparser.ConfigParser()
-config.read("config/config.ini")
-username = config.get("Link", "username")
-password = config.get("Link", "password")
-port = config.getint("Link", "port")
-data = bytearray(2048)
