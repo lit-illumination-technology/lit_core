@@ -2,11 +2,10 @@
 ***Lit Illumination Technology***
 ## Synopisis
 This is an improved version of the <a href="http://github.com/nickpesce/neopixels">Neopixels</a> project</br>
-This python script is intended for <a href="https://www.adafruit.com/products/1138">Adafruit Neopixels</a></br>
-Lights can  be controlled from the command line, web interface, or any other programs that use the RESTful API such as this <a href="http://github.com/nickpesce/NeopixelAndroidApp">Android app</a>.</br>
+The lit daemon makes it very easy to control ws281x addressable leds using a raspberry pi. Once the daemon is started, 'effects' can be started and state can be queried using a python api. Addition effects can be added very easily, and LEDs over IP (LOIPs) can be connected using [lit_arduino](https://github.com/nickpesce/lit_arduino)
 ## Installation
 <ol>
-<li>Install the <a href="https://github.com/jgarff/rpi_ws281x">rpi_ws281x</a> module
+<li>Install the [rpi_ws281x](https://github.com/jgarff/rpi_ws281x) module by jgarff
   <ol>
   <li><code>$ sudo apt-get update</code></li>
   <li><code>$ sudo apt-get install scons swig python-dev build-essential git</code></li>
@@ -20,18 +19,16 @@ Lights can  be controlled from the command line, web interface, or any other pro
   <li><code>$ sudo rm -rf rpi_ws281x</code></li>
   </ol>
 </li>
-<li><code>sudo apt-get install python-pip</code></li>
-<li><code>sudo pip install flask</code></li>
 <li>Clone this repository to your Raspberry Pi<br/>
-<code>$ git clone https://github.com/nickpesce/L.I.T..git</code><br/><code>$ cd L.I.T.</code></li>
-<li><code>$ cp -r defaultconfiguration configuration</code></li>
-<li>Modify username and password in config.ini<br/><code>$ nano configuration/config.ini</code></li>
-<li>Run web_server.py<br/><code>$ sudo python web_server.py</code></li>
-<li>Check that the controls at <code>localhost:5000</code> work</li>
+<code>$ git clone https://github.com/nickpesce/lit.git</code></li>
+<li>Install the package<br/>
+  <code>$ cd lit</code><br/>
+  <code>$ sudo  ./setup.py build</code> <br/>
+  <code>$ sudo  ./setup.py install</code></li>
 </ol>
 
 ## Customization
-The configuration directory contains four files that can be changed to reflect your personal setup.
+litd should be started with a --config PATH flag. The following files should all be in the PATH/config/ directory. Overriding the default configurations is optional, but changes to config.ini and ranges.json is almost definitely necessary.
 <ul>
 <li>config.ini:
   <ul>
@@ -40,17 +37,8 @@ The configuration directory contains four files that can be changed to reflect y
     <ul>
     <li>leds: The number of leds connected to your pi</li>
     <li>pin: The pwm pin that your data line is connected to</li>
-    <li>port: The port that the web server should run on</li>
-    <li>username: The username to log into the website</li>
-    <li>password: The password to log into the website</li>
     </ul>
-   </li>
-   <li>
-   API: Optional
-      <ul>
-      <li>apiai: Api.Ai client access token</li>
-      </ul>
-   </li>
+   </li>   
    <li>
    Link: If link effect is installed (it is by default)
      <ul>
@@ -89,71 +77,5 @@ If your leds can't all be connected by one wire, a udp connection can be made. T
 
 _**Note: The virtual section must be named exactly the same as an already defined section. The start and end of the section specifies where the lights will be relative to the other "local" sections. The virtual_section will specify how that section is controlled.**_
 
-## Updating
-<ol>
-<li>cd into the L.I.T. directory</li>
-<li><code>git pull</code></li>
-<li>If defaultconfiguration/changes.txt changed, your configuration files must be updated
-  <ol>
-  <li>less defaultconfiguration/changes.txt</li>
-  <li>Read the most recent changes</li>
-  <li>update the relevant files in you configuration directory</li>
-  </ol>
-</li>
-</ol>
-
-## Api.Ai Integration
-<a href="https://api.ai/Api.Ai">Api.Ai</a> is a free and easy artificial intelligence API. It can easily be integrated into L.I.T. to enable natural language commands!
-<ol>
-<li>Run generate.py and get the files from the api-ai directory<br/>
-<code>$ sudo python generate.py</code></li>
-<li>Install apiai and it's dependencies<br/>
-<code>$ apt-get install python-pyaudio python-numpy</code><br/>
-<code>$ pip install apiai</code></li>
-<li>Make an account at <a href="https://console.api.ai/api-client/#/signup">Api.Ai</a> and watch the tutorials</li>
-<li>Create a new agent</li>
-<li>Go to Entities and click on the menu icon next to "Create Entity"</li>
-<li>Click "Upload Entity"</li>
-<li>Upload each of the json files from the api-ai directory (Ad-Blockers may have to be turned off)</li>
-<li>Go to Fulfillment
-  <ol>
-  <li>Enable webhook.</li>
-  <li>For URL, enter your server hostname followed by <code>/ai_action</code></li>
-  <li>Under "Basic Auth", enter your username and password as defined in the config.ini</li>
-  </ol>
-</li>
-<li>Click the gear next to the agent selector</li>
-<li>Take note of the "Client access token"</li>
-<li>Back on the raspberry pi, <code>$ nano config.ini</code>.
-  <ol>
-  <li>Add a new section <code>[Api]</code></li>
-  <li>Add a new entry <code>apiai: YOUR_CLIENT_ACCESS_TOKEN</code>.
-  </ol>
-<li>Create whatever intents you want</li>
-<li>For each intent you create, be sure to check "enable webhook" at the bottom</li>
-<li>Restart the server and there should be a new text entry at the top of the website</li>
-</ol>
-
-### Custom Api.Ai Fulfillment
-Define custom actions for your api.ai agent. Allows you to override all of the Smalltalk responses.
-<ol>
-<li>In the L.I.T. directory, create a new file called fulfillment.py</li>
-<li>Create a 'process' function <br><code>def process(json)</code></li>
-<li>The json parameter contains the Api.Ai request (If the action was not lights)</li>
-<li>In the process function, either return the response text, or <code>None</code> if the action should not be handled</li>
-</ol>
-
 ## Adding New Effects
-Easily add new and personalized effects. Basic python knowlege is required.
-<ol>
-<li>Navigate to the <code>effects</code> directory</li>
-<li>Make a copy of the template<br/>
-<code>$ cp template.py YOUR_EFFECT_NAME.py</code></li>
-<li>Edit the new effect<br/>
-<code>$ nano YOUR_EFFECT_NAME.py</code></li>
-<li>Change each field according to the comments</li>
-<li>Code your effect in the <code>start</code> function</li>
-<li>Restart the server</li>
-<li>If you want to share your creation, feel free to create a pull request!</li>
-<li>That's it!</li>
-</ol>
+Easily add new and personalized effects. Basic python knowlege is required. To start, create a directory called 'effects' in your base directory (same level as the config directory). Create an empty file named '\_\_init\_\_.py' in the new directory. Finally, restart the daemon. Now any python files that are in this directory, or subdirectories of this directory, will try to be imported as effects when the daemon is started. Refer to effects/_template.py for more information. 
