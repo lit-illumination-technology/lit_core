@@ -3,26 +3,6 @@ import colorsys
 import socket
 import logging
 
-"""Mapping to make RGB values appear more natural"""
-GAMMA = [
-    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1,
-    1,  1,  1,  1,  1,  1,  1,  1,  1,  2,  2,  2,  2,  2,  2,  2,
-    2,  3,  3,  3,  3,  3,  3,  3,  4,  4,  4,  4,  4,  5,  5,  5,
-    5,  6,  6,  6,  6,  7,  7,  7,  7,  8,  8,  8,  9,  9,  9, 10,
-    10, 10, 11, 11, 11, 12, 12, 13, 13, 13, 14, 14, 15, 15, 16, 16,
-    17, 17, 18, 18, 19, 19, 20, 20, 21, 21, 22, 22, 23, 24, 24, 25,
-    25, 26, 27, 27, 28, 29, 29, 30, 31, 32, 32, 33, 34, 35, 35, 36,
-    37, 38, 39, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 50,
-    51, 52, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 66, 67, 68,
-    69, 70, 72, 73, 74, 75, 77, 78, 79, 81, 82, 83, 85, 86, 87, 89,
-    90, 92, 93, 95, 96, 98, 99,101,102,104,105,107,109,110,112,114,
-    115,117,119,120,122,124,126,127,129,131,133,135,137,138,140,142,
-    144,146,148,150,152,154,156,158,160,162,164,167,169,171,173,175,
-    177,180,182,184,186,189,191,193,196,198,200,203,205,208,210,213,
-    215,218,220,223,225,228,231,233,236,239,241,244,247,249,252,255 ];
-
-
 # LED strip configuration:
 LED_FREQ_HZ	= 800000  # LED signal frequency in hertz (usually 800khz)
 LED_DMA		= 5       # DMA channel to use for generating signal (try 5)
@@ -87,6 +67,15 @@ class Led_Controller_Manager:
     def get_controllers(self):
         return self.controllers
 
+    def show(self):
+        """Pushes the led array to the actual lights"""
+        # TODO lock self.controllers while reading. Not thread safe
+        for controller in self.controllers:
+            controller.render()
+        self.ws2812.show()
+        for vr in self.virtual_sections:
+            self.virtual_sections[vr].show()
+
 class Led_Controller:
     def __init__(self, manager):
         """Creates a new Led_Controller with no active ranges"""
@@ -104,7 +93,9 @@ class Led_Controller:
         self.pixels = [(0, 0, 0)]*self.total_leds
         #A mapping from absolute index to (local index, controller)
         #"Local pixels" will be formatted as (index, self.ws2182)
-        self.pixel_locations = manager.pixel_locations
+        self.absolute_pixel_locations = manager.pixel_locations
+        #Mapping from "controller index" to pixel location
+        self.pixel_locations = []
 
     def set_sections(self, new_sections):
         """Sets the currently active sections to new_sections and updates other dependent fields.
@@ -112,51 +103,18 @@ class Led_Controller:
         self.active_sections = sorted(new_sections, key=lambda e: self.sections[e][-1])
         self.inactive_sections = [x for x in self.sections if x not in self.active_sections]
         self.num_leds = sum(len(self.sections[r]) for r in self.active_sections)
+        self.pixel_locations = []
+        for sn in self.active_sections:
+            s = self.sections[sn]
+            self.pixel_locations += self.absolute_pixel_locations[s[0]:s[-1]+1]
 
     def get_sections(self):
         """Returns a list of currently active sections"""
         return [self.sections[k] for k in self.active_sections]
 
-    def all_lights(self):
-        """Generator for all currently active light indicies"""
-        for ri in self.active_sections:
-            for n in self.sections[ri]:
-                yield n
-
-    def all_lights_with_count(self):
-        """Generator for all currently active light indicies
-        with count for relative light position in currently
-        active lights"""
-        n = 0
-        for ri in self.active_sections:
-            for i in self.sections[ri]:
-                yield (i, n)
-                n += 1
-
-    # Deprecated. DO NOT USE
-    def all_other_lights(self):
-        """Generator for all lights that are not in an active section"""
-        for ri in self.inactive_sections:
-            for n in self.sections[ri]:
-                yield n
-
-    # Deprecated. DO NOT USE
-    def all_other_lights_with_count(self):
-        """Generator for all lights that are not in an active section
-        with count for relative light position"""
-        n = 0
-        for ri in self.inactive_sections:
-            for i in self.sections[ri]:
-                yield (i, n)
-                n += 1
-
     def clear(self):
         """Clear the currently active buffer"""
         self.set_all_pixels(0, 0, 0)
-
-    def clear_absolute(self):
-        """Clear the buffer for entire strip"""
-        self.set_all_absolute_pixels(0, 0, 0)
 
     def off(self):
         """Clear the buffer and immediately update lights
@@ -164,34 +122,9 @@ class Led_Controller:
         self.clear()
         self.show()
 
-    def set_absolute_pixel_hsv(self, index, h, s, v):
-        """Set a single pixel to a colour using HSV"""
-        if index is not None:
-            r, g, b = [int(n*255) for n in colorsys.hsv_to_rgb(h, s, v)]
-            self.set_absolute_pixel(index, r, g, b)
-
-    def set_absolute_pixel(self, n, r, g, b):
-        """Set a single pixel to RGB colour"""
-        self.pixels[n] = (r, g, b)
-        location = self.pixel_locations[n]
-        location[1].setPixelColorRGB(location[0], GAMMA[r], GAMMA[g], GAMMA[b])
-
     def set_pixel(self, n, r, g, b):
-        """Set a single pixel to RGB colour, with index only counting active sections.
-        O(s) where s is the number of active sections"""
-        if n >= self.num_leds:
-            return
-        remaining = n
-        i = 0
-        for section_name in self.active_sections:
-            if remaining < len(self.sections[section_name]):
-                i = self.sections[section_name][0] + remaining
-                break
-            else:
-                remaining -= len(self.sections[section_name])
-        self.pixels[i] = (r, g, b)
-        location = self.pixel_locations[i]
-        location[1].setPixelColorRGB(location[0], GAMMA[r], GAMMA[g], GAMMA[b])
+        """Set a single pixel to RGB colour, with index only counting active sections for this controller"""
+        self.pixels[n] = (r, g, b)
 
     def set_pixel_hsv(self, n, h, s, v):
         """Set a single pixel to RGB colour, with index only counting active sections.
@@ -199,41 +132,15 @@ class Led_Controller:
         r, g, b = [int(n*255) for n in colorsys.hsv_to_rgb(h, s, v)]
         self.set_pixel(n, r, g, b)
 
-    def get_absolute_pixel(self, n):
-        """Get the RGB value of a single pixel"""
-        if n is not None:
-            return self.pixels[n]
-
-    def set__all_absolute_pixels(self, r, g, b):
-        """Sets all pixels to the same RGB color"""
-        for n in range(0, len(pixels)):
-            self.set_absolute_pixel(n, r, g, b)
-
-    def set__all_absolute_pixels_hsv(self, h, s, v):
-        """Sets all pixels to the same RGB color"""
-        r, g, b = [int(n*255) for n in colorsys.hsv_to_rgb(h, s, v)]
-        self.set_all_absolute_pixels(r, g, b)
-
-    def set_absolute_pixels(self, pixels):
-        """Sets the pixels to corresponding pixels in an array of pixel tuples."""
-        self.clear_absolute()
-        for n in range(0, len(pixels)):
-            r, g, b = pixels[n]
-            self.set_absolute_pixel(n, r, g, b)
-
-    def set_absolute_pixels_hsv(self, pixels):
-        """Sets the pixels to corresponding pixels in an array of pixel tuples."""
-        self.clear()
-        for n in range(0, len(pixels)):
-            r, g, b = [int(p*255) for p in colorsys.hsv_to_rgb(*pixels[n])]
-            self.set_absolute_pixel(n, r, g, b)
-
     def set_pixels(self, pixels):
         """Set active pixels to corresponding pixels in array of rgb tuples with size num_leds"""
         self.clear()
         for n in range(0, len(pixels)):
             r, g, b = pixels[n]
             self.set_pixel(n, r, g, b)
+
+    def get_pixels(self):
+        return pixels
 
     def set_pixels_hsv(self, pixels):
         """Set active pixels to corresponding pixels in array of hsv tuples with size num_leds"""
@@ -244,36 +151,30 @@ class Led_Controller:
 
     def set_all_pixels(self, r, g, b):
         """Sets all of the pixels to a color in the RGB colorspace"""
-        for n in self.all_lights():
-            self.set_absolute_pixel(n, r, g, b)
-
-
-    # Deprecated: DO NOT USE
-    def set_all_other_pixels(self, r, g, b):
-        """Sets all of the pixels to a color in the RGB colorspace"""
-        for n in self.all_other_lights():
-            self.set_absolute_pixel(n, r, g, b)
+        self.pixels = [(r, g, b)]*self.num_leds
 
     def set_all_pixels_hsv(self, h, s, v):
         """Sets all of the pixels to a color in the HSV colorspace"""
-        for n in self.all_lights():
-            self.set_absolute_pixel_hsv(n, h, s, v)
+        r, g, b = [int(p*255) for p in colorsys.hsv_to_rgb(*pixels[n])]
+        self.set_all_pixels(r, g, b)
 
-    # Deprecated: DO NOT USE
-    def set_all_other_pixels_hsv(self, h, s, v):
-        """Sets all of the pixels to a color in the HSV colorspace"""
-        for n in self.all_other_lights():
-            self.set_absolute_pixel_hsv(n, h, s, v)
-            
-    def get_absolute_pixels(self):
-        """Get the RGB value of all pixels in a 1d array of 3d tuples"""
-        return self.pixels
+    def render(self):
+        """Thread-safe transfer of pixels from controller to 'locations'"""
+        pixels = self.pixels
+        for i in range(0, self.num_leds):
+            r, g, b = pixels[i]
+            location = self.pixel_locations[i]
+            location[1].setPixelColorRGB(location[0], r, g, b)
 
     def show(self):
         """Pushes the led array to the actual lights"""
+        self.render()
         self.ws2812.show()
         for vr in self.virtual_sections:
             self.virtual_sections[vr].show()
+
+    def __repr__(self):
+        return "Controller: {}".format(self.active_sections)
 
 class Virtual_Range:
     def __init__(self, num_pixels, ip, port):

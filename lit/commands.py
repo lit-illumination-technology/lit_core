@@ -1,7 +1,6 @@
 import atexit
 import configparser
 import getopt
-import glob
 import importlib
 import json
 import logging
@@ -16,11 +15,13 @@ from . import effects
 __author__="Nick Pesce"
 __email__="nickpesce22@gmail.com"
 
+FPS = 40
 SPEED = 0b10
 COLOR = 0b1
-DEFAULT_SPEED = 50
+DEFAULT_SPEED = 50 # hertz
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 BASE_CONFIG = os.path.join(BASE_PATH, 'config')
+TIME_WARN_COOLDOWN = 10 # seconds
 logger = logging.getLogger(__name__)
 
 class commands:
@@ -39,6 +40,7 @@ class commands:
         self.zones = {}
         self.default_range = None
         self.history = []
+        self.singleton_args = {}
 
         # Load config files
         with open(os.path.join(self.config_path or BASE_CONFIG, 'speeds.json')) as data_file:    
@@ -66,30 +68,56 @@ class commands:
         initial_controller = self.controller_manager.create_controller(self.sections.keys())
 
         self.import_effects()
-        self.controller_effects = {initial_controller:{'effect': self.effects['off'], 'state': {}, 'speed': DEFAULT_SPEED, 'step': 0}}
+        self.controller_effects = {initial_controller: self.create_effect(self.effects['off'], {}, DEFAULT_SPEED)}
         atexit.register(self._clean_shutdown)
         self.start_loop()
+        logger.info('Started effect loop')
+
 
     def start_loop(self):
         self.stop_event.clear()
         def loop(self):
             total_steps = 0
+            next_show = time.time()
+            next_upd_time = time.time()
+            last_warn_time = 0
             while not self.stop_event.is_set():
+                start_time = time.time()
                 try:
-                    # Remove empty controllers
-                    self.controller_effects = {c:self.controller_effects[c] for c in self.controller_effects if c.num_leds != 0}
                     for controller, effect in self.controller_effects.items():
-                        # NOTE: Speed changes wrt 1/(1000-speed). 
-                        # Changing speed from 1000 to 999 halves rate.
-                        # Changing from 2 to 1 does almost nothing
-                        if total_steps % (1001-effect['speed']) == 0:
+                        if effect['next_upd_time'] <= start_time:
+                            su = time.time()
                             effect['effect'].update(controller, effect['step'], effect['state'])
+                            eu = time.time()
+                            logger.debug("Took {}ms to update {}".format((eu - su)*1000, effect))
+                            # Speed is in units of updates/second
+                            effect['next_upd_time'] += 1/effect['speed']
+                            next_upd_time = min(next_upd_time, effect['next_upd_time'])
                             effect['step'] += 1
-                            controller.show()
-                    self.stop_event.wait(1/1000) #TODO time 1000/sec
+                    end = time.time()
+                    took = (end - start_time)
+                    d = next_upd_time - time.time()
+                    if d < 0 and last_warn_time > time.time() + TIME_WARN_COOLDOWN:
+                        logger.warning("Can't keep up! Did the system time change, or is the server overloaded? Running {} ms behind.".format(d*-1000))
+                        logger.debug("Behind while running effect(s) {}".format(self.controller_effects.values()))
+                        last_warn_time = time.time()
+                    else:
+                        self.stop_event.wait(d)
                     total_steps += 1
                 except Exception as e:
                     logger.error(e)
+
+        def show_loop(self):
+            start_time = time.time()
+            while not self.stop_event.is_set():
+                try:
+                    self.controller_manager.show()
+                    end_time = time.time()
+                    logger.debug('Show took {}ms'.format((end_time - start_time)*1000))
+                    start_time = end_time
+                except Exception as e:
+                    logger.error('Error in show loop: {}'.format(e))
+        threading.Thread(target=show_loop, args=(self,)).start()
         self.loop_thread = threading.Thread(target=loop, args=(self,))
         self.loop_thread.start()
     
@@ -106,24 +134,38 @@ class commands:
         args = {k:v for (k,v) in args.items() if v!=None}
         # attempt to parse arg values
         args = {k:self.get_value_from_string(k, args[k]) for k in args}
+        sections = self.get_sections_from_ranges(args.get('ranges', [self.default_range]))
+        controller = self.controller_manager.create_controller(sections)
         # fill in default args from schema
         schema = getattr(effect, 'schema', {})
-        for k in schema:
-            if not k in args and 'default' in schema[k]['value']:
-                args[k] = schema[k]['value']['default']
+        self.complete_args_with_schema(args, schema, controller)
 
         self.history.append({'effect' : effect_name.lower(), 'state' : args.copy()})
 
-        sections = self.get_sections_from_ranges(args.get('ranges', [self.default_range]))
-
-        controller = self.controller_manager.create_controller(sections)
-
-        # TODO seperate speed and initial state in json
-        # TODO initial state is empty. Args is different (for initial conditions). Store/pass both. Effects 'ask for' args, but not state
         speed = args.get('speed', DEFAULT_SPEED)
-        self.controller_effects[controller] = {'effect': effect, 'state': args.copy(), 'step': 0, 'speed': speed}
-        #TODO try to call effect setup
+        self.controller_effects[controller] = self.create_effect(effect, args, speed)
+        # Remove empty controllers
+        self.controller_effects = {c:self.controller_effects[c] for c in self.controller_effects if c.num_leds != 0}
         return (effect.start_string,  0)
+
+    def complete_args_with_schema(self, args, schema, controller):
+        for k, v in sorted(schema.items(), key=lambda x: x[1].get('index', float('inf'))):
+            if ((not k in args or not v.get('user_input', False)) and 
+                ('default' in v['value'] or 'default_gen' in v['value'])):
+                # If this arg is a singleton that was already set, give a reference
+                if v.get('singleton', False) and k in self.singleton_args:
+                    args[k] = self.singleton_args[k]
+                # Otherwise, get the default value
+                else:
+                    if 'default_gen' in v['value']:
+                        args[k] = v['value']['default_gen'](controller, args)
+                    else:
+                        args[k] = v['value']['default']
+                    if v.get('singleton', False):
+                        self.singleton_args[k] = args[k]
+
+    def create_effect(self, effect, state, speed):
+        return {'effect': effect, 'state': state.copy(), 'step': 0, 'speed': speed, 'next_upd_time': time.time()}
 
     def modify(self, range):
         #Modify command
@@ -225,15 +267,11 @@ class commands:
         return name.lower() in self.effects
 
     def import_effects(self):
-        #files = glob.glob(os.path.join(BASE_PATH, 'effects', '*.py'))
-        #if self.base_path:
-        #    files += glob.glob(os.path.join(self.base_path, 'effects', '*.py'))
-        ignored = ['__init__', 'template']
-        module_names = [m for m in effects.__all__ if m not in ignored]
+        module_names = effects.effects
         modules = []
         for m in module_names:
             try:
-                module = importlib.import_module('lit.effects.{}'.format(m))
+                module = importlib.import_module(m)
                 modules.append(module)
             except Exception as e:
                 logger.error("Could not import {} because {}".format(m, e))
@@ -244,8 +282,10 @@ class commands:
                 logger.info("loading {}".format(str(m)))
                 name = getattr(m, 'name', 'Unnamed')
                 schema= getattr(m, 'schema', {})
+                command_schema = {k: {k2: v2 for k2, v2 in v.items() if k2 != 'user_input'} 
+                        for k, v in schema.items() if v.get('user_input', False)}
                 self.effects[name.lower()] = m
-                self.commands.append({'name' : name, 'schema' : schema})
+                self.commands.append({'name' : name, 'schema' : command_schema})
             except Exception as e:
                 logger.error('Error loading effect {}. {}'.format(str(m), e))
 
@@ -254,7 +294,8 @@ class commands:
         logger.info('Shutting down')
         self.stop_loop()
         for c in self.controller_manager.get_controllers():
-            c.off()
+            c.clear()
+        self.controller_manager.show()
 
 if __name__ == "__main__":
     logger.error("This is module can not be run. Import it and call start()")

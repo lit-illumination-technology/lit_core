@@ -9,7 +9,7 @@ setuptools.setup(
     description='Lit Ilumination Technology',
     url=['https://github.com/nickpesce/lit'],
     packages=['lit', 'lit.effects'],
-    scripts=['bin/litd', 'bin/litctl'],
+    scripts=['bin/litd', 'bin/litctl', 'bin/litdev'],
     package_data={'lit': ['config/*']},
     classifiers=[
         'License :: MIT License',

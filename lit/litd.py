@@ -13,11 +13,11 @@ MAX_CONNECTIONS = 5
 socket_path = '/tmp/litd'
 queries = {}
 np = None
+logging.basicConfig(level=logging.INFO, format='%(asctime)s:%(name)s:(%(lineno)d):%(levelname)s:%(message)s')
 logger = logging.getLogger(__name__)
 
 def setup():
     global np
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s:%(name)s:%(levelname)s:%(message)s')
     logger.info('setting up')
 
     parser = argparse.ArgumentParser(description='Start the L.I.T. daemon')
@@ -25,6 +25,15 @@ def setup():
                                 help='specify the directory containing the config directory')
     args = parser.parse_args()
     base_path = args.base_path if args.base_path and os.path.isdir(args.base_path) else None
+    # Create effects symlink to config path
+    try:
+        src = os.path.join(args.base_path, 'effects')
+        dest = os.path.join(os.path.dirname(__file__), 'effects', 'user')
+        if not os.path.exists(dest) and os.path.exists(src):
+            os.symlink(src, dest)
+            logger.info('Created user effects symlink')
+    except OSError as e:
+        logger.warning('Could not create user effects symlink: {}'.format(e))
     np = commands.commands(base_path=base_path)
 
     queries.update({
@@ -44,13 +53,14 @@ def start():
     serv = socket.socket(socket.AF_UNIX)
     try:
         os.remove(socket_path)
-    except OSError:
-        pass
+    except OSError as e:
+        logger.warning('Got "{}" when trying to remove {}'.format(e, socket_path))
     try:
         # Allow created socket to have non-root read and write permissions
         os.umask(0o1)
         serv.bind(socket_path)
         serv.listen(MAX_CONNECTIONS)
+        logger.info('Listening on {}'.format(socket_path))
         while running:
            conn, address = serv.accept()
            start_conn_thread(conn)
@@ -63,7 +73,10 @@ def start_conn_thread(conn):
             try:
                 data = conn.recv(4096)
                 if not data: break
-                resp = handle_command(data.decode()).encode()
+                msg = data.decode()
+                logger.info('received command: {}'.format(msg))
+                resp = handle_command(msg).encode()
+                logger.debug('responding: {}'.format(resp))
                 # First 32 bytes is message length
                 conn.send(str(len(resp)).zfill(32).encode())
                 conn.send(resp)
@@ -79,11 +92,12 @@ def handle_command(data):
     if not 'type' in msg:
         return type_error
     msg_type = msg['type']
-    logger.debug('processing {}'.format(msg))
     if msg_type == 'command':
         return command(msg)
     elif msg_type == 'query':
         return query(msg)
+    elif msg_type == 'dev':
+        return dev_command(msg)
     else:
         return type_error
 
@@ -97,6 +111,18 @@ def result(data):
 def command(msg):
     ret, rc = np.start_effect(msg['effect'], msg.get('args', {}))
     return json.dumps({'result': ret, 'rc': rc})
+
+def dev_command(msg):
+    if msg.get('command', '') == 'verbosity':
+        level = msg.get('args', {}).get('level', None)
+        level_val = 0
+        try:
+            level_val = getattr(logging, level.upper())
+        except AttributeError:
+            return json.dumps({'result': "args['level'] must be debug, info, warning, error, or critical", 'rc': 2})
+        logging.getLogger().setLevel(level_val)
+        return json.dumps({'result': 'Logging level changed to {}'.format(level), 'rc': 0})
+    return json.dumps({'result': 'Unknown command', 'rc': 2})
 
 def query(msg):
     return queries[msg.get('query', 'error')]
@@ -117,4 +143,4 @@ def speeds():
     return result({'rc': 0, 'speeds': np.get_speeds()})
 
 if __name__ == '__main__':
-    start()
+    logger.info('This module must be started by calling importing and calling start()')

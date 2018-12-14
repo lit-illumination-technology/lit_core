@@ -1,38 +1,33 @@
 import random
 import colorsys
-#This is what will appear in all interfaces
 name = "Nexus"
 
-#This is what the user will see after the effect starts
 start_string = name + " started!"
 
-#This is what will appear in tips and help menus
 description = "Like the Nexus android wallpaper"
 
-#This defines the format of update's 'state' parameter
-#If a 'speed' key is defined it must be an int and will automatically be used by the daemon.
 schema = {
     'speed': {
         'value': {
-            'type': 'int',
-            'min': 500,
-            'max': 1000,
-            'default': 750
+            'type': 'number',
+            'min': 1,
+            'max': 100,
+            'default': 50
         },
         'user_input': True,
         'required': False
+    },
+    'projectiles': {
+        'value': {
+            'type': 'int list',
+            'default_gen': lambda x: list()
+        },
+        'user_input': False
     }
 }
 
-#This is the function that updates the effect.
-#Params:
-#   lights: A reference to the light controls (the only way to make anything happen).
-#   step: The number of times that this effect has been updated
-#   state: Dict with information about the state of the effect
 def update(lights, step, state):
     #TODO constant number of projectiles. Reuse when go fall off strip. Avoids O(n) remove and inserts.	
-    if not 'projectiles' in state:
-        state['projectiles'] = []
     projectiles = state['projectiles']
     if random.random() < .05:
         right = random.random() < .5 

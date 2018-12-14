@@ -1,0 +1,19 @@
+#! /usr/bin/python3
+import argparse
+import lit
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Send a dev command to the L.I.T. daemon')
+    parser.add_argument('command', type=str, 
+                                help='command name')
+    parser.add_argument('arguments', metavar='K:V', type=str, nargs='*', help='Argument key value pairs')
+
+    args = parser.parse_args()
+    try:
+        arguments = {k:v for k, v in map(lambda x: x.split(':'), args.arguments)}
+    except ValueError:
+        print("Arguments must be key value pairs separated by a ':'")
+        exit(1)
+    resp = lit.dev_command(command=args.command, args=arguments)
+    print(resp['result'])
+    exit(resp['rc'])

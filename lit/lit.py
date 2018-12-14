@@ -39,6 +39,23 @@ def query(query):
         print(response_error(res))
     return res
 
+def dev_command(command, args):
+    s = None
+    try:
+        s = socket.socket(socket.AF_UNIX)
+        s.connect('/tmp/litd')
+        msg = {'type': 'dev', 'command': command, 'args': args}
+        s.sendall(json.dumps(msg).encode())
+    except Exception as e:
+        s.close()
+        raise conn_error(e)
+
+    res = get_response(s)
+    s.close()
+    if res.get('rc', 1) != 0:
+        print(response_error(res))
+    return res
+
 def get_response(s):
     response = ''
     try:
