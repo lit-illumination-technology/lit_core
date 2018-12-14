@@ -39,14 +39,6 @@ litd should be started with a --config PATH flag. The following files should all
     <li>pin: The pwm pin that your data line is connected to</li>
     </ul>
    </li>   
-   <li>
-   Link: If link effect is installed (it is by default)
-     <ul>
-     <li>port: The port that the effect listens on</li>
-     <li>username: The username for link</li>
-     <li>password: The password for link</li>
-     </ul>
-   </li>
    </ul>
 </li>
 
