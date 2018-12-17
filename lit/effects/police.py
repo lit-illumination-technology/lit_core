@@ -10,7 +10,7 @@ schema = {
             'type': 'number',
             'min': 0,
             'max': 100,
-            'default': 50
+            'default': 25
         },
         'user_input': True,
         'required': False
@@ -24,7 +24,6 @@ CENTER_R=3
 RIGHT=1
 
 def update(lights, step, state):
-    lights.clear()
     if step % 3 != 0:
         if (step//10) % 2 == 0:
             set_section(lights, LEFT, (255, 0, 0))

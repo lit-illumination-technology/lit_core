@@ -10,8 +10,8 @@ schema = {
         'value': {
             'type': 'number',
             'min': 0,
-            'max': 100,
-            'default': 50
+            'max': 10,
+            'default': 3
         },
         'user_input': True,
         'required': False

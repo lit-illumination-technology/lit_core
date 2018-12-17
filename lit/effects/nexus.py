@@ -20,7 +20,7 @@ schema = {
     'projectiles': {
         'value': {
             'type': 'int list',
-            'default_gen': lambda x: list()
+            'default_gen': lambda lights, args: list()
         },
         'user_input': False
     }
@@ -35,7 +35,6 @@ def update(lights, step, state):
             (1 if right else -1) * (max(.3, random.normalvariate(2, 1))),
             random.random()])
 
-    lights.clear()
     hsvs = [[0, 0, 0] for _ in range(0, lights.num_leds)]
     #Total of value(HSV) at each position
     count = [0] * lights.num_leds

@@ -134,17 +134,15 @@ class Led_Controller:
 
     def set_pixels(self, pixels):
         """Set active pixels to corresponding pixels in array of rgb tuples with size num_leds"""
-        self.clear()
         for n in range(0, len(pixels)):
             r, g, b = pixels[n]
             self.set_pixel(n, r, g, b)
 
     def get_pixels(self):
-        return pixels
+        return self.pixels
 
     def set_pixels_hsv(self, pixels):
         """Set active pixels to corresponding pixels in array of hsv tuples with size num_leds"""
-        self.clear()
         for n in range(0, len(pixels)):
             r, g, b = [int(p*255) for p in colorsys.hsv_to_rgb(*pixels[n])]
             self.set_pixel(n, r, g, b)
@@ -155,7 +153,7 @@ class Led_Controller:
 
     def set_all_pixels_hsv(self, h, s, v):
         """Sets all of the pixels to a color in the HSV colorspace"""
-        r, g, b = [int(p*255) for p in colorsys.hsv_to_rgb(*pixels[n])]
+        r, g, b = [int(p*255) for p in colorsys.hsv_to_rgb(h, s, v)]
         self.set_all_pixels(r, g, b)
 
     def render(self):

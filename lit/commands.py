@@ -85,9 +85,12 @@ class commands:
                 start_time = time.time()
                 try:
                     for controller, effect in self.controller_effects.items():
-                        if effect['next_upd_time'] <= start_time:
+                        if effect['speed'] > 0 and effect['next_upd_time'] <= start_time:
                             su = time.time()
-                            effect['effect'].update(controller, effect['step'], effect['state'])
+                            try:
+                                effect['effect'].update(controller, effect['step'], effect['state'])
+                            except Exception as e:
+                                logger.error('Error in effect "{}": {}'.format(getattr(effect['effect'], 'name', 'NONAME'), e))
                             eu = time.time()
                             logger.debug("Took {}ms to update {}".format((eu - su)*1000, effect))
                             # Speed is in units of updates/second

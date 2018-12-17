@@ -2,7 +2,9 @@ name = "Fade"
 
 start_string = "Fading!"
 
-description = "Lights fade from their current color to a new color"
+description = "Lights fade from one color to another"
+
+TOTAL_STEPS = 1000
 
 schema = {
     'speed': {
@@ -15,7 +17,7 @@ schema = {
         'user_input': True,
         'required': False
     },
-    'color': {
+    'start color': {
         'value': {
             'type': 'color',
             'default': (0, 0, 0)
@@ -23,33 +25,27 @@ schema = {
         'user_input': True,
         'required': False
     },
-    'steps_left': {
+    'end color': {
         'value': {
-            'type': 'number',
-            'default': 0
+            'type': 'color',
+            'default': (0, 0, 0)
         },
-        'user_input': False
+        'user_input': True,
+        'required': False
     }
 }
 
 def update(lights, step, state):
-    state['steps_left'] -= 1
-    n = state['steps_left']
-    color = state['color']
-    if n < 0:
+    start_color = state['start color']
+    end_color = state['end color']
+    if step >= TOTAL_STEPS:
         #TODO hotswap effects
-        lights.set_all_pixels(*color)
+        lights.set_all_pixels(*end_color)
         return
-    pixels = lights.get_pixels()
-    ds = [(0, 0, 0)]*lights.num_leds
-
-    for i in range(lights.num_leds):
-        r, g, b = lights.get_pixels()[i]
-        pixels[i] = (float(r), float(g), float(b))
-        ds[i] = ((color[0]-r)/n, (color[1]-g)/n, (color[2]-b)/n)
-        r = pixels[p][0]+ds[p][0]
-        g = pixels[p][1]+ds[p][1]
-        b = pixels[p][2]+ds[p][2]
-        pixels[p] = (max(0,int(r)), max(0,int(g)), max(0,int(b)))
-
-    lights.set_pixels(pixels)
+    ar, ag, ab = start_color
+    br, bg, bb = end_color
+    ds = ((br-ar)/TOTAL_STEPS, (bg-ag)/TOTAL_STEPS, (bb-ab)/TOTAL_STEPS)
+    nr = ar+ds[0]*step
+    ng = ag+ds[1]*step
+    nb = ab+ds[2]*step
+    lights.set_all_pixels(max(0,int(nr)), max(0,int(ng)), max(0,int(nb)))
