@@ -33,7 +33,7 @@ schema = {
     'delta': {
         'value': {
             'type': 'number',
-            'default': 0.01
+            'default': 0.05
         },
         'user_input': False
     }
