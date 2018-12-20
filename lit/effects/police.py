@@ -24,6 +24,7 @@ CENTER_R=3
 RIGHT=1
 
 def update(lights, step, state):
+    lights.clear()
     if step % 3 != 0:
         if (step//10) % 2 == 0:
             set_section(lights, LEFT, (255, 0, 0))
