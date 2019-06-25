@@ -4,7 +4,7 @@ import json
 import socket
 import sys
 
-def start(effect, args):
+def start(effect, args={}):
     s = None
     try:
         s = socket.socket(socket.AF_UNIX)
