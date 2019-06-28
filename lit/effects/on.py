@@ -17,6 +17,16 @@ schema = {
         },
         'user_input': True,
         'required': False
+    },
+    'speed': {
+        'value': {
+            'type': 'number',
+            'min': 0,
+            'max': 5,
+            'default': 1
+        },
+        'user_input': False,
+        'required': False
     }
 }
 
