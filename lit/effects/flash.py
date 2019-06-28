@@ -9,7 +9,7 @@ schema = {
     'speed': {
         'value': {
             'type': 'number',
-            'min': 0,
+            'min': 1,
             'max': 10,
             'default': 3
         },
