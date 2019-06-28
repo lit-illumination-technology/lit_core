@@ -5,6 +5,9 @@ start_string = name + " started!"
 
 description = "Mimics water droplets accumulating and falling"
 
+def setup_dullness(lights, args):
+    return [15]*lights.num_leds
+
 schema = {
     'speed': {
         'value': {
@@ -23,16 +26,21 @@ schema = {
         },
         'user_input': True,
         'required': False
+    },
+    'dullness': {
+        'value': {
+            'type': 'int list',
+            'default_gen': setup_dullness
+        },
+        'user_input': False
     }
 }
 
 def update(lights, step, state):
-    if step == 0:
-        state['dullness'] = [15]*lights.num_leds
     color = state['color'];
     dullness = state['dullness']
     for i in range(lights.num_leds):
         lights.set_pixel(i, int(color[0]/dullness[i]), int(color[1]/dullness[i]), int(color[2]/dullness[i]))
         dullness[i] -= random.random()/20
         if dullness[i]<=1 or random.randint(0, int(dullness[i]*20)) == 0:
-            dullness[i] = (random.random()*2)+4
+            dullness[i] = (random.random()*4)+4
