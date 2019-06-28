@@ -26,7 +26,7 @@ schema = {
         'value': {
             'type': 'number', #TODO integer type (or step)
             'min': 1,
-            'max': 15,
+            'max': 20,
             'default': 3
         },
         'user_input': True,
