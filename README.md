@@ -5,7 +5,7 @@ This is an improved version of the <a href="http://github.com/nickpesce/neopixel
 The lit daemon makes it very easy to control ws281x addressable leds using a raspberry pi. Once the daemon is started, 'effects' can be started and state can be queried using a python api. Addition effects can be added very easily, and LEDs over IP (LOIPs) can be connected using [lit_arduino](https://github.com/nickpesce/lit_arduino)
 ## Installation
 <ol>
-<li>Install the python module rpi\_ws281x<br/>
+<li>Install the python module rpi_ws281x<br/>
 <code>sudo pip install rpi_ws281x</code></li>
 <li>Clone this repository to your Raspberry Pi<br/>
 <code>$ git clone https://github.com/nickpesce/lit.git</code></li>
