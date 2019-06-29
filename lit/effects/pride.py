@@ -11,7 +11,7 @@ schema = {
         'value': {
             'type': 'number',
             'min': 0,
-            'max': 100,
+            'max': 10,
             'default': 0
         },
         'user_input': True,
@@ -21,12 +21,10 @@ schema = {
 
 def update(lights, step, state):
     stripe_width = (lights.num_leds/len(COLORS))
-    start = (step*stripe_width)%lights.num_leds
-    end = ((step+1)*stripe_width)%lights.num_leds
-    for n, color in enumerate(COLORS):
+    start = 0
+    end = stripe_width
+    for ci in range(len(COLORS)):
         for i in range(int(start), int(end)): 
-            lights.set_pixel(i, *color)
+            lights.set_pixel(i, *COLORS[(ci+step)%len(COLORS)])
         start += stripe_width
-        start %= lights.num_leds
         end += stripe_width
-        end %= (lights.num_leds+1)
