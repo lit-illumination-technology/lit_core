@@ -98,7 +98,7 @@ class commands:
                             effect['next_upd_time'] += 1/(effect['speed'] or DEFAULT_SPEED)
                             next_upd_time = min(next_upd_time, effect['next_upd_time'])
                             if effect['speed'] > 0:
-                                    effect['step'] += 1
+                                effect['step'] += 1
                     end = time.time()
                     took = (end - start_time)
                     d = next_upd_time - time.time()
