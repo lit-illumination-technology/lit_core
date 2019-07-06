@@ -1,0 +1,12 @@
+[Unit]
+Description=lit daemon
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/litd --config /home/pi/.lit/litd
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
