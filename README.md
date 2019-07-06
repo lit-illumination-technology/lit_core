@@ -15,8 +15,22 @@ The lit daemon makes it very easy to control ws281x addressable leds using a ras
   <code>$ sudo  ./setup.py install</code></li>
 </ol>
 
+### Startup Script
+*If you are are using a config path that is not "/home/pi/.lit/litd", you must first edit the command in litd.service*
+<ol>
+<li>
+  <code>sudo cp litd.service /etc/systemd/system</code>
+</li>
+<li>
+  <code>sudo systemtl daemon-reload</code>
+</li>
+<li>
+  <code>sudo systemctl start litd && sudo systemctl enable litd</code>
+</li>
+</ol>
+
 ## Customization
-litd should be started with a --config PATH flag. The following files should all be in the PATH/config/ directory. Overriding the default configurations is optional, but changes to config.ini and ranges.json is almost definitely necessary.
+litd should be started with a --config PATH flag. The following files should all be in the PATH/config/ directory. Overriding the default configurations is optional, but making changes to config.ini and ranges.json is almost definitely necessary.
 <ul>
 <li>config.ini:
   <ul>
