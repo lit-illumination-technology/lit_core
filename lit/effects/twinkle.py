@@ -5,7 +5,7 @@ name = "Twinkle"
 
 start_string = name + " started!"
 
-description = "Like little start"
+description = "Like a little star"
 
 def setup_start_durations(lights, args):
     return [(-1, 1)]*lights.num_leds
@@ -24,7 +24,7 @@ schema = {
     'color': {
         'value': {
             'type': 'color',
-            'default': (0, 20, 175)
+            'default': (255, 240, 0)
         },
         'user_input': True,
         'required': False
