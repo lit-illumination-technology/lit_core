@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger(__name__)
+
 # This is what will appear in all interfaces
 name = "Effect Display Name"
 
