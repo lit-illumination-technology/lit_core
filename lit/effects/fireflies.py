@@ -1,11 +1,11 @@
 import random
 import logging
 logger = logging.getLogger(__name__)
-name = "Twinkle"
+name = "Fireflies"
 
 start_string = name + " started!"
 
-description = "Like a little star"
+description = "You would not believe your eyes"
 
 def setup_start_durations(lights, args):
     return [(-1, 1)]*lights.num_leds
