@@ -50,6 +50,7 @@ schema = {
 
 # Average time a led is on
 AVG_ON_TIME = 100
+MIN_ON_TIME = 10
 
 def update(lights, step, state):
     color = state['color'];
@@ -64,7 +65,7 @@ def update(lights, step, state):
     for i in range(lights.num_leds):
         sd = start_durations[i]
         if sd[0] + sd[1] <= step:
-            state['start_durations'][i] = (step+random.randint(0, int(2*avg_off_time)), random.randint(1, AVG_ON_TIME*2)) 
+            state['start_durations'][i] = (step+random.randint(0, int(2*avg_off_time)), MIN_ON_TIME+random.randint(0, (AVG_ON_TIME-MIN_ON_TIME)*2)) 
         brightness = (step-sd[0])/(sd[1]/2)
         if brightness > 1:
             brightness = 2 - brightness
