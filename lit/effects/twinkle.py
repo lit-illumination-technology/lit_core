@@ -39,14 +39,25 @@ schema = {
         },
         'user_input': True,
         'required': False
+    },
+    'brightnesses': {
+        'value': {
+            'type': 'int list',
+            'default_gen': lambda l, a: [.5]*l.num_leds
+        },
+        'user_input': False,
     }
 }
 
 def update(lights, step, state):
     color = state['color'];
-    off_prob = state['twinkleyness']/10000
+    brightnesses = state['brightnesses']
     for i in range(lights.num_leds):
-        if random.random() <= off_prob:
-            lights.set_pixel(i, 0, 0, 0)
-        else:
-            lights.set_pixel(i, *color)
+        brightness = brightnesses[i]
+        lights.set_pixel(i, int(color[0]*brightness), int(color[1]*brightness), int(color[2]*brightness))
+        rand = random.random()
+        if rand > brightness:
+            brightnesses[i] += (state['twinkleyness']/200)
+        elif rand > 1-brightness:
+            brightnesses[i] -= (state['twinkleyness']/200) 
+        brightnesses[i] = max(min(brightnesses[i], 1), 0)
