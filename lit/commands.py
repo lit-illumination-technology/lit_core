@@ -1,11 +1,13 @@
 import atexit
 import configparser
+import colorsys
 import getopt
 import importlib
 import json
 import logging
 import math
 import os
+import random
 import sys
 import time
 import threading
@@ -237,9 +239,12 @@ class commands:
         if not isinstance(string, str):
             return string
         if type.lower() == 'color':
+            if string.lower() == 'random':
+                return list(map(lambda x: int(255*x), colorsys.hsv_to_rgb(random.random(), 1, 1)))
             for c in self.colors:
                 if c['name'].lower() == string.lower():
                     return c['color']
+            # TODO throw invalid color name error
             return [255, 255, 255]
         elif type.lower() == 'speed':
             return self.speeds.get(string.lower(), DEFAULT_SPEED)
