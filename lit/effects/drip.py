@@ -27,9 +27,19 @@ schema = {
         'user_input': True,
         'required': False
     },
+    'intensity': {
+        'value': {
+            'type': 'number',
+            'min': 1,
+            'max': 100,
+            'default': 50
+        },
+        'user_input': True,
+        'required': False
+    },
     'dullness': {
         'value': {
-            'type': 'int list',
+            'type': 'number list',
             'default_gen': setup_dullness
         },
         'user_input': False
@@ -39,8 +49,9 @@ schema = {
 def update(lights, step, state):
     color = state['color'];
     dullness = state['dullness']
+    intensity = state['intensity']
     for i in range(lights.num_leds):
-        if dullness[i]<=1 or random.randint(0, int(dullness[i]*40)) == 0:
-            dullness[i] = random.random()*200
+        if dullness[i]<=1 or random.randint(0, int(dullness[i]**2)) == 0:
+            dullness[i] = (1000/intensity)*(random.random()+1)
         lights.set_pixel(i, int(color[0]/dullness[i]), int(color[1]/dullness[i]), int(color[2]/dullness[i]))
-        dullness[i] -= random.random()/20
+        dullness[i] -= (random.random()*intensity)/100
