@@ -38,6 +38,7 @@ def setup():
 
     queries.update({
         'effects': effects(),
+        'presets': presets(),
         'colors': colors(),
         'sections': sections(),
         'zones': zones(),
@@ -140,6 +141,9 @@ def query(msg):
 
 def effects():
     return result({'effects': sorted(np.get_effects(), key=operator.itemgetter('name'))})
+
+def presets():
+    return result({'presets': sorted( np.get_presets())})
 
 def colors():
     return result({'colors': np.get_colors()})

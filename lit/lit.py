@@ -101,6 +101,9 @@ def response_error(res):
 def get_effects():
     return query('effects')['effects']
 
+def get_presets():
+    return query('presets')['presets']
+
 def get_colors():
     return query('colors')['colors']
 
