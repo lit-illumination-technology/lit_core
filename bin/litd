@@ -1,9 +1,12 @@
 #!/usr/bin/python3
 import logging
+import traceback
+
 from lit import litd
 logger = logging.getLogger(__name__)
 
 try:
     litd.start()
 except Exception as e:
+    traceback.print_exc()
     logger.critical('Uncaught exception: {}'.format(e))

@@ -10,8 +10,13 @@ if __name__ == '__main__':
                                 help='speed of the effect (if applicable)')
     parser.add_argument('--color', '-c', dest='color', metavar=('RED', 'GREEN', 'BLUE'), type=int, nargs=3,
                                 help='rgb color')
+    parser.add_argument('--preset', '-p', dest='preset', action="store_true",
+                                help='effect is a preset')
 
     args = parser.parse_args()
-    resp = lit.start(effect=args.effect, args={'speed': args.speed, 'color': args.color})
+    if args.preset:
+        resp = lit.start_preset(preset=args.effect)
+    else:
+        resp = lit.start_effect(effect=args.effect, args={'speed': args.speed, 'color': args.color})
     print(resp['result'])
     exit(resp['rc'])

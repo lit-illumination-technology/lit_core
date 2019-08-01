@@ -1,10 +1,13 @@
 #! /usr/bin/python3
 import argparse
 import json
+import logging
 import socket
 import sys
 
-def start(effect, args={}):
+logger = logging.getLogger(__name__)
+
+def start_effect(effect, args={}):
     s = None
     try:
         s = socket.socket(socket.AF_UNIX)
@@ -19,7 +22,25 @@ def start(effect, args={}):
     s.close()
     # rc 0: success, rc 2: command usage error
     if res.get('rc', 1) != 0:
-        print(response_error(res))
+        logger.error(response_error(res))
+    return res
+
+def start_preset(preset):
+    s = None
+    try:
+        s = socket.socket(socket.AF_UNIX)
+        s.connect('/tmp/litd')
+        command = {'type': 'command', 'preset': preset}
+        s.sendall(json.dumps(command).encode())
+    except Exception as e:
+        s.close()
+        raise conn_error(e)
+
+    res = get_response(s)
+    s.close()
+    # rc 0: success, rc 2: command usage error
+    if res.get('rc', 1) != 0:
+        logger.error(response_error(res))
     return res
 
 def query(query):
@@ -36,7 +57,7 @@ def query(query):
     res = get_response(s)
     s.close()
     if res.get('rc', 1) != 0:
-        print(response_error(res))
+        logger.error(response_error(res))
     return res
 
 def dev_command(command, args):
@@ -53,7 +74,7 @@ def dev_command(command, args):
     res = get_response(s)
     s.close()
     if res.get('rc', 1) != 0:
-        print(response_error(res))
+        logger.error(response_error(res))
     return res
 
 def get_response(s):

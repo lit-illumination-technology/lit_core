@@ -53,6 +53,14 @@ litd should be started with a --config PATH flag. The following files should all
   </ul>
 </li>
 
+<li>presets.json: Named groups of effects that can be run together. Maps preset names to preset objects.
+Preset objects contain:
+  <ul>
+  <li>start_string: Message that is returned when the preset starts</li>
+  <li>commands: List of commands to run. Commands are objects with and "effect" string and "args" object</li>
+  </ul>
+</li>
+
 <li>colors.json: A list of all preset color values defined by an object containing a name and color. The color field is defined as an array contining a red, green, and blue value.
 </li>
 

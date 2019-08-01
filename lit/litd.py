@@ -72,10 +72,15 @@ def start_conn_thread(conn):
         while True:
             try:
                 data = conn.recv(4096)
-                if not data: break
+                if not data: 
+                    break
                 msg = data.decode()
                 logger.info('received command: {}'.format(msg))
-                resp = handle_command(msg).encode()
+                try:
+                    resp = handle_command(msg).encode()
+                except Exception as e:
+                    logger.error("Unexpected error while handing command")
+                    resp = error("Internal error")
                 logger.debug('responding: {}'.format(resp))
                 # First 32 bytes is message length
                 conn.send(str(len(resp)).zfill(32).encode())
@@ -109,7 +114,13 @@ def result(data):
     return json.dumps(data)
 
 def command(msg):
-    ret, rc = np.start_effect(msg['effect'], msg.get('args', {}))
+    if "effect" in msg:
+        ret, rc = np.start_effect(msg['effect'], msg.get('args', {}))
+    elif "preset" in msg:
+        ret, rc = np.start_preset(msg['preset'])
+    else:
+        ret = "Message must have 'effect' or 'preset' key"
+        rc = 1
     return json.dumps({'result': ret, 'rc': rc})
 
 def dev_command(msg):

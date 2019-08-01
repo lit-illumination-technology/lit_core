@@ -48,6 +48,9 @@ class commands:
         with open(os.path.join(self.config_path or BASE_CONFIG, 'speeds.json')) as data_file:    
             self.speeds = json.load(data_file)
 
+        with open(os.path.join(self.config_path or BASE_CONFIG, 'presets.json')) as data_file:    
+            self.presets = json.load(data_file)
+
         with open(os.path.join(self.config_path or BASE_CONFIG, 'colors.json')) as data_file:    
             self.colors = json.load(data_file)
 
@@ -132,6 +135,24 @@ class commands:
         self.stop_event.set()
         self.loop_thread.join()
 
+    def start_preset(self, preset_name):
+        preset = self.presets.get(preset_name, None) 
+        if not preset:
+            msg = "The preset {} does not exist".format(preset_name)
+            return (msg, 2)
+        if "commands" not in preset:
+            msg = "The preset {} does not specify commands".format(preset_name)
+            return (msg, 3)
+        for command in preset["commands"]:
+            if "effect" not in command:
+                msg = "The preset {} must specify an effect for all commands".format(preset_name)
+                return (msg, 3)
+            result, rc = self.start_effect(command["effect"], command.get("args", {}))
+            if rc != 0:
+                self.start_effect("off")
+                return (result, rc)
+        return (preset.get("start_string", "{} started!".format(preset_name)), 0)
+
     def start_effect(self, effect_name, args): 
         effect_name = effect_name.lower()
         if effect_name not in self.effects:
@@ -211,6 +232,9 @@ class commands:
 
     def get_effects(self):
         return self.commands
+
+    def get_presets(self):
+        return self.presets
 
     def get_colors(self):
         return self.colors
