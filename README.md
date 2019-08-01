@@ -22,7 +22,7 @@ The lit daemon makes it very easy to control ws281x addressable leds using a ras
   <code>sudo cp litd.service /etc/systemd/system</code>
 </li>
 <li>
-  <code>sudo systemtl daemon-reload</code>
+  <code>sudo systemctl daemon-reload</code>
 </li>
 <li>
   <code>sudo systemctl start litd && sudo systemctl enable litd</code>
