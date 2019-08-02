@@ -57,7 +57,7 @@ litd should be started with a --config PATH flag. The following files should all
 Preset objects contain:
   <ul>
   <li>start_string: Message that is returned when the preset starts</li>
-  <li>commands: List of commands to run. Commands are objects with and "effect" string and "args" object</li>
+  <li>commands: List of commands to run. Commands are objects with an "effect" string and "args" object</li>
   </ul>
 </li>
 
