@@ -1,0 +1,20 @@
+{
+    "on": {
+        "start_string": "The lights have been turned on",
+        "commands": [
+            {"effect": "on", "args": {"color": [55, 40, 25]}}
+        ]
+    },
+    "off": {
+        "start_string": "The lights have been turned off",
+        "commands": [
+            {"effect": "off"}
+        ]
+    },
+    "chill": {
+        "start_string": "chill vibes started",
+        "commands": [
+            {"effect": "fireflies", "args": {"color": "random"}}
+        ]
+    }
+}
