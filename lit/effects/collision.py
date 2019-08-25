@@ -35,7 +35,6 @@ def update(lights, step, state):
     if random.random() < .01:
         projectiles.append([0, 1, random.random()])
         projectiles.append([lights.num_leds-1, -1, random.random()])
-    lights.set_all_pixels(0, 0, 0)
     for i, v in enumerate(projectiles):
         projectiles[i][0] = projectiles[i][0]+projectiles[i][1]
         for t in range(0, TRAIL_LENGTH):

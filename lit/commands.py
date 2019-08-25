@@ -21,18 +21,16 @@ FPS = 40
 SPEED = 0b10
 COLOR = 0b1
 DEFAULT_SPEED = 50 # hertz
-BASE_PATH = os.path.dirname(os.path.abspath(__file__))
-BASE_CONFIG = os.path.join(BASE_PATH, 'config')
 TIME_WARN_COOLDOWN = 10 # seconds
 logger = logging.getLogger(__name__)
 
 class commands:
-    def __init__(self, base_path=None):
+    def __init__(self, base_path):
         self.base_path = base_path
-        self.config_path = os.path.join(base_path, 'config') if base_path else None
-        logger.info('Using config directories: {}'.format(', '.join(filter(None, [BASE_CONFIG, self.config_path]))))
+        self.config_path = os.path.join(base_path, 'config')
+        logger.info('Using config directory: {}'.format(self.config_path))
         self.config = configparser.ConfigParser()
-        self.config.read(os.path.join(self.config_path or BASE_CONFIG, 'config.ini')) 
+        self.config.read(os.path.join(self.config_path, 'config.ini')) 
         self.t = None
         self.stop_event = threading.Event()
         self.effects = {}
@@ -45,16 +43,16 @@ class commands:
         self.singleton_args = {}
 
         # Load config files
-        with open(os.path.join(self.config_path or BASE_CONFIG, 'speeds.json')) as data_file:    
+        with open(os.path.join(self.config_path, 'speeds.json')) as data_file:    
             self.speeds = json.load(data_file)
 
-        with open(os.path.join(self.config_path or BASE_CONFIG, 'presets.json')) as data_file:    
+        with open(os.path.join(self.config_path, 'presets.json')) as data_file:    
             self.presets = json.load(data_file)
 
-        with open(os.path.join(self.config_path or BASE_CONFIG, 'colors.json')) as data_file:    
+        with open(os.path.join(self.config_path, 'colors.json')) as data_file:    
             self.colors = json.load(data_file)
 
-        with open(os.path.join(self.config_path or BASE_CONFIG, 'ranges.json')) as data_file:    
+        with open(os.path.join(self.config_path, 'ranges.json')) as data_file:    
             rangeJson = json.load(data_file)
             sectionJson = rangeJson['sections']
             zoneJson = rangeJson['zones']
