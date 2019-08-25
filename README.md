@@ -30,7 +30,7 @@ The lit daemon makes it very easy to control ws281x addressable leds using a ras
 </ol>
 
 ## Customization
-litd should be started with a --config PATH flag. The following files should all be in the PATH/config/ directory. Overriding the default configurations is optional, but making changes to config.ini and ranges.json is almost definitely necessary.
+litd should be started with a --config PATH flag. The following files should all be in the PATH/config/ directory. Overriding the default configurations is optional, but making changes to config.ini and ranges.json is almost definitely necessary. To copy the default configuration files, use <code>litd -g PATH</code>. For example, <code>litd -g /home/pi/.lit/litd</code>, then run it with <code>sudo litd -c /home/pi/.lit/litd</code>
 <ul>
 <li>config.ini:
   <ul>
@@ -81,3 +81,7 @@ _**Note: The virtual section must be named exactly the same as an already define
 
 ## Adding New Effects
 Easily add new and personalized effects. Basic python knowlege is required. To start, create a directory called 'effects' in your base directory (same level as the config directory). Create an empty file named '\_\_init\_\_.py' in the new directory. Finally, restart the daemon. Now any python files that are in this directory, or subdirectories of this directory, will try to be imported as effects when the daemon is started. Refer to effects/\_template.py for more information. 
+
+
+## Know Issues
+- When running <code>litd</code> from the command line, ctrl-c needs to be pressed twice for the program to fully stop.
