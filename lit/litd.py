@@ -40,15 +40,16 @@ def setup():
 
     logger.info('setting up')
     base_path = args.base_path if args.base_path and os.path.isdir(args.base_path) else default_base_path
-    # Create effects symlink to config path
-    try:
-        src = os.path.join(base_path, 'effects')
-        dest = os.path.join(os.path.dirname(__file__), 'effects', 'user')
-        if not os.path.exists(dest) and os.path.exists(src):
-            os.symlink(src, dest)
-            logger.info('Created user effects symlink')
-    except OSError as e:
-        logger.warning('Could not create user effects symlink: {}'.format(e))
+    if args.base_path:
+        # Create effects symlink to config path
+        try:
+            src = os.path.join(base_path, 'effects')
+            dest = os.path.join(os.path.dirname(__file__), 'effects', 'user')
+            if not os.path.exists(dest) and os.path.exists(src):
+                os.symlink(src, dest)
+                logger.info('Created user effects symlink')
+        except OSError as e:
+            logger.warning('Could not create user effects symlink: {}'.format(e))
     np = commands.commands(base_path=base_path)
 
     queries.update({
