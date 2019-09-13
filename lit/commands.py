@@ -322,6 +322,10 @@ class commands:
                 logger.error('Error loading effect {}. {}'.format(str(m), e))
 
 
+    def get_pixels(self):
+        return self.controller_manager.get_pixels()
+
+
     def _clean_shutdown(self):
         logger.info('Shutting down')
         self.stop_loop()

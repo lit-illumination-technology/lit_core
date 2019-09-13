@@ -116,6 +116,9 @@ def get_sections():
 def get_zones():
     return query('zones')['zones']
 
+def get_pixels():
+    return query('pixels')['pixels']
+
 if __name__ == '__main__':
     print('This is a library that must be imported to be used')
  

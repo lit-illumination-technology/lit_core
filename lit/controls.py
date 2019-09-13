@@ -76,6 +76,16 @@ class Led_Controller_Manager:
         for vr in self.virtual_sections:
             self.virtual_sections[vr].show()
 
+    def get_pixels(self):
+        r= []
+        for c in self.controllers:
+            logger.info(c)
+            for p in c.get_pixels():
+                r += [p]
+        logger.info(r)
+        return r
+        #return [p for c in self.controllers for p in c.get_pixels()]
+
 class Led_Controller:
     def __init__(self, manager):
         """Creates a new Led_Controller with no active ranges"""

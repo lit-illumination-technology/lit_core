@@ -53,14 +53,15 @@ def setup():
     np = commands.commands(base_path=base_path)
 
     queries.update({
-        'effects': effects(),
-        'presets': presets(),
-        'colors': colors(),
-        'sections': sections(),
-        'zones': zones(),
-        'speeds': speeds(),
-        'sections': sections(),
-        'error': error('not a valid query')
+        'effects': effects,
+        'presets': presets,
+        'colors': colors,
+        'sections': sections,
+        'zones': zones,
+        'speeds': speeds,
+        'sections': sections,
+        'pixels': pixels,
+        'error': lambda _: error('not a valid query')
     })
 
 def start():
@@ -156,7 +157,7 @@ def dev_command(msg):
     return json.dumps({'result': 'Unknown command', 'rc': 2})
 
 def query(msg):
-    return queries[msg.get('query', 'error')]
+    return queries[msg.get('query', 'error')]()
 
 def effects():
     return result({'effects': sorted(np.get_effects(), key=operator.itemgetter('name'))})
@@ -175,6 +176,9 @@ def zones():
 
 def speeds():
     return result({'rc': 0, 'speeds': np.get_speeds()})
+
+def pixels():
+    return result({'pixels': np.get_pixels()})
 
 if __name__ == '__main__':
     logger.info('This module must be started by calling importing and calling start()')
