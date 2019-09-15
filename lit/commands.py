@@ -34,7 +34,7 @@ class commands:
         self.t = None
         self.stop_event = threading.Event()
         self.effects = {}
-        self.commands = []
+        self.commands = {}
         self.sections = {}
         self.virtual_sections = {}
         self.zones = {}
@@ -217,7 +217,7 @@ class commands:
         return self.start(prev['effect'], prev['state'])
 
     def help(self):
-        return """Effects:\n    ~ """ + ("\n    ~ ".join(d["name"] + " " + self.schema_to_string(d["schema"]) for d in self.commands))
+        return """Effects:\n    ~ """ + ("\n    ~ ".join(name + " " + self.schema_to_string(schema) for name, schema in self.commands))
 
     def schema_to_string(self, schema):
         ret = str(schema)
@@ -229,7 +229,7 @@ class commands:
         return ret
 
     def get_effects(self):
-        return self.commands
+        return [{'name': n, 'schema': s} for n, s in self.commands.items()]
 
     def get_presets(self):
         return self.presets
@@ -245,6 +245,23 @@ class commands:
 
     def get_zones(self):
         return self.zones
+
+    def get_pixels(self):
+        return self.controller_manager.get_pixels()
+
+    def get_state(self):
+        state = []
+        def state_schema(state, schema):
+            return {k:v for k, v in state.items() if k in schema}
+                 
+        for c, e in self.controller_effects.items():
+            effect_name = getattr(e['effect'], 'name', 'Unnamed')
+            state.append({
+                'sections': c.active_sections, 
+                'effect_name': effect_name,
+                'effect_state': state_schema(e['state'], self.commands[effect_name])
+            })
+        return state
         
     def get_sections_from_ranges(self, lst):
         """converts ranges names (sections or zones), to a list containing ony section names"""
@@ -317,14 +334,9 @@ class commands:
                 command_schema = {k: {k2: v2 for k2, v2 in v.items() if k2 != 'user_input'} 
                         for k, v in schema.items() if v.get('user_input', False)}
                 self.effects[name.lower()] = m
-                self.commands.append({'name' : name, 'schema' : command_schema})
+                self.commands[name] = command_schema
             except Exception as e:
                 logger.error('Error loading effect {}. {}'.format(str(m), e))
-
-
-    def get_pixels(self):
-        return self.controller_manager.get_pixels()
-
 
     def _clean_shutdown(self):
         logger.info('Shutting down')

@@ -61,6 +61,7 @@ def setup():
         'speeds': speeds,
         'sections': sections,
         'pixels': pixels,
+        'state': state,
         'error': lambda _: error('not a valid query')
     })
 
@@ -100,8 +101,8 @@ def start_conn_thread(conn):
                 try:
                     resp = handle_command(msg).encode()
                 except Exception as e:
-                    logger.error("Unexpected error while handing command")
-                    resp = error("Internal error")
+                    logger.error("Unexpected error while handing command: {0}".format(e))
+                    resp = error("Internal error").encode()
                 logger.debug('responding: {}'.format(resp))
                 # First 32 bytes is message length
                 conn.send(str(len(resp)).zfill(32).encode())
@@ -179,6 +180,9 @@ def speeds():
 
 def pixels():
     return result({'pixels': np.get_pixels()})
+
+def state():
+    return result({'state': np.get_state()})
 
 if __name__ == '__main__':
     logger.info('This module must be started by calling importing and calling start()')

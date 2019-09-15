@@ -119,6 +119,9 @@ def get_zones():
 def get_pixels():
     return query('pixels')['pixels']
 
+def get_state():
+    return query('state')['state']
+
 if __name__ == '__main__':
     print('This is a library that must be imported to be used')
  
