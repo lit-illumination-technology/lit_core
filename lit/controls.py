@@ -1,4 +1,3 @@
-from rpi_ws281x import *
 import colorsys
 import socket
 import logging
@@ -9,7 +8,6 @@ LED_DMA		= 10      # DMA channel to use for generating signal (try 5)
 LED_BRIGHTNESS	= 255     # Set to 0 for darkest and 255 for brightest
 LED_INVERT	= False   # True to invert the signal (when using NPN transistor level shift)
 LED_CHANNEL	= 0
-LED_STRIP	= ws.WS2812_STRIP	#Uses GBR instead of RGB
 #TODO add to config
 #Comment the above line and uncomment line that matches your model
 #LED_STRIP	= ws.WS2811_STRIP_RGB
@@ -27,10 +25,11 @@ class Led_Controller_Manager:
         virtual_sections: The names of the sections that are not connected to this device
         and their respective controller modules.
         """
-        self.ws2812 = Adafruit_NeoPixel(led_count, led_pin, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL, LED_STRIP)
-        self.ws2812.begin()
-        self.led_count = led_count
-        self.led_pin = led_pin
+        if led_count > 0:
+            from rpi_ws281x import Adafruit_NeoPixel
+            LED_STRIP	= ws.WS2812_STRIP	#Uses GBR instead of RGB
+            self.ws2812 = Adafruit_NeoPixel(led_count, led_pin, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL, LED_STRIP)
+            self.ws2812.begin()
         self.controllers = []
         self.sections = sections
         self.section_ordered = sorted(self.sections, key=lambda e: self.sections[e][-1])
@@ -72,7 +71,9 @@ class Led_Controller_Manager:
         # TODO lock self.controllers while reading. Not thread safe
         for controller in self.controllers:
             controller.render()
-        self.ws2812.show()
+
+        if len(self.sections) > len(self.virtual_sections):
+            self.ws2812.show()
         for vr in self.virtual_sections:
             self.virtual_sections[vr].show()
 
@@ -89,7 +90,8 @@ class Led_Controller_Manager:
 class Led_Controller:
     def __init__(self, manager):
         """Creates a new Led_Controller with no active ranges"""
-        self.ws2812 = manager.ws2812
+        if len(manager.sections) > len(manager.virtual_sections):
+            self.ws2812 = manager.ws2812
         self.sections = manager.sections
         self.section_ordered = sorted(self.sections, key=lambda e: self.sections[e][-1])
         self.virtual_sections = manager.virtual_sections
@@ -177,7 +179,8 @@ class Led_Controller:
     def show(self):
         """Pushes the led array to the actual lights"""
         self.render()
-        self.ws2812.show()
+        if len(self.sections) > len(self.virtual_sections):
+            self.ws2812.show()
         for vr in self.virtual_sections:
             self.virtual_sections[vr].show()
 
