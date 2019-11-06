@@ -72,7 +72,7 @@ Preset objects contain:
 If your leds can't all be connected by one wire, a udp connection can be made. This can work with any device, but the only officially supported device is the Arduino 8266 with [this library](https://github.com/nickpesce/lit_arduino). To set a virtual section, add an entry in the "virtual_sections" section of ranges.json. The format is as follows:
 
 <code>
-"virtual_sections": {"section_name": {"num_leds": 60, "ip": "192.168.1.2", "port": 9000}}
+"virtual_sections": {"section_name": {"num_pixels": 60, "ip": "192.168.1.2", "port": 9000}}
 </code>
 
 
