@@ -26,8 +26,8 @@ class Led_Controller_Manager:
         and their respective controller modules.
         """
         if led_count > 0:
-            from rpi_ws281x import Adafruit_NeoPixel
-            LED_STRIP	= ws.WS2812_STRIP	#Uses GBR instead of RGB
+            from rpi_ws281x import Adafruit_NeoPixel, WS2812_STRIP
+            LED_STRIP	= WS2812_STRIP	#Uses GBR instead of RGB
             self.ws2812 = Adafruit_NeoPixel(led_count, led_pin, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL, LED_STRIP)
             self.ws2812.begin()
         self.controllers = []
