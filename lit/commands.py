@@ -1,11 +1,9 @@
 import atexit
 import configparser
 import colorsys
-import getopt
 import importlib
 import json
 import logging
-import math
 import os
 import random
 import sys
@@ -33,7 +31,6 @@ class commands:
         logger.info("Using config directory: {}".format(self.config_path))
         self.config = configparser.ConfigParser()
         self.config.read(os.path.join(self.config_path, "config.ini"))
-        self.t = None
         self.stop_event = threading.Event()
         self.effects = {}
         self.commands = {}
@@ -93,6 +90,7 @@ class commands:
 
     def start_loop(self):
         self.stop_event.clear()
+        show_lock = threading.Lock()
 
         def loop(self):
             total_steps = 0
@@ -102,6 +100,7 @@ class commands:
             while not self.stop_event.is_set():
                 start_time = time.time()
                 try:
+                    show_lock.acquire()
                     for controller, effect in self.controller_effects.items():
                         if effect["next_upd_time"] <= start_time:
                             su = time.time()
@@ -128,6 +127,8 @@ class commands:
                             next_upd_time = min(next_upd_time, effect["next_upd_time"])
                             if effect["speed"] > 0:
                                 effect["step"] += 1
+
+                    show_lock.release()
                     end = time.time()
                     took = end - start_time
                     d = next_upd_time - time.time()
@@ -153,7 +154,9 @@ class commands:
             start_time = time.time()
             while not self.stop_event.is_set():
                 try:
+                    show_lock.acquire()
                     self.controller_manager.show()
+                    show_lock.release()
                     end_time = time.time()
                     logger.debug(
                         "Show took {}ms".format((end_time - start_time) * 1000)
