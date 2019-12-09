@@ -90,7 +90,7 @@ class commands:
 
     def start_loop(self):
         self.stop_event.clear()
-        show_lock = threading.Lock()
+        self.show_lock = threading.Lock()
 
         def loop(self):
             total_steps = 0
@@ -100,7 +100,7 @@ class commands:
             while not self.stop_event.is_set():
                 start_time = time.time()
                 try:
-                    show_lock.acquire()
+                    self.show_lock.acquire()
                     for controller, effect in self.controller_effects.items():
                         if effect["next_upd_time"] <= start_time:
                             su = time.time()
@@ -128,7 +128,7 @@ class commands:
                             if effect["speed"] > 0:
                                 effect["step"] += 1
 
-                    show_lock.release()
+                    self.show_lock.release()
                     end = time.time()
                     took = end - start_time
                     d = next_upd_time - time.time()
@@ -148,15 +148,17 @@ class commands:
                         self.stop_event.wait(d)
                     total_steps += 1
                 except Exception as e:
+                    if self.show_lock.locked():
+                        self.show_lock.release()
                     logger.exception("Error in effect loop")
 
         def show_loop(self):
             start_time = time.time()
             while not self.stop_event.is_set():
                 try:
-                    show_lock.acquire()
+                    self.show_lock.acquire()
                     self.controller_manager.show()
-                    show_lock.release()
+                    self.show_lock.release()
                     end_time = time.time()
                     logger.debug(
                         "Show took {}ms".format((end_time - start_time) * 1000)
@@ -213,6 +215,7 @@ class commands:
         self.history.append({"effect": effect_name.lower(), "state": args.copy()})
 
         speed = args.get("speed", DEFAULT_SPEED)
+        self.show_lock.acquire()
         self.controller_effects[controller] = self.create_effect(effect, args, speed)
         # Remove empty controllers
         self.controller_effects = {
@@ -220,6 +223,7 @@ class commands:
             for c in self.controller_effects
             if c.num_leds != 0
         }
+        self.show_lock.release()
         return (effect.start_string, 0)
 
     def complete_args_with_schema(self, args, schema, controller):
