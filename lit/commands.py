@@ -207,6 +207,7 @@ class commands:
         sections = self.get_sections_from_ranges(
             args.get("ranges", [self.default_range])
         )
+        self.show_lock.acquire()
         controller = self.controller_manager.create_controller(sections)
         # fill in default args from schema
         schema = getattr(effect, "schema", {})
@@ -215,7 +216,6 @@ class commands:
         self.history.append({"effect": effect_name.lower(), "state": args.copy()})
 
         speed = args.get("speed", DEFAULT_SPEED)
-        self.show_lock.acquire()
         self.controller_effects[controller] = self.create_effect(effect, args, speed)
         # Remove empty controllers
         self.controller_effects = {
