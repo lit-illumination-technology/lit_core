@@ -20,6 +20,7 @@ FPS = 40
 SPEED = 0b10
 COLOR = 0b1
 DEFAULT_SPEED = 50  # hertz
+MAX_SHOW_SPEED = 60 # hertz
 TIME_WARN_COOLDOWN = 10  # seconds
 logger = logging.getLogger(__name__)
 
@@ -94,7 +95,6 @@ class commands:
 
         def loop(self):
             total_steps = 0
-            next_show = time.time()
             next_upd_time = time.time()
             last_warn_time = 0
             while not self.stop_event.is_set():
@@ -160,20 +160,23 @@ class commands:
                     self.controller_manager.show()
                     self.show_lock.release()
                     end_time = time.time()
-                    logger.debug(
-                        "Show took {}ms".format((end_time - start_time) * 1000)
-                    )
+                    show_time = (end_time - start_time)
+                    logger.debug("Show took %dms", show_time * 1000)
+                    wait_time = max(0, (1/MAX_SHOW_SPEED) - show_time)
+                    self.stop_event.wait(wait_time)
                     start_time = end_time
                 except Exception as e:
                     logger.exception("Error in show loop")
 
-        threading.Thread(target=show_loop, args=(self,)).start()
+        self.show_thread = threading.Thread(target=show_loop, args=(self,))
+        self.show_thread.start()
         self.loop_thread = threading.Thread(target=loop, args=(self,))
         self.loop_thread.start()
 
     def stop_loop(self):
         self.stop_event.set()
         self.loop_thread.join()
+        self.show_thread.join()
 
     def start_preset(self, preset_name):
         preset = self.presets.get(preset_name, None)
