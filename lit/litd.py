@@ -112,6 +112,8 @@ def start():
         sys.exit(0)
     except Exception as e:
         logger.exception("litd socket error")
+    finally:
+        np.stop_loop()
 
 
 def start_conn_thread(conn):
