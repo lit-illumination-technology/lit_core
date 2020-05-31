@@ -1,5 +1,6 @@
 import colorsys
 import socket
+import time
 import logging
 
 # LED strip configuration:
@@ -223,4 +224,4 @@ class Virtual_Range:
         self.pixels[3 * n + 2] = b
 
     def show(self):
-        self.socket.sendto(bytearray(self.pixels), (self.ip, self.port))
+        self.socket.sendto(bytearray(self.pixels) + int(time.time() * 100).to_bytes(8, 'little'), (self.ip, self.port))
