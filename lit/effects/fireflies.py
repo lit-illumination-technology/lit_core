@@ -8,7 +8,7 @@ start_string = name + " started!"
 description = "You would not believe your eyes"
 
 def setup_start_durations(lights, args):
-    return [(-1, 1)]*lights.num_leds
+    return [(-1, 1)]*lights.size
 
 schema = {
     'speed': {
@@ -62,7 +62,7 @@ def update(lights, step, state):
     """
     density = state['density']/100
     avg_off_time = (((1-density)*AVG_ON_TIME)/density)
-    for i in range(lights.num_leds):
+    for i in range(lights.size):
         sd = start_durations[i]
         if sd[0] + sd[1] <= step:
             state['start_durations'][i] = (step+random.randint(0, int(2*avg_off_time)), MIN_ON_TIME+random.randint(0, (AVG_ON_TIME-MIN_ON_TIME)*2)) 

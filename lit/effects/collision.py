@@ -6,7 +6,7 @@ start_string = name + " started!"
 description = "Two projectiles are sent from opposite ends and collide in the center"
 
 def create_projectiles(lights, args):
-    return [[0, 1, random.random()], [lights.num_leds-1, -1, random.random()]]
+    return [[0, 1, random.random()], [lights.size-1, -1, random.random()]]
 
 schema = {
     'speed': {
@@ -34,11 +34,11 @@ def update(lights, step, state):
     projectiles = state['projectiles']
     if random.random() < .01:
         projectiles.append([0, 1, random.random()])
-        projectiles.append([lights.num_leds-1, -1, random.random()])
+        projectiles.append([lights.size-1, -1, random.random()])
     for i, v in enumerate(projectiles):
         projectiles[i][0] = projectiles[i][0]+projectiles[i][1]
         for t in range(0, TRAIL_LENGTH):
-            if v[0]-v[1]*t >=0 and v[0] - v[1]*t < lights.num_leds:
+            if v[0]-v[1]*t >=0 and v[0] - v[1]*t < lights.size:
                 lights.set_pixel_hsv(v[0] - v[1]*t, v[2], 1, (TRAIL_LENGTH - 1.0*t)/TRAIL_LENGTH)
     for i1, p1 in enumerate(projectiles):
         for i2, p2 in enumerate(projectiles):
@@ -51,8 +51,8 @@ def update(lights, step, state):
                     projectiles.remove(p2)
 
 def explode(lights, n, color1, color2):
-    radius = lights.num_leds // 20
+    radius = lights.size // 20
     for d in range(0, radius):
         for pixel in range(n - d, n + d):
-            if pixel >= 0 and pixel < lights.num_leds:
+            if pixel >= 0 and pixel < lights.size:
                 lights.set_pixel_hsv(pixel, random.choice([color1, color2]) , 1, (1.0 * radius - d) / radius)

@@ -6,9 +6,9 @@ start_string = name + " started!"
 description = "Red and green pattern slides along the strand"
 
 def setup_pixels(lights, args):
-    colors = [None]*lights.num_leds
-    for n in range(0, lights.num_leds):
-        x = math.fabs((lights.num_leds/2 - n)/(lights.num_leds/2))
+    colors = [None]*lights.size
+    for n in range(0, lights.size):
+        x = math.fabs((lights.size/2 - n)/(lights.size/2))
         colors[n] = (int(255-(x*255)), int(x*255), 0)
     return colors
 

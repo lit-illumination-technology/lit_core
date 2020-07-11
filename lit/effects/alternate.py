@@ -35,7 +35,7 @@ schema = {
 }
 
 def update(lights, step, state):
-    for i in range(lights.num_leds):
+    for i in range(lights.size):
         if (i+step) % 2 == 0:
             lights.set_pixel(i, *state['color 1'])
         else:

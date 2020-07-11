@@ -35,14 +35,14 @@ def update(lights, step, state):
 
 def set_section(lights, section, color):
     if section == LEFT:
-        for n in range(0, int(lights.num_leds * (5/12))):
+        for n in range(0, int(lights.size * (5/12))):
             lights.set_pixel(n, *color)
     elif section == RIGHT:
-        for n in range(int(lights.num_leds*(7/12)), lights.num_leds):
+        for n in range(int(lights.size*(7/12)), lights.size):
             lights.set_pixel(n, *color)
     elif section == CENTER_L:
-        for n in range(int(lights.num_leds*(5/12)), int(lights.num_leds*(1/2))):
+        for n in range(int(lights.size*(5/12)), int(lights.size*(1/2))):
             lights.set_pixel(n, *color)
     elif section == CENTER_R:
-        for n in range(int(lights.num_leds*(1/2)), int(lights.num_leds*(7/12))):
+        for n in range(int(lights.size*(1/2)), int(lights.size*(7/12))):
             lights.set_pixel(n, *color)

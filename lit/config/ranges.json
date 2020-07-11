@@ -1,14 +1,15 @@
 {
-    "sections" : {
-        "range 1" : {"start" : 0, "end" : 60},
-        "range 2" : {"start" : 60, "end" : 90},
-        "range 3" : {"start" : 90, "end" : 120}
-    },
-    "zones" : {
-        "all" : ["range 1", "range 2", "range 3"],
-        "one and two" : ["range 1", "range 2"]
-    },
-    "virtual_sections": {
-    },
+    "sections" : [
+        {"name": "range 1", "size": 60, "adapter": "ws2812"},
+        {"name": "range 2", "size": 60, "adapter": "ws2812"},
+        {"name": "range 3", "size": 60, "adapter": "ws2812"}
+    ],
+    "adapters": [
+        {"name": "ws2812", "type": "ws2812", "pin": 18, "size": 120}
+    ],
+    "zones" : [
+        {"name": "all", "sections": ["range 1", "range 2", "range 3"]},
+        {"name": "one and two", "sections": ["range 1", "range 2"]}
+    ],
     "default" : "all"
 }

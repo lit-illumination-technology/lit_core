@@ -9,7 +9,7 @@ start_string = name + " started!"
 description = "Like a little star"
 
 def setup_start_durations(lights, args):
-    return [(-1, 1)]*lights.num_leds
+    return [(-1, 1)]*lights.size
 
 schema = {
     'speed': {
@@ -43,7 +43,7 @@ schema = {
     'brightnesses': {
         'value': {
             'type': 'int list',
-            'default_gen': lambda l, a: [.5]*l.num_leds
+            'default_gen': lambda l, a: [.5]*l.size
         },
         'user_input': False,
     }
@@ -52,7 +52,7 @@ schema = {
 def update(lights, step, state):
     color = state['color'];
     brightnesses = state['brightnesses']
-    for i in range(lights.num_leds):
+    for i in range(lights.size):
         brightness = brightnesses[i]
         lights.set_pixel(i, int(color[0]*brightness), int(color[1]*brightness), int(color[2]*brightness))
         rand = random.random()

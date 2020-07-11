@@ -31,18 +31,18 @@ def update(lights, step, state):
     projectiles = state['projectiles']
     if random.random() < .05:
         right = random.random() < .5 
-        projectiles.append([0 if right else (lights.num_leds-1),
+        projectiles.append([0 if right else (lights.size-1),
             (1 if right else -1) * (max(.3, random.normalvariate(2, 1))),
             random.random()])
 
-    hsvs = [[0, 0, 0] for _ in range(0, lights.num_leds)]
+    hsvs = [[0, 0, 0] for _ in range(0, lights.size)]
     #Total of value(HSV) at each position
-    count = [0] * lights.num_leds
+    count = [0] * lights.size
     for i, val in enumerate(projectiles):
         tail_length = int(15 * abs(val[1]))
         for t in range(0, tail_length):
             tail_pixel = int(val[0] + t * (1 if val[1] < 0 else -1))
-            if tail_pixel >=0 and tail_pixel < lights.num_leds:
+            if tail_pixel >=0 and tail_pixel < lights.size:
                 (h, s, v) = (val[2], 1, (tail_length - 1.0 * t) / tail_length)
                 hsvs[tail_pixel][0] = (hsvs[tail_pixel][0] * count[tail_pixel] + (h*v)) / (count[tail_pixel] + v)
                 hsvs[tail_pixel][1] = s
@@ -52,6 +52,6 @@ def update(lights, step, state):
                 #rgbs[tail_pixel][2] = ((rgbs[tail_pixel][2] * count[tail_pixel]) + b) / (count[tail_pixel] + 1)
                 count[tail_pixel] = count[tail_pixel] + v 
         projectiles[i][0] = projectiles[i][0] + projectiles[i][1]
-        if val[0] + tail_length < 0 or val[0] - tail_length >= lights.num_leds:
+        if val[0] + tail_length < 0 or val[0] - tail_length >= lights.size:
             projectiles.remove(val)
     lights.set_pixels_hsv(hsvs)

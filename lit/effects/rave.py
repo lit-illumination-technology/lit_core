@@ -19,5 +19,5 @@ schema = {
 }
 
 def update(lights, step, state):
-    for i in range(lights.num_leds):
+    for i in range(lights.size):
         lights.set_pixel(i, random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))

@@ -20,7 +20,7 @@ schema = {
 }
 
 def update(lights, step, state):
-    stripe_width = (lights.num_leds/len(COLORS))
+    stripe_width = (lights.size/len(COLORS))
     start = 0
     end = stripe_width
     for ci in range(len(COLORS)):

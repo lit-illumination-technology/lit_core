@@ -8,7 +8,7 @@ schema = {}
 
 BRIGHTNESS = .2
 def update(lights, step, state):
-    for i in range(lights.num_leds):
+    for i in range(lights.size):
         seq = i%10
         if seq == 0:
             lights.set_pixel(i, int(170*BRIGHTNESS), 0, 0)

@@ -18,5 +18,5 @@ schema = {
 }
 
 def update(lights, step, state):
-    hue = (.2*(step//lights.num_leds))%1
-    lights.set_pixel_hsv(step%lights.num_leds, hue, 1, 1)
+    hue = (.2*(step//lights.size))%1
+    lights.set_pixel_hsv(step%lights.size, hue, 1, 1)

@@ -1,5 +1,4 @@
 import atexit
-import configparser
 import colorsys
 import importlib
 import json
@@ -10,7 +9,9 @@ import sys
 import time
 import threading
 
-from . import controls
+from . import controller
+from .section import Section, SectionAdapter
+from .device import DeviceAdapter
 from . import effects
 
 __author__ = "Nick Pesce"
@@ -30,8 +31,6 @@ class commands:
         self.base_path = base_path
         self.config_path = os.path.join(base_path, "config")
         logger.info("Using config directory: {}".format(self.config_path))
-        self.config = configparser.ConfigParser()
-        self.config.read(os.path.join(self.config_path, "config.ini"))
         self.stop_event = threading.Event()
         self.effects = {}
         self.commands = {}
@@ -53,27 +52,42 @@ class commands:
             self.colors = json.load(data_file)
 
         with open(os.path.join(self.config_path, "ranges.json")) as data_file:
-            rangeJson = json.load(data_file)
-            sectionJson = rangeJson["sections"]
-            zoneJson = rangeJson["zones"]
-            virtualSectionJson = rangeJson["virtual_sections"]
-            self.default_range = rangeJson["default"]
-            for k in sectionJson:
-                r = sectionJson[k]
-                self.sections[k] = range(r["start"], r["end"])
-            for k in zoneJson:
-                self.zones[k] = zoneJson[k]
-            for k in virtualSectionJson:
-                v = virtualSectionJson[k]
-                self.virtual_sections[k] = controls.Virtual_Range(
-                    v["num_pixels"], v["ip"], v["port"]
-                )
+            range_json = json.load(data_file)
+            section_json = range_json["sections"]
+            adapters_json = range_json["adapters"]
+            zone_json = range_json["zones"]
+            self.default_range = range_json["default"]
 
-        self.controller_manager = controls.Led_Controller_Manager(
-            led_count=self.config.getint("General", "leds"),
-            led_pin=self.config.getint("General", "pin"),
-            sections=self.sections,
-            virtual_sections=self.virtual_sections,
+            devices = {}
+            for adapter in adapters_json:
+                name = adapter['name']
+                if name in devices:
+                    logger.error("Error in ranges.json: Adapter name %s was defined more than once. Adapter names must be unique.", name)
+                    raise SyntaxError
+                devices[name] = {"adapter": DeviceAdapter.from_config(adapter), "used_indexes": 0}
+
+            section_start_index = 0
+            for section in section_json:
+                device = devices.get(section["adapter"])
+                if not device:
+                    logger.error("Error in ranges.json: Section '%s' references adapter '%s', but that adapter is not defined", section['name'], section["adapter"])
+                    raise SyntaxError
+                next_used_indexes = device['used_indexes'] + section['size']
+                if next_used_indexes > device['adapter'].size:
+                    logger.error("Error in ranges.json: Adapter '%s' has %d pixels available (adapter size), but at least %d were used by sections")
+                    raise SyntaxError
+                section_adapter = SectionAdapter(device['used_indexes'], device['adapter'])
+                section_end_index = section_start_index + section['size']
+                self.sections[section['name']] = Section(section['name'], section_start_index, section['size'], section_adapter)
+                section_start_index += section['size']
+                device['used_indexes'] = next_used_indexes
+                logger.info(devices)
+
+            for zone in zone_json:
+                self.zones[zone['name']] = zone['sections']
+
+        self.controller_manager = controller.ControllerManager(
+            self.sections
         )
         initial_controller = self.controller_manager.create_controller(
             self.sections.keys()
@@ -167,6 +181,8 @@ class commands:
                     start_time = end_time
                 except Exception as e:
                     logger.exception("Error in show loop")
+                    if self.show_lock.locked():
+                        self.show_lock.release()
 
         self.show_thread = threading.Thread(target=show_loop, args=(self,))
         self.show_thread.start()
@@ -224,7 +240,7 @@ class commands:
         self.controller_effects = {
             c: self.controller_effects[c]
             for c in self.controller_effects
-            if c.num_leds != 0
+            if c.size != 0
         }
         self.show_lock.release()
         return (effect.start_string, 0)
