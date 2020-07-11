@@ -52,23 +52,22 @@ class UDPAdapter(DeviceAdapter):
 class WS2812Adapter(DeviceAdapter):
 
     created = False
-    def __init__(self, name, pin, led_count):
+    def __init__(self, name, size, pin):
         if WS2812Adapter.created:
             raise Exception("There can only be one adapter of type ws2812")
-        super().__init__(name, led_count)
+        super().__init__(name, size)
         self.pin = pin
-        self.led_count = led_count
+        self.size = size 
         self.ws2812 = self._init_ws2812()
-        self.absolute_index = absolute_index
         WS2812Adapter.created = True
 
 
     def set_pixel_color_rgb(self, n, r, g, b):
         super().set_pixel_color_rgb(n, r, g, b)
-        WS2812Adapter.ws2812.setPixelColorRGB(n, r, g, b)
+        self.ws2812.setPixelColorRGB(n, r, g, b)
 
     def show(self):
-        WS2812Adapter.ws2812.show()
+        self.ws2812.show()
 
     def _init_ws2812(self):
         from rpi_ws281x import Adafruit_NeoPixel, WS2812_STRIP
@@ -81,8 +80,8 @@ class WS2812Adapter(DeviceAdapter):
 
         LED_STRIP = WS2812_STRIP
         ws2812 = Adafruit_NeoPixel(
-            self.led_count,
-            self.led_pin,
+            self.size,
+            self.pin,
             LED_FREQ_HZ,
             LED_DMA,
             LED_INVERT,
