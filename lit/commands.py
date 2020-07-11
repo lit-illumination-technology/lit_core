@@ -62,26 +62,22 @@ class commands:
             for adapter in adapters_json:
                 name = adapter['name']
                 if name in devices:
-                    logger.error("Error in ranges.json: Adapter name %s was defined more than once. Adapter names must be unique.", name)
-                    raise SyntaxError
+                    raise SyntaxError(f"Adapter name {name} was defined more than once. Adapter names must be unique.")
                 devices[name] = {"adapter": DeviceAdapter.from_config(adapter), "used_indexes": 0}
 
             section_start_index = 0
             for section in section_json:
                 device = devices.get(section["adapter"])
                 if not device:
-                    logger.error("Error in ranges.json: Section '%s' references adapter '%s', but that adapter is not defined", section['name'], section["adapter"])
-                    raise SyntaxError
+                    raise SyntaxError(f"Error in ranges.json: Section '{section['name']}' references adapter '{section['adapter']}', but that adapter is not defined"}
                 next_used_indexes = device['used_indexes'] + section['size']
                 if next_used_indexes > device['adapter'].size:
-                    logger.error("Error in ranges.json: Adapter '%s' has %d pixels available (adapter size), but at least %d were used by sections")
-                    raise SyntaxError
+                    raise SyntaxError(f"Adapter '{device['adapter'].name}' has {device['adapter'].size} pixels available (adapter size), but at least {next_used_indexes} were used by sections")
                 section_adapter = SectionAdapter(device['used_indexes'], device['adapter'])
                 section_end_index = section_start_index + section['size']
                 self.sections[section['name']] = Section(section['name'], section_start_index, section['size'], section_adapter)
                 section_start_index += section['size']
                 device['used_indexes'] = next_used_indexes
-                logger.info(devices)
 
             for zone in zone_json:
                 self.zones[zone['name']] = zone['sections']
