@@ -62,17 +62,17 @@ class commands:
             for adapter in adapters_json:
                 name = adapter['name']
                 if name in devices:
-                    raise SyntaxError(f"Adapter name {name} was defined more than once. Adapter names must be unique.")
+                    raise SyntaxError("Adapter name {name} was defined more than once. Adapter names must be unique.".format(name=name))
                 devices[name] = {"adapter": DeviceAdapter.from_config(adapter), "used_indexes": 0}
 
             section_start_index = 0
             for section in section_json:
                 device = devices.get(section["adapter"])
                 if not device:
-                    raise SyntaxError(f"Error in ranges.json: Section '{section['name']}' references adapter '{section['adapter']}', but that adapter is not defined"}
+                    raise SyntaxError("Error in ranges.json: Section '{section}' references adapter '{adapter}', but that adapter is not defined".format(section=section['name'], adapter=section['adapter']))
                 next_used_indexes = device['used_indexes'] + section['size']
                 if next_used_indexes > device['adapter'].size:
-                    raise SyntaxError(f"Adapter '{device['adapter'].name}' has {device['adapter'].size} pixels available (adapter size), but at least {next_used_indexes} were used by sections")
+                    raise SyntaxError("Adapter '{name}' has {size} pixels available (adapter size), but at least {used} were used by sections".format(name=device['adapter'].name, size=device['adapter'].size, used=next_used_indexes))
                 section_adapter = SectionAdapter(device['used_indexes'], device['adapter'])
                 section_end_index = section_start_index + section['size']
                 self.sections[section['name']] = Section(section['name'], section_start_index, section['size'], section_adapter)
