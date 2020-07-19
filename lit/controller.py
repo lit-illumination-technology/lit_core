@@ -18,47 +18,68 @@ class ControllerManager:
         self.section_ordered = sorted(self.sections, key=lambda e: self.sections[e].end_index)
         # Number of leds in all sections
         self.total_leds = sum(s.size for s in self.sections.values())
+        # The rendered pixel values to be displayed
+        self.pixels = [(0, 0, 0) for _ in range(self.total_leds)]
         # A mapping from absolute index to (local index, controller)
         self.pixel_locations = [None] * self.total_leds
         for section_name in self.section_ordered:
             section = self.sections[section_name]
             for local_i, absolute_i in enumerate(section.absolute_range):
+                # TODO named tuple for pixel locations
                 self.pixel_locations[absolute_i] = (
                     local_i,
                     section
                 )
 
-    # Creates a new Led_Controller for the sections, and removes intersecting sections from other controllers
-    def create_controller(self, sections):
+    def create_controller(self, sections, overlayed=False):
+        """ Creates a new Led_Controller for the specified sections
+        If overlayed is False , the sections will be removed from any existing controllers """
         controller = Controller(self)
         controller.set_sections(sections)
-        for c in self.controllers:
-            if any(s in sections for s in c.active_sections):
-                c.set_sections([s for s in c.active_sections if s not in sections])
+        if not overlayed:
+            for c in self.controllers:
+                if any(s in sections for s in c.active_section_names):
+                    c.set_sections([s for s in c.active_section_names if s not in sections])
+            # Remove any empty controllers
+            self.controllers = [c for c in self.controllers if c.size != 0]
         self.controllers.append(controller)
-        # Remove any empty controllers
-        self.controllers = [c for c in self.controllers if c.size != 0]
         return controller
 
-    def get_controllers(self):
+
+    def get_controller(self):
         return self.controllers
+
+
+    def render(self):
+        overlay_pixels = [[] for _ in range(self.total_leds)]
+        for controller in self.controllers:
+            for abs_i, pixel in controller.abs_pixels():
+                overlay_pixels[abs_i].append(pixel)
+        for i, overlays in enumerate(overlay_pixels):
+            r, g, b, a = 0, 0, 0, 0
+            for pixel in overlays:
+                a += pixel[3]
+                r += pixel[0] * pixel[3]
+                g += pixel[1] * pixel[3]
+                b += pixel[2] * pixel[3]
+            if a == 0:
+                self.pixels[i] = (0, 0, 0)
+            else:
+                self.pixels[i] = (r//a, g//a, b//a)
+            location = self.pixel_locations[i]
+            location[1].section_adapter.set_pixel_color_rgb(location[0], *self.pixels[i])
+
 
     def show(self):
         """Pushes the led array to the actual lights"""
-        for controller in self.controllers:
-            controller.render()
-
+        self.render()
         for display_adapter in self.display_adapters:
             display_adapter.show()
+            
 
     def get_pixels(self):
-        r = []
-        for c in self.controllers:
-            logger.info(c)
-            for p in c.get_pixels():
-                r += [p]
-        logger.info(r)
-        return r
+        """ Returns the list of rgb values as of the last 'show' call """
+        return self.pixels
 
 
 class Controller:
@@ -68,59 +89,54 @@ class Controller:
         self.sections = manager.sections
         self.section_ordered = sorted(self.sections, key=lambda e: self.sections[e].end_index)
         # Currently active section names sorted by end location
-        self.active_sections = []
-        self.inactive_sections = list(self.sections)
+        self.active_section_names = []
         # Number of currently active leds
         self.size  = 0
-        # Number of leds in all sections, local and virtual
-        self.total_leds = manager.total_leds
-        self.pixels = [(0, 0, 0)] * self.total_leds
-        # A mapping from absolute index to (local index, controller)
-        # "Local pixels" will be formatted as (index, self.ws2182)
-        self.absolute_pixel_locations = manager.pixel_locations
-        # Mapping from "controller index" to pixel location
-        self.pixel_locations = []
 
     def set_sections(self, new_sections):
         """Sets the currently active sections to new_sections and updates other dependent fields.
         new_sections is a list of section names corresponding to the sections dict keys"""
-        self.active_sections = sorted(new_sections, key=lambda e: self.sections[e].end_index)
-        self.inactive_sections = [
-            x for x in self.sections if x not in self.active_sections
-        ]
-        self.size  = sum(self.sections[r].size for r in self.active_sections)
-        self.pixel_locations = []
-        for sn in self.active_sections:
+        self.active_section_names = sorted(new_sections, key=lambda e: self.sections[e].end_index)
+        self.size  = sum(self.sections[r].size for r in self.active_section_names)
+        self.pixels = [(0, 0, 0, 0)] * self.size
+
+    def abs_pixels(self):
+        for sn in self.active_section_names:
             s = self.sections[sn]
-            self.pixel_locations += self.absolute_pixel_locations[s.start_index : s.end_index]
+            for i, abs_i in enumerate(s.absolute_range):
+                yield abs_i, self.pixels[i]
 
     def get_sections(self):
         """Returns a list of currently active sections"""
-        return [self.sections[k] for k in self.active_sections]
+        return [self.sections[k] for k in self.active_section_names]
 
     def clear(self):
         """Clear the currently active buffer"""
-        self.set_all_pixels(0, 0, 0)
+        self.set_all_pixels(0, 0, 0, 0)
 
     def off(self):
         """ Turns off all pixels. """
         self.clear()
 
-    def set_pixel(self, n, r, g, b):
+    def set_pixel(self, n, r, g, b, a=1):
         """Set a single pixel to RGB colour, with index only counting active sections for this controller"""
-        self.pixels[n] = (r, g, b)
+        self.pixels[n] = (r, g, b, a)
 
-    def set_pixel_hsv(self, n, h, s, v):
+    def set_pixel_hsv(self, n, h, s, v, a=1):
         """Set a single pixel to RGB colour, with index only counting active sections.
         O(s) where s is the size of active sections"""
         r, g, b = [int(n * 255) for n in colorsys.hsv_to_rgb(h, s, v)]
-        self.set_pixel(n, r, g, b)
+        self.set_pixel(n, r, g, b, a)
 
     def set_pixels(self, pixels):
         """Set active pixels to corresponding pixels in array of rgb tuples with size 'size'"""
         for n in range(0, len(pixels)):
-            r, g, b = pixels[n]
-            self.set_pixel(n, r, g, b)
+            if len(pixels[n]) ==  4:
+                r, g, b, a = pixels[n]
+                self.set_pixel(n, r, g, b, a)
+            else:
+                r, g, b = pixels[n]
+                self.set_pixel(n, r, g, b)
 
     def get_pixels(self):
         return self.pixels
@@ -128,24 +144,20 @@ class Controller:
     def set_pixels_hsv(self, pixels):
         """Set active pixels to corresponding pixels in array of hsv tuples with size 'size'"""
         for n in range(0, len(pixels)):
-            r, g, b = [int(p * 255) for p in colorsys.hsv_to_rgb(*pixels[n])]
-            self.set_pixel(n, r, g, b)
+            r, g, b = [int(p * 255) for p in colorsys.hsv_to_rgb(*pixels[n][:3])]
+            if len(pixels[n]) == 4:
+                self.set_pixel(n, r, g, b, pixels[n][3]) 
+            else:
+                self.set_pixel(n, r, g, b)
 
-    def set_all_pixels(self, r, g, b):
+    def set_all_pixels(self, r, g, b, a=1):
         """Sets all of the pixels to a color in the RGB colorspace"""
-        self.pixels = [(r, g, b)] * self.size
+        self.pixels = [(r, g, b, a)] * self.size
 
-    def set_all_pixels_hsv(self, h, s, v):
+    def set_all_pixels_hsv(self, h, s, v, a=1):
         """Sets all of the pixels to a color in the HSV colorspace"""
         r, g, b = [int(p * 255) for p in colorsys.hsv_to_rgb(h, s, v)]
-        self.set_all_pixels(r, g, b)
-
-    def render(self):
-        """Thread-safe transfer of pixels from controller to 'locations'"""
-        for i in range(0, self.size):
-            r, g, b = self.pixels[i]
-            location = self.pixel_locations[i]
-            location[1].section_adapter.set_pixel_color_rgb(location[0], r, g, b)
+        self.set_all_pixels(r, g, b, a)
 
     def __repr__(self):
-        return "Controller: {}".format(self.active_sections)
+        return "Controller: {}".format(self.active_section_names)

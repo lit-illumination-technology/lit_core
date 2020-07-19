@@ -7,12 +7,12 @@ import sys
 
 logger = logging.getLogger(__name__)
 
-def start_effect(effect, args={}):
+def start_effect(effect, args={}, overlayed=False):
     s = None
     try:
         s = socket.socket(socket.AF_UNIX)
         s.connect('/tmp/litd')
-        command = {'type': 'command', 'effect': effect, 'args': args}
+        command = {'type': 'command', 'effect': effect, 'args': args, 'overlayed': overlayed}
         s.sendall(json.dumps(command).encode())
     except Exception as e:
         s.close()

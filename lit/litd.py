@@ -68,7 +68,7 @@ def setup():
             dest = os.path.join(os.path.dirname(__file__), "effects", "user")
             if not os.path.exists(dest) and os.path.exists(src):
                 os.symlink(src, dest)
-                logger.info("Created user effects symlink")
+                logger.info("Created user effects symlink {} -> {}".format(src, dest))
         except OSError as e:
             logger.warning("Could not create user effects symlink: {}".format(e))
     np = commands.commands(base_path=base_path)
@@ -168,7 +168,7 @@ def result(data):
 
 def command(msg):
     if "effect" in msg:
-        ret, rc = np.start_effect(msg["effect"], msg.get("args", {}))
+        ret, rc = np.start_effect(msg["effect"], msg.get("args", {}), msg.get("overlayed", False))
     elif "preset" in msg:
         ret, rc = np.start_preset(msg["preset"])
     else:

@@ -11,7 +11,6 @@ class DeviceAdapter:
     def __init__(self, name, size):
         self.size = size 
         self.name = name
-        self.pixels = [0] * size * 3
 
     @staticmethod
     def from_config(config):
@@ -24,9 +23,7 @@ class DeviceAdapter:
 
 
     def set_pixel_color_rgb(self, n, r, g, b):
-        self.pixels[3 * n] = r
-        self.pixels[3 * n + 1] = g
-        self.pixels[3 * n + 2] = b
+        pass
 
     def show(self):
         pass
@@ -44,6 +41,12 @@ class UDPAdapter(DeviceAdapter):
         self.ip = ip
         self.port = port
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.pixels = [0] * size * 3
+
+    def set_pixel_color_rgb(self, n, r, g, b):
+        self.pixels[3 * n] = r
+        self.pixels[3 * n + 1] = g
+        self.pixels[3 * n + 2] = b
 
     def show(self):
         payload = bytearray(self.pixels) + int(time.time() * 100).to_bytes(8, 'little')

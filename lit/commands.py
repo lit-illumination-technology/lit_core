@@ -90,11 +90,7 @@ class commands:
         )
 
         self.import_effects()
-        self.controller_effects = {
-            initial_controller: self.create_effect(
-                self.effects["off"], {}, DEFAULT_SPEED
-            )
-        }
+        self.controller_effects = {}
         atexit.register(self._clean_shutdown)
         self.start_loop()
         logger.info("Started effect loop")
@@ -204,13 +200,13 @@ class commands:
                     preset_name
                 )
                 return (msg, 3)
-            result, rc = self.start_effect(command["effect"], command.get("args", {}))
+            result, rc = self.start_effect(command["effect"], command.get("args", {}), overlayed=command.get("overlayed", False))
             if rc != 0:
-                self.start_effect("off", None)
+                self.start_effect("off", {})
                 return (result, rc)
         return (preset.get("start_string", "{} started!".format(preset_name)), 0)
 
-    def start_effect(self, effect_name, args):
+    def start_effect(self, effect_name, args, overlayed=False):
         effect_name = effect_name.lower()
         if effect_name not in self.effects:
             return (self.help(), 2)
@@ -223,7 +219,7 @@ class commands:
             args.get("ranges", [self.default_range])
         )
         self.show_lock.acquire()
-        controller = self.controller_manager.create_controller(sections)
+        controller = self.controller_manager.create_controller(sections, overlayed=overlayed)
         # fill in default args from schema
         schema = getattr(effect, "schema", {})
         self.complete_args_with_schema(args, schema, controller)
@@ -240,6 +236,7 @@ class commands:
         }
         self.show_lock.release()
         return (effect.start_string, 0)
+
 
     def complete_args_with_schema(self, args, schema, controller):
         for k, v in sorted(
