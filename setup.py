@@ -1,7 +1,7 @@
 import setuptools
 
 setuptools.setup(
-    name="lit",
+    name="lit-core",
     version="0.0.0",
     author="Nick Pesce",
     author_email="nickpesce22@gmail.com",
