@@ -1,6 +1,6 @@
 name = "Slide"
 
-start_string = name + " started!"
+start_message = name + " started!"
 
 description = "The full color spectrum shifts along the strand."
 

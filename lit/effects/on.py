@@ -2,7 +2,7 @@
 name = "On"
 
 # This is what the user will see after the effect starts
-start_string = "The lights have been turned on!"
+start_message = "The lights have been turned on!"
 
 # This is what will appear in tips and help menus
 description = "Turns all of the lights on to a specfied color"

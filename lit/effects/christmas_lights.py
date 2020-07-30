@@ -1,6 +1,6 @@
 name = "Christmas Lights"
 
-start_string = name + " started!"
+start_message = name + " started!"
 
 description = "Colors of traditional colored christmas lights"
 

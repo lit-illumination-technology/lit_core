@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 name = "Effect Display Name"
 
 # This is what the user will see after the effect starts
-start_string = name + " started!"
+start_message = name + " started!"
 
 # This is what will appear in tips and help menus
 description = "A light effect"

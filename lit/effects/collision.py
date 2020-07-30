@@ -2,7 +2,7 @@ import random
 
 name = "Collision"
 
-start_string = name + " started!"
+start_message = name + " started!"
 
 description = "Two projectiles are sent from opposite ends and collide in the center"
 

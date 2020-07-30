@@ -2,7 +2,7 @@ import random
 
 name = "Rave"
 
-start_string = name + " started!"
+start_message = name + " started!"
 
 description = "Each light flashes a random color"
 

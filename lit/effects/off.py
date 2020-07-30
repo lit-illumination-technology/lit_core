@@ -1,6 +1,6 @@
 name = "Off"
 
-start_string = "The lights have been turned off."
+start_message = "The lights have been turned off."
 
 description = "Turns the lights off"
 

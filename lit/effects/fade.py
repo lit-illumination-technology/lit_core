@@ -1,6 +1,6 @@
 name = "Fade"
 
-start_string = "Fading!"
+start_message = "Fading!"
 
 description = "Lights fade from one color to another"
 

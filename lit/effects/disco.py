@@ -1,6 +1,6 @@
 name = "Disco"
 
-start_string = name + " started!"
+start_message = name + " started!"
 
 description = "Color spectrum is repeatedly 'squished' to one side."
 

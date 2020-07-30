@@ -1,6 +1,6 @@
 name = "Pride"
 
-start_string = name + " started!"
+start_message = name + " started!"
 
 description = "Displays rainbow pride flag colors"
 

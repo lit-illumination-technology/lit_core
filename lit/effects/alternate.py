@@ -1,8 +1,6 @@
-import math
-
 name = "Alternate"
 
-start_string = name + " started!"
+start_message = name + " started!"
 
 description = "Two alternating colors"
 

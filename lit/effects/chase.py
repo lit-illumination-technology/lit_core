@@ -1,6 +1,6 @@
 name = "Chase"
 
-start_string = name + " started!"
+start_message = name + " started!"
 
 description = "The string is sequentially covered by different colors"
 

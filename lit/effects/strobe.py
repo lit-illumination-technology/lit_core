@@ -1,6 +1,6 @@
 name = "Strobe"
 
-start_string = name + " started!"
+start_message = name + " started!"
 
 description = "Lights flash rapidly"
 

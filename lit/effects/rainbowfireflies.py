@@ -4,7 +4,7 @@ import logging
 logger = logging.getLogger(__name__)
 name = "Rainbow Fireflies"
 
-start_string = name + " started!"
+start_message = name + " started!"
 
 description = "The most fabulous fireflies"
 

@@ -2,7 +2,7 @@ import random
 
 name = "Multi-Chase"
 
-start_string = name + " started!"
+start_message = name + " started!"
 
 description = (
     "The string is sequentially covered by random colors with multiple at the same time"

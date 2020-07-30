@@ -226,7 +226,7 @@ class commands:
             if rc != 0:
                 self.start_effect("off", {}, {"overlayed": False})
                 return (result, rc)
-        return (preset.get("start_string", "{} started!".format(preset_name)), 0)
+        return (preset.get("start_message", "{} started!".format(preset_name)), 0)
 
     def start_effect(self, effect_name, args, properties):
         effect_name = effect_name.lower()
@@ -238,7 +238,7 @@ class commands:
         # attempt to parse arg values
         args = {k: self.get_value_from_string(k, args[k]) for k in args}
         sections = self.get_sections_from_ranges(
-            args.get("ranges", [self.default_range])
+            properties.get("ranges", [self.default_range])
         )
         self.show_lock.acquire()
         opacity = properties.get("opacity", 1)
@@ -260,7 +260,7 @@ class commands:
 
         self.history.append({"effect": effect_name.lower(), "state": args.copy()})
 
-        speed = args.get("speed", DEFAULT_SPEED)
+        speed = properties.get("speed", DEFAULT_SPEED)
         self.controller_effects[controller] = self.create_effect(effect, args, speed)
         # Remove empty controllers
         self.controller_effects = {
@@ -270,7 +270,7 @@ class commands:
         }
         self.show_lock.release()
         logger.info("New controller manager: {}".format(self.controller_manager))
-        return (effect.start_string, 0)
+        return (effect.start_message, 0)
 
     def complete_args_with_schema(self, args, schema, controller):
         for k, v in sorted(
@@ -382,7 +382,7 @@ class commands:
                 )
             for c in self.colors:
                 if c["name"].lower() == string.lower():
-                    return c["color"]
+                    return c["rgb"]
             # TODO throw invalid color name error
             return [255, 255, 255]
         elif type.lower() == "speed":
@@ -392,25 +392,6 @@ class commands:
                 return self.sections.keys()
             return string.split(",")
         return string
-
-    def combine_colors_in_list(self, list):
-        """Takes a list of strings, and combines adjacent strings that are not known to be speeds"""
-        ret = []
-        cat = None
-        for i in range(0, len(list)):
-            if self.speeds.has_key(list[i].lower()):
-                if not cat is None:
-                    ret.append(cat)
-                    cat = None
-                ret.append(list[i].lower())
-            else:
-                if cat is None:
-                    cat = list[i].lower()
-                else:
-                    cat += " " + list[i].lower()
-        if not cat is None:
-            ret.append(cat)
-        return ret
 
     def is_effect(self, name):
         return name.lower() in self.effects

@@ -4,7 +4,7 @@ import logging
 logger = logging.getLogger(__name__)
 name = "Fireflies"
 
-start_string = name + " started!"
+start_message = name + " started!"
 
 description = "You would not believe your eyes"
 

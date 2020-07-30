@@ -1,6 +1,6 @@
 name = "Throb"
 
-start_string = name + " started!"
+start_message = name + " started!"
 
 description = "Shifts through brighness levels repeatedly"
 

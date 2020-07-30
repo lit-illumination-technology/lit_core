@@ -2,7 +2,7 @@ import math
 
 name = "Christmas"
 
-start_string = name + " started!"
+start_message = name + " started!"
 
 description = "Red and green pattern slides along the strand"
 

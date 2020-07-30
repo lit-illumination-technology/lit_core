@@ -5,7 +5,7 @@ logger = logging.getLogger(__name__)
 
 name = "Twinkle"
 
-start_string = name + " started!"
+start_message = name + " started!"
 
 description = "Like a little star"
 

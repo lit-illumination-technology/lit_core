@@ -4,7 +4,7 @@ import logging
 logger = logging.getLogger(__name__)
 name = "Heartbeat"
 
-start_string = name + " started!"
+start_message = name + " started!"
 
 description = "La-dub la-dub"
 

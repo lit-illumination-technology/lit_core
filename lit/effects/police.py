@@ -1,6 +1,6 @@
 name = "Police"
 
-start_string = "Cops are here!"
+start_message = "Cops are here!"
 
 description = "Mimics lights on top of police cars."
 

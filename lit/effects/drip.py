@@ -2,7 +2,7 @@ import random
 
 name = "Drip"
 
-start_string = name + " started!"
+start_message = name + " started!"
 
 description = "Mimics water droplets accumulating and falling"
 

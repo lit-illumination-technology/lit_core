@@ -1,9 +1,8 @@
 import random
-import colorsys
 
 name = "Nexus"
 
-start_string = name + " started!"
+start_message = name + " started!"
 
 description = "Like the Nexus android wallpaper"
 
