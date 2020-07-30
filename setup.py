@@ -6,7 +6,7 @@ setuptools.setup(
     author="Nick Pesce",
     author_email="nickpesce22@gmail.com",
     description="Lit Ilumination Technology",
-    url=["https://github.com/lit-illumination-technology/lit_core"],
+    url="https://github.com/lit-illumination-technology/lit_core",
     packages=["lit", "lit.effects"],
     scripts=["bin/litctl", "bin/litdev"],
     entry_points={"console_scripts": ["litd=lit.litd:start"],},
