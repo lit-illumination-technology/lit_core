@@ -13,7 +13,7 @@ setuptools.setup(
     package_data={"lit": ["config/*"]},
     classifiers=[
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
-        "Operating System :: Linux",
+        "Operating System :: POSIX :: Linux",
         "Development Status :: 3 - Alpha",
         "Programming Language :: Python :: 3",
         "Topic :: Home Automation",
