@@ -1,4 +1,5 @@
 import logging
+
 logger = logging.getLogger(__name__)
 
 # This is what will appear in all interfaces
@@ -13,14 +14,14 @@ description = "A light effect"
 # Schema defines what information the effect needs. This includes all arguments
 # that the effect requires as well as any other state that the effect may need.
 # All keys in the 'schema' dict will have a corresponding key in the 'state' dict below.
-# All schema elements must have a 'value' and 'user_input' field. 
+# All schema elements must have a 'value' and 'user_input' field.
 # 'value' defines the what data should look like. The fields are:
-     #'type': {'number', 'color'} required if user_input=True
-     #'min': minimum allowed value. required if type=number
-     #'max': maximum allowed value. required if type=number
-     #*One of the following two fields are required
-     #'default': The default value. Must be a primitive
-     #'default_gen': A function that returns a default value.
+#'type': {'number', 'color'} required if user_input=True
+#'min': minimum allowed value. required if type=number
+#'max': maximum allowed value. required if type=number
+# *One of the following two fields are required
+#'default': The default value. Must be a primitive
+#'default_gen': A function that returns a default value.
 # 'user_input': True if this field is meant to be an argument passed by the user
 # IMPORTANT NOTE:
 # There are two field names that are considered 'special': 'speed' and 'ranges'
@@ -28,28 +29,12 @@ description = "A light effect"
 # Bounds may be set by defining it in the scehma.
 # Ranges defines which sections the effect was started on. It is reserved and may not be used
 schema = {
-    'speed': {
-        'value': {
-            'type': 'number',
-            'min': 0,
-            'max': 100,
-            'default': 50
-        },
-        'user_input': True
+    "speed": {
+        "value": {"type": "number", "min": 0, "max": 100, "default": 50},
+        "user_input": True,
     },
-    'color': {
-        'value': {
-            'type': 'color',
-            'default': (255, 0, 255)
-        },
-        'user_input': True
-    },
-    'custom': {
-        'value': {
-            'default_gen': lambda x: list()
-        },
-        'user_input': False
-    }
+    "color": {"value": {"type": "color", "default": (255, 0, 255)}, "user_input": True},
+    "custom": {"value": {"default_gen": lambda x: list()}, "user_input": False},
 }
 
 # This is the function that controls the effect. Look at the included effects for examples.
@@ -58,6 +43,6 @@ schema = {
 #    step: The number of iterations since starting the effect
 #    state: A dictionary that corresponds to the schema above
 def update(lights, step, state):
-    # Called repeatedy, with step increasing by 1 each call and state persisting 
-    state['my_list'].append(step)
-    lights.set_all_pixels(*state['color'])
+    # Called repeatedy, with step increasing by 1 each call and state persisting
+    state["my_list"].append(step)
+    lights.set_all_pixels(*state["color"])
