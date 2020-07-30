@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 import setuptools
 
 setuptools.setup(
@@ -7,12 +6,17 @@ setuptools.setup(
     author='Nick Pesce',
     author_email='nickpesce22@gmail.com',
     description='Lit Ilumination Technology',
-    url=['https://github.com/nickpesce/lit'],
+    url=['https://github.com/lit-illumination-technology/lit_core'],
     packages=['lit', 'lit.effects'],
-    scripts=['bin/litd', 'bin/litctl', 'bin/litdev'],
+    scripts=['bin/litctl', 'bin/litdev'],
+    entry_points={
+        'console_scripts': [
+            'litd=lit.litd:start'
+        ],
+    },
     package_data={'lit': ['config/*']},
     classifiers=[
         'License :: MIT License',
         'Operating System :: Linux',
-    ],
+    ]
 )

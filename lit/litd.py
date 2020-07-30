@@ -68,9 +68,13 @@ def setup():
             dest = os.path.join(os.path.dirname(__file__), "effects", "user")
             if not os.path.exists(dest) and os.path.exists(src):
                 os.symlink(src, dest)
-                logger.info("Created user effects symlink {} -> {}".format(src, dest))
+                logger.info(
+                    "Created user effects symlink {} -> {}".format(src, dest))
+                logger.warning(
+                    "User effects will not be available until this program is restarted")
         except OSError as e:
-            logger.warning("Could not create user effects symlink: {}".format(e))
+            logger.warning(
+                "Could not create user effects symlink: {}".format(e))
     np = commands.commands(base_path=base_path)
 
     queries.update(
@@ -81,7 +85,6 @@ def setup():
             "sections": sections,
             "zones": zones,
             "speeds": speeds,
-            "sections": sections,
             "pixels": pixels,
             "state": state,
             "error": lambda _: error("not a valid query"),
@@ -97,7 +100,8 @@ def start():
     try:
         os.remove(socket_path)
     except OSError as e:
-        logger.warning('Got "{}" when trying to remove {}'.format(e, socket_path))
+        logger.warning(
+            'Got "{}" when trying to remove {}'.format(e, socket_path))
     try:
         # Allow created socket to have non-root read and write permissions
         os.umask(0o1)
@@ -168,9 +172,10 @@ def result(data):
 
 def command(msg):
     if "effect" in msg:
-        ret, rc = np.start_effect(msg["effect"], msg.get("args", {}), msg.get("overlayed", False))
+        ret, rc = np.start_effect(msg["effect"], msg.get(
+            "args", {}), msg.get("properties", {}))
     elif "preset" in msg:
-        ret, rc = np.start_preset(msg["preset"])
+        ret, rc = np.start_preset(msg["preset"], msg.get("properties", {}))
     else:
         ret = "Message must have 'effect' or 'preset' key"
         rc = 1
@@ -236,4 +241,5 @@ def state():
 
 
 if __name__ == "__main__":
-    logger.info("This module must be started by calling importing and calling start()")
+    logger.info(
+        "This module must be started by calling importing and calling start()")

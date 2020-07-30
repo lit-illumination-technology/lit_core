@@ -7,12 +7,16 @@ import sys
 
 logger = logging.getLogger(__name__)
 
-def start_effect(effect, args={}, overlayed=False):
+
+def start_effect(effect_name, effect_args=None, properties=None):
     s = None
+    if effect_args is None:
+        effect_args = {}
     try:
         s = socket.socket(socket.AF_UNIX)
         s.connect('/tmp/litd')
-        command = {'type': 'command', 'effect': effect, 'args': args, 'overlayed': overlayed}
+        command = {'type': 'command', 'effect': effect_name,
+                   'args': effect_args, 'properties': properties}
         s.sendall(json.dumps(command).encode())
     except Exception as e:
         s.close()
@@ -25,12 +29,14 @@ def start_effect(effect, args={}, overlayed=False):
         logger.error(response_error(res))
     return res
 
-def start_preset(preset):
+
+def start_preset(preset, properties=None):
     s = None
     try:
         s = socket.socket(socket.AF_UNIX)
         s.connect('/tmp/litd')
-        command = {'type': 'command', 'preset': preset}
+        command = {'type': 'command',
+                   'preset': preset, 'properties': properties}
         s.sendall(json.dumps(command).encode())
     except Exception as e:
         s.close()
@@ -42,6 +48,7 @@ def start_preset(preset):
     if res.get('rc', 1) != 0:
         logger.error(response_error(res))
     return res
+
 
 def query(query):
     s = None
@@ -60,6 +67,7 @@ def query(query):
         logger.error(response_error(res))
     return res
 
+
 def dev_command(command, args):
     s = None
     try:
@@ -77,10 +85,11 @@ def dev_command(command, args):
         logger.error(response_error(res))
     return res
 
+
 def get_response(s):
     response = ''
     try:
-        #First 32 bytes are a string representation of the message length
+        # First 32 bytes are a string representation of the message length
         expected = int(s.recv(32).decode())
         received = 0
         while received < expected:
@@ -90,38 +99,47 @@ def get_response(s):
     except Exception as e:
         raise conn_error(e)
     return json.loads(response)
-    
+
 
 def conn_error(e):
     return Exception('LIT Daemon error: {}'.format(e))
 
+
 def response_error(res):
     return Exception('Daemon returned a non-zero response code(rc={}). Error={}'.format(res.get('rc', None), res.get('result', 'No message')))
+
 
 def get_effects():
     return query('effects')['effects']
 
+
 def get_presets():
     return query('presets')['presets']
+
 
 def get_colors():
     return query('colors')['colors']
 
+
 def get_speeds():
     return query('speeds')['speeds']
+
 
 def get_sections():
     return query('sections')['sections']
 
+
 def get_zones():
     return query('zones')['zones']
+
 
 def get_pixels():
     return query('pixels')['pixels']
 
+
 def get_state():
     return query('state')['state']
 
+
 if __name__ == '__main__':
     print('This is a library that must be imported to be used')
- 

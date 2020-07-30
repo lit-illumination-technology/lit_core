@@ -47,7 +47,7 @@ schema = {
 }
 
 def update(lights, step, state):
-    color = state['color'];
+    color = state['color']
     dullness = state['dullness']
     intensity = state['intensity']
     for i in range(lights.size):

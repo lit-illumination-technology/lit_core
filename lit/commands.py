@@ -21,7 +21,7 @@ FPS = 40
 SPEED = 0b10
 COLOR = 0b1
 DEFAULT_SPEED = 50  # hertz
-MAX_SHOW_SPEED = 60 # hertz
+MAX_SHOW_SPEED = 60  # hertz
 TIME_WARN_COOLDOWN = 10  # seconds
 logger = logging.getLogger(__name__)
 
@@ -62,20 +62,28 @@ class commands:
             for adapter in adapters_json:
                 name = adapter['name']
                 if name in devices:
-                    raise SyntaxError("Adapter name {name} was defined more than once. Adapter names must be unique.".format(name=name))
-                devices[name] = {"adapter": DeviceAdapter.from_config(adapter), "used_indexes": 0}
+                    raise SyntaxError(
+                        "Adapter name {name} was defined more than once. "
+                        "Adapter names must be unique.".format(name=name))
+                devices[name] = {"adapter": DeviceAdapter.from_config(
+                    adapter), "used_indexes": 0}
 
             section_start_index = 0
             for section in section_json:
                 device = devices.get(section["adapter"])
                 if not device:
-                    raise SyntaxError("Error in ranges.json: Section '{section}' references adapter '{adapter}', but that adapter is not defined".format(section=section['name'], adapter=section['adapter']))
+                    raise SyntaxError("Error in ranges.json: Section '{section}' references "
+                                      "adapter '{adapter}', but that adapter is not defined".format(
+                        section=section['name'], adapter=section['adapter']))
                 next_used_indexes = device['used_indexes'] + section['size']
                 if next_used_indexes > device['adapter'].size:
-                    raise SyntaxError("Adapter '{name}' has {size} pixels available (adapter size), but at least {used} were used by sections".format(name=device['adapter'].name, size=device['adapter'].size, used=next_used_indexes))
-                section_adapter = SectionAdapter(device['used_indexes'], device['adapter'])
+                    raise SyntaxError("Adapter '{name}' has {size} pixels available (adapter size), but at least {used} were used by sections".format(
+                        name=device['adapter'].name, size=device['adapter'].size, used=next_used_indexes))
+                section_adapter = SectionAdapter(
+                    device['used_indexes'], device['adapter'])
                 section_end_index = section_start_index + section['size']
-                self.sections[section['name']] = Section(section['name'], section_start_index, section['size'], section_adapter)
+                self.sections[section['name']] = Section(
+                    section['name'], section_start_index, section['size'], section_adapter)
                 section_start_index += section['size']
                 device['used_indexes'] = next_used_indexes
 
@@ -85,10 +93,6 @@ class commands:
         self.controller_manager = controller.ControllerManager(
             self.sections
         )
-        initial_controller = self.controller_manager.create_controller(
-            self.sections.keys()
-        )
-
         self.import_effects()
         self.controller_effects = {}
         atexit.register(self._clean_shutdown)
@@ -117,7 +121,8 @@ class commands:
                             except Exception as e:
                                 logger.exception(
                                     'Error in effect "%s"',
-                                    getattr(effect["effect"], "name", "NONAME"),
+                                    getattr(effect["effect"],
+                                            "name", "NONAME"),
                                 )
                             eu = time.time()
                             logger.debug(
@@ -130,7 +135,8 @@ class commands:
                             effect["next_upd_time"] += 1 / (
                                 effect["speed"] or DEFAULT_SPEED
                             )
-                            next_upd_time = min(next_upd_time, effect["next_upd_time"])
+                            next_upd_time = min(
+                                next_upd_time, effect["next_upd_time"])
                             if effect["speed"] > 0:
                                 effect["step"] += 1
 
@@ -186,7 +192,7 @@ class commands:
         self.loop_thread.join()
         self.show_thread.join()
 
-    def start_preset(self, preset_name):
+    def start_preset(self, preset_name, properties):
         preset = self.presets.get(preset_name, None)
         if not preset:
             msg = "The preset {} does not exist".format(preset_name)
@@ -200,13 +206,14 @@ class commands:
                     preset_name
                 )
                 return (msg, 3)
-            result, rc = self.start_effect(command["effect"], command.get("args", {}), overlayed=command.get("overlayed", False))
+            result, rc = self.start_effect(command["effect"], command.get(
+                "args", {}), command.get("properties", {}))
             if rc != 0:
-                self.start_effect("off", {})
+                self.start_effect("off", {}, {"overlayed": False})
                 return (result, rc)
         return (preset.get("start_string", "{} started!".format(preset_name)), 0)
 
-    def start_effect(self, effect_name, args, overlayed=False):
+    def start_effect(self, effect_name, args, properties):
         effect_name = effect_name.lower()
         if effect_name not in self.effects:
             return (self.help(), 2)
@@ -219,15 +226,29 @@ class commands:
             args.get("ranges", [self.default_range])
         )
         self.show_lock.acquire()
-        controller = self.controller_manager.create_controller(sections, overlayed=overlayed)
+        opacity = properties.get("opacity", 1)
+        if not isinstance(opacity, int):
+            opacity = 1
+            logger.warning(
+                "Invalid 'opacity' property received: {}".format(opacity))
+        overlayed = properties.get("overlayed", False)
+        if not isinstance(overlayed, bool):
+            logger.warning(
+                "Invalid 'overlayed' property received: {}".format(overlayed))
+            overlayed = False
+        controller = self.controller_manager.create_controller(sections,
+                                                               overlayed=overlayed,
+                                                               opacity=opacity)
         # fill in default args from schema
         schema = getattr(effect, "schema", {})
         self.complete_args_with_schema(args, schema, controller)
 
-        self.history.append({"effect": effect_name.lower(), "state": args.copy()})
+        self.history.append(
+            {"effect": effect_name.lower(), "state": args.copy()})
 
         speed = args.get("speed", DEFAULT_SPEED)
-        self.controller_effects[controller] = self.create_effect(effect, args, speed)
+        self.controller_effects[controller] = self.create_effect(
+            effect, args, speed)
         # Remove empty controllers
         self.controller_effects = {
             c: self.controller_effects[c]
@@ -235,8 +256,9 @@ class commands:
             if c.size != 0
         }
         self.show_lock.release()
+        logger.info("New controller manager: {}".format(
+            self.controller_manager))
         return (effect.start_string, 0)
-
 
     def complete_args_with_schema(self, args, schema, controller):
         for k, v in sorted(
@@ -265,29 +287,6 @@ class commands:
             "speed": speed,
             "next_upd_time": time.time(),
         }
-
-    def modify(self, range):
-        # Modify command
-        if not history:
-            return ("There is no current effect", 1)
-        current = self.history.pop()
-        if "speed" in args:
-            if args["speed"] == "faster":
-                args["speed"] = current["state"].get("speed", 50) + 10
-            if args["speed"] == "slower":
-                args["speed"] = current["state"].get("speed", 50) - 10
-
-        current["state"].update(args)
-        self.start(current["effect"], current["state"])
-        return ("Effect modified!", 0)
-
-    def back(self, range):
-        # Back command
-        if len(self.history) < 2:
-            return ("There are no previous effects!", 1)
-        self.history.pop()
-        prev = self.history.pop()
-        return self.start_effect(prev["effect"], prev["state"])
 
     def help(self):
         return """Effects:\n    ~ """ + (
@@ -337,7 +336,8 @@ class commands:
             effect_name = getattr(e["effect"], "name", "Unnamed")
             state.append(
                 {
-                    "sections": c.active_sections,
+                    "sections": c.active_section_names,
+                    "opacity": c.opacity,
                     "effect_name": effect_name,
                     "effect_state": state_schema(
                         e["state"], self.commands[effect_name]

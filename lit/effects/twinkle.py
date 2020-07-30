@@ -50,7 +50,7 @@ schema = {
 }
 
 def update(lights, step, state):
-    color = state['color'];
+    color = state['color']
     brightnesses = state['brightnesses']
     for i in range(lights.size):
         brightness = brightnesses[i]

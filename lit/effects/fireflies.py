@@ -53,7 +53,7 @@ AVG_ON_TIME = 100
 MIN_ON_TIME = 10
 
 def update(lights, step, state):
-    color = state['color'];
+    color = state['color']
     start_durations = state['start_durations']
     """ MATH:
     DENSITY = OnTime/(Ontime+OffTime)
@@ -70,4 +70,4 @@ def update(lights, step, state):
         if brightness > 1:
             brightness = 2 - brightness
         brightness = max(brightness, 0)
-        lights.set_pixel(i, int(color[0]*brightness), int(color[1]*brightness), int(color[2]*brightness))
+        lights.set_pixel(i, int(color[0]*brightness), int(color[1]*brightness), int(color[2]*brightness), brightness)
