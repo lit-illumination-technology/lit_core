@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="lit",
-    version="0.1",
+    version="0.0.0",
     author="Nick Pesce",
     author_email="nickpesce22@gmail.com",
     description="Lit Ilumination Technology",
@@ -11,5 +11,13 @@ setuptools.setup(
     scripts=["bin/litctl", "bin/litdev"],
     entry_points={"console_scripts": ["litd=lit.litd:start"],},
     package_data={"lit": ["config/*"]},
-    classifiers=["License :: MIT License", "Operating System :: Linux",],
+    classifiers=[
+        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+        "Operating System :: Linux",
+        "Development Status :: 3 - Alpha",
+        "Programming Language :: Python :: 3",
+        "Topic :: Home Automation",
+    ],
+    install_requires=["rpi_ws281x"],
+    python_requires=">=3.5",
 )
