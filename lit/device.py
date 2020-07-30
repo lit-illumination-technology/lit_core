@@ -1,6 +1,7 @@
 import logging
 import time
 import socket
+
 logger = logging.getLogger(__name__)
 
 
@@ -16,13 +17,13 @@ class DeviceAdapter:
 
     @staticmethod
     def from_config(config):
-        adapter_type = config.get('type')
-        if adapter_type == 'ws2812':
-            adapter = WS2812Adapter(
-                config['name'], config['size'], config['pin'])
-        elif adapter_type == 'udp':
+        adapter_type = config.get("type")
+        if adapter_type == "ws2812":
+            adapter = WS2812Adapter(config["name"], config["size"], config["pin"])
+        elif adapter_type == "udp":
             adapter = UDPAdapter(
-                config['name'], config['size'], config['ip'], config['port'])
+                config["name"], config["size"], config["ip"], config["port"]
+            )
         return adapter
 
     def set_pixel_color_rgb(self, n, r, g, b):
@@ -53,8 +54,7 @@ class UDPAdapter(DeviceAdapter):
         self.pixels[3 * n + 2] = b
 
     def show(self):
-        payload = bytearray(self.pixels) + int(time.time()
-                                               * 100).to_bytes(8, 'little')
+        payload = bytearray(self.pixels) + int(time.time() * 100).to_bytes(8, "little")
         self.socket.sendto(payload, 0, (self.ip, self.port))
 
 

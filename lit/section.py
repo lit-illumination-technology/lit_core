@@ -3,7 +3,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class Section():
+class Section:
     def __init__(self, name, start_index, size, section_adapter):
         self.name = name
         self.start_index = start_index
@@ -23,6 +23,5 @@ class SectionAdapter:
         self.offset = offset
         self.display_adapter = display_adapter
 
-
     def set_pixel_color_rgb(self, n, r, g, b):
-        self.display_adapter.set_pixel_color_rgb(n+self.offset, r, g, b)
+        self.display_adapter.set_pixel_color_rgb(n + self.offset, r, g, b)

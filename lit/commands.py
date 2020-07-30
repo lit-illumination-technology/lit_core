@@ -60,39 +60,53 @@ class commands:
 
             devices = {}
             for adapter in adapters_json:
-                name = adapter['name']
+                name = adapter["name"]
                 if name in devices:
                     raise SyntaxError(
                         "Adapter name {name} was defined more than once. "
-                        "Adapter names must be unique.".format(name=name))
-                devices[name] = {"adapter": DeviceAdapter.from_config(
-                    adapter), "used_indexes": 0}
+                        "Adapter names must be unique.".format(name=name)
+                    )
+                devices[name] = {
+                    "adapter": DeviceAdapter.from_config(adapter),
+                    "used_indexes": 0,
+                }
 
             section_start_index = 0
             for section in section_json:
                 device = devices.get(section["adapter"])
                 if not device:
-                    raise SyntaxError("Error in ranges.json: Section '{section}' references "
-                                      "adapter '{adapter}', but that adapter is not defined".format(
-                        section=section['name'], adapter=section['adapter']))
-                next_used_indexes = device['used_indexes'] + section['size']
-                if next_used_indexes > device['adapter'].size:
-                    raise SyntaxError("Adapter '{name}' has {size} pixels available (adapter size), but at least {used} were used by sections".format(
-                        name=device['adapter'].name, size=device['adapter'].size, used=next_used_indexes))
+                    raise SyntaxError(
+                        "Error in ranges.json: Section '{section}' references "
+                        "adapter '{adapter}', but that adapter is not defined".format(
+                            section=section["name"], adapter=section["adapter"]
+                        )
+                    )
+                next_used_indexes = device["used_indexes"] + section["size"]
+                if next_used_indexes > device["adapter"].size:
+                    raise SyntaxError(
+                        "Adapter '{name}' has {size} pixels available (adapter size), but at least {used} were used by sections".format(
+                            name=device["adapter"].name,
+                            size=device["adapter"].size,
+                            used=next_used_indexes,
+                        )
+                    )
                 section_adapter = SectionAdapter(
-                    device['used_indexes'], device['adapter'])
-                section_end_index = section_start_index + section['size']
-                self.sections[section['name']] = Section(
-                    section['name'], section_start_index, section['size'], section_adapter)
-                section_start_index += section['size']
-                device['used_indexes'] = next_used_indexes
+                    device["used_indexes"], device["adapter"]
+                )
+                section_end_index = section_start_index + section["size"]
+                self.sections[section["name"]] = Section(
+                    section["name"],
+                    section_start_index,
+                    section["size"],
+                    section_adapter,
+                )
+                section_start_index += section["size"]
+                device["used_indexes"] = next_used_indexes
 
             for zone in zone_json:
-                self.zones[zone['name']] = zone['sections']
+                self.zones[zone["name"]] = zone["sections"]
 
-        self.controller_manager = controller.ControllerManager(
-            self.sections
-        )
+        self.controller_manager = controller.ControllerManager(self.sections)
         self.import_effects()
         self.controller_effects = {}
         atexit.register(self._clean_shutdown)
@@ -121,8 +135,7 @@ class commands:
                             except Exception as e:
                                 logger.exception(
                                     'Error in effect "%s"',
-                                    getattr(effect["effect"],
-                                            "name", "NONAME"),
+                                    getattr(effect["effect"], "name", "NONAME"),
                                 )
                             eu = time.time()
                             logger.debug(
@@ -135,8 +148,7 @@ class commands:
                             effect["next_upd_time"] += 1 / (
                                 effect["speed"] or DEFAULT_SPEED
                             )
-                            next_upd_time = min(
-                                next_upd_time, effect["next_upd_time"])
+                            next_upd_time = min(next_upd_time, effect["next_upd_time"])
                             if effect["speed"] > 0:
                                 effect["step"] += 1
 
@@ -172,9 +184,9 @@ class commands:
                     self.controller_manager.show()
                     self.show_lock.release()
                     end_time = time.time()
-                    show_time = (end_time - start_time)
+                    show_time = end_time - start_time
                     logger.debug("Show took %dms", show_time * 1000)
-                    wait_time = max(0, (1/MAX_SHOW_SPEED) - show_time)
+                    wait_time = max(0, (1 / MAX_SHOW_SPEED) - show_time)
                     self.stop_event.wait(wait_time)
                     start_time = end_time
                 except Exception as e:
@@ -206,8 +218,11 @@ class commands:
                     preset_name
                 )
                 return (msg, 3)
-            result, rc = self.start_effect(command["effect"], command.get(
-                "args", {}), command.get("properties", {}))
+            result, rc = self.start_effect(
+                command["effect"],
+                command.get("args", {}),
+                command.get("properties", {}),
+            )
             if rc != 0:
                 self.start_effect("off", {}, {"overlayed": False})
                 return (result, rc)
@@ -229,26 +244,24 @@ class commands:
         opacity = properties.get("opacity", 1)
         if not isinstance(opacity, int):
             opacity = 1
-            logger.warning(
-                "Invalid 'opacity' property received: {}".format(opacity))
+            logger.warning("Invalid 'opacity' property received: {}".format(opacity))
         overlayed = properties.get("overlayed", False)
         if not isinstance(overlayed, bool):
             logger.warning(
-                "Invalid 'overlayed' property received: {}".format(overlayed))
+                "Invalid 'overlayed' property received: {}".format(overlayed)
+            )
             overlayed = False
-        controller = self.controller_manager.create_controller(sections,
-                                                               overlayed=overlayed,
-                                                               opacity=opacity)
+        controller = self.controller_manager.create_controller(
+            sections, overlayed=overlayed, opacity=opacity
+        )
         # fill in default args from schema
         schema = getattr(effect, "schema", {})
         self.complete_args_with_schema(args, schema, controller)
 
-        self.history.append(
-            {"effect": effect_name.lower(), "state": args.copy()})
+        self.history.append({"effect": effect_name.lower(), "state": args.copy()})
 
         speed = args.get("speed", DEFAULT_SPEED)
-        self.controller_effects[controller] = self.create_effect(
-            effect, args, speed)
+        self.controller_effects[controller] = self.create_effect(effect, args, speed)
         # Remove empty controllers
         self.controller_effects = {
             c: self.controller_effects[c]
@@ -256,8 +269,7 @@ class commands:
             if c.size != 0
         }
         self.show_lock.release()
-        logger.info("New controller manager: {}".format(
-            self.controller_manager))
+        logger.info("New controller manager: {}".format(self.controller_manager))
         return (effect.start_string, 0)
 
     def complete_args_with_schema(self, args, schema, controller):
