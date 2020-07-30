@@ -1,5 +1,4 @@
 import random
-
 name = "Flash"
 
 start_string = name + " started!"
@@ -7,13 +6,17 @@ start_string = name + " started!"
 description = "All lights change to a random color repeatedly"
 
 schema = {
-    "speed": {
-        "value": {"type": "number", "min": 1, "max": 10, "default": 3},
-        "user_input": True,
-        "required": False,
+    'speed': {
+        'value': {
+            'type': 'number',
+            'min': 1,
+            'max': 10,
+            'default': 3
+        },
+        'user_input': True,
+        'required': False
     }
 }
-
 
 def update(lights, step, state):
     color = [random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)]

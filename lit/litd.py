@@ -168,9 +168,7 @@ def result(data):
 
 def command(msg):
     if "effect" in msg:
-        ret, rc = np.start_effect(
-            msg["effect"], msg.get("args", {}), msg.get("overlayed", False)
-        )
+        ret, rc = np.start_effect(msg["effect"], msg.get("args", {}), msg.get("overlayed", False))
     elif "preset" in msg:
         ret, rc = np.start_preset(msg["preset"])
     else:

@@ -21,7 +21,7 @@ FPS = 40
 SPEED = 0b10
 COLOR = 0b1
 DEFAULT_SPEED = 50  # hertz
-MAX_SHOW_SPEED = 60  # hertz
+MAX_SHOW_SPEED = 60 # hertz
 TIME_WARN_COOLDOWN = 10  # seconds
 logger = logging.getLogger(__name__)
 
@@ -60,53 +60,31 @@ class commands:
 
             devices = {}
             for adapter in adapters_json:
-                name = adapter["name"]
+                name = adapter['name']
                 if name in devices:
-                    raise SyntaxError(
-                        "Adapter name {name} was defined more than once. Adapter names must be unique.".format(
-                            name=name
-                        )
-                    )
-                devices[name] = {
-                    "adapter": DeviceAdapter.from_config(adapter),
-                    "used_indexes": 0,
-                }
+                    raise SyntaxError("Adapter name {name} was defined more than once. Adapter names must be unique.".format(name=name))
+                devices[name] = {"adapter": DeviceAdapter.from_config(adapter), "used_indexes": 0}
 
             section_start_index = 0
             for section in section_json:
                 device = devices.get(section["adapter"])
                 if not device:
-                    raise SyntaxError(
-                        "Error in ranges.json: Section '{section}' references adapter '{adapter}', but that adapter is not defined".format(
-                            section=section["name"], adapter=section["adapter"]
-                        )
-                    )
-                next_used_indexes = device["used_indexes"] + section["size"]
-                if next_used_indexes > device["adapter"].size:
-                    raise SyntaxError(
-                        "Adapter '{name}' has {size} pixels available (adapter size), but at least {used} were used by sections".format(
-                            name=device["adapter"].name,
-                            size=device["adapter"].size,
-                            used=next_used_indexes,
-                        )
-                    )
-                section_adapter = SectionAdapter(
-                    device["used_indexes"], device["adapter"]
-                )
-                section_end_index = section_start_index + section["size"]
-                self.sections[section["name"]] = Section(
-                    section["name"],
-                    section_start_index,
-                    section["size"],
-                    section_adapter,
-                )
-                section_start_index += section["size"]
-                device["used_indexes"] = next_used_indexes
+                    raise SyntaxError("Error in ranges.json: Section '{section}' references adapter '{adapter}', but that adapter is not defined".format(section=section['name'], adapter=section['adapter']))
+                next_used_indexes = device['used_indexes'] + section['size']
+                if next_used_indexes > device['adapter'].size:
+                    raise SyntaxError("Adapter '{name}' has {size} pixels available (adapter size), but at least {used} were used by sections".format(name=device['adapter'].name, size=device['adapter'].size, used=next_used_indexes))
+                section_adapter = SectionAdapter(device['used_indexes'], device['adapter'])
+                section_end_index = section_start_index + section['size']
+                self.sections[section['name']] = Section(section['name'], section_start_index, section['size'], section_adapter)
+                section_start_index += section['size']
+                device['used_indexes'] = next_used_indexes
 
             for zone in zone_json:
-                self.zones[zone["name"]] = zone["sections"]
+                self.zones[zone['name']] = zone['sections']
 
-        self.controller_manager = controller.ControllerManager(self.sections)
+        self.controller_manager = controller.ControllerManager(
+            self.sections
+        )
         initial_controller = self.controller_manager.create_controller(
             self.sections.keys()
         )
@@ -188,9 +166,9 @@ class commands:
                     self.controller_manager.show()
                     self.show_lock.release()
                     end_time = time.time()
-                    show_time = end_time - start_time
+                    show_time = (end_time - start_time)
                     logger.debug("Show took %dms", show_time * 1000)
-                    wait_time = max(0, (1 / MAX_SHOW_SPEED) - show_time)
+                    wait_time = max(0, (1/MAX_SHOW_SPEED) - show_time)
                     self.stop_event.wait(wait_time)
                     start_time = end_time
                 except Exception as e:
@@ -222,11 +200,7 @@ class commands:
                     preset_name
                 )
                 return (msg, 3)
-            result, rc = self.start_effect(
-                command["effect"],
-                command.get("args", {}),
-                overlayed=command.get("overlayed", False),
-            )
+            result, rc = self.start_effect(command["effect"], command.get("args", {}), overlayed=command.get("overlayed", False))
             if rc != 0:
                 self.start_effect("off", {})
                 return (result, rc)
@@ -245,9 +219,7 @@ class commands:
             args.get("ranges", [self.default_range])
         )
         self.show_lock.acquire()
-        controller = self.controller_manager.create_controller(
-            sections, overlayed=overlayed
-        )
+        controller = self.controller_manager.create_controller(sections, overlayed=overlayed)
         # fill in default args from schema
         schema = getattr(effect, "schema", {})
         self.complete_args_with_schema(args, schema, controller)
@@ -264,6 +236,7 @@ class commands:
         }
         self.show_lock.release()
         return (effect.start_string, 0)
+
 
     def complete_args_with_schema(self, args, schema, controller):
         for k, v in sorted(

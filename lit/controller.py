@@ -5,18 +5,17 @@ logger = logging.getLogger(__name__)
 
 
 class ControllerManager:
-    def __init__(self, sections):
+    def __init__(
+        self,
+        sections
+    ):
         """Creates a new Led_Controller Manager.
         sections: The named led sections that can be controlled. 
         """
         self.controllers = []
         self.sections = sections
-        self.display_adapters = {
-            s.section_adapter.display_adapter for s in self.sections.values()
-        }
-        self.section_ordered = sorted(
-            self.sections, key=lambda e: self.sections[e].end_index
-        )
+        self.display_adapters = {s.section_adapter.display_adapter for s in self.sections.values()}
+        self.section_ordered = sorted(self.sections, key=lambda e: self.sections[e].end_index)
         # Number of leds in all sections
         self.total_leds = sum(s.size for s in self.sections.values())
         # The rendered pixel values to be displayed
@@ -27,7 +26,10 @@ class ControllerManager:
             section = self.sections[section_name]
             for local_i, absolute_i in enumerate(section.absolute_range):
                 # TODO named tuple for pixel locations
-                self.pixel_locations[absolute_i] = (local_i, section)
+                self.pixel_locations[absolute_i] = (
+                    local_i,
+                    section
+                )
 
     def create_controller(self, sections, overlayed=False):
         """ Creates a new Led_Controller for the specified sections
@@ -37,16 +39,16 @@ class ControllerManager:
         if not overlayed:
             for c in self.controllers:
                 if any(s in sections for s in c.active_section_names):
-                    c.set_sections(
-                        [s for s in c.active_section_names if s not in sections]
-                    )
+                    c.set_sections([s for s in c.active_section_names if s not in sections])
             # Remove any empty controllers
             self.controllers = [c for c in self.controllers if c.size != 0]
         self.controllers.append(controller)
         return controller
 
+
     def get_controller(self):
         return self.controllers
+
 
     def render(self):
         overlay_pixels = [[] for _ in range(self.total_leds)]
@@ -63,17 +65,17 @@ class ControllerManager:
             if a == 0:
                 self.pixels[i] = (0, 0, 0)
             else:
-                self.pixels[i] = (r // a, g // a, b // a)
+                self.pixels[i] = (r//a, g//a, b//a)
             location = self.pixel_locations[i]
-            location[1].section_adapter.set_pixel_color_rgb(
-                location[0], *self.pixels[i]
-            )
+            location[1].section_adapter.set_pixel_color_rgb(location[0], *self.pixels[i])
+
 
     def show(self):
         """Pushes the led array to the actual lights"""
         self.render()
         for display_adapter in self.display_adapters:
             display_adapter.show()
+            
 
     def get_pixels(self):
         """ Returns the list of rgb values as of the last 'show' call """
@@ -82,25 +84,20 @@ class ControllerManager:
 
 class Controller:
     """ A grouping of sections that are being controlled as one unit """
-
     def __init__(self, manager):
         """Creates a new Led_Controller with no active ranges"""
         self.sections = manager.sections
-        self.section_ordered = sorted(
-            self.sections, key=lambda e: self.sections[e].end_index
-        )
+        self.section_ordered = sorted(self.sections, key=lambda e: self.sections[e].end_index)
         # Currently active section names sorted by end location
         self.active_section_names = []
         # Number of currently active leds
-        self.size = 0
+        self.size  = 0
 
     def set_sections(self, new_sections):
         """Sets the currently active sections to new_sections and updates other dependent fields.
         new_sections is a list of section names corresponding to the sections dict keys"""
-        self.active_section_names = sorted(
-            new_sections, key=lambda e: self.sections[e].end_index
-        )
-        self.size = sum(self.sections[r].size for r in self.active_section_names)
+        self.active_section_names = sorted(new_sections, key=lambda e: self.sections[e].end_index)
+        self.size  = sum(self.sections[r].size for r in self.active_section_names)
         self.pixels = [(0, 0, 0, 0)] * self.size
 
     def abs_pixels(self):
@@ -134,7 +131,7 @@ class Controller:
     def set_pixels(self, pixels):
         """Set active pixels to corresponding pixels in array of rgb tuples with size 'size'"""
         for n in range(0, len(pixels)):
-            if len(pixels[n]) == 4:
+            if len(pixels[n]) ==  4:
                 r, g, b, a = pixels[n]
                 self.set_pixel(n, r, g, b, a)
             else:
@@ -149,7 +146,7 @@ class Controller:
         for n in range(0, len(pixels)):
             r, g, b = [int(p * 255) for p in colorsys.hsv_to_rgb(*pixels[n][:3])]
             if len(pixels[n]) == 4:
-                self.set_pixel(n, r, g, b, pixels[n][3])
+                self.set_pixel(n, r, g, b, pixels[n][3]) 
             else:
                 self.set_pixel(n, r, g, b)
 
