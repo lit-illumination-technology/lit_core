@@ -4,12 +4,9 @@ start_message = name + " started!"
 
 description = "Two alternating colors"
 
+default_speed = 1
+
 schema = {
-    "speed": {
-        "value": {"type": "number", "min": 0, "max": 100, "default": 1},
-        "user_input": True,
-        "required": False,
-    },
     "color 1": {
         "value": {"type": "color", "default": (255, 0, 0)},
         "user_input": True,

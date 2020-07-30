@@ -8,16 +8,10 @@ start_message = "The lights have been turned on!"
 description = "Turns all of the lights on to a specfied color"
 
 # This defines the format of update's 'state' parameter
-# If a 'speed' key is defined it must be an int and will automatically be used by the daemon.
 schema = {
     "color": {
         "value": {"type": "color", "default": (255, 255, 255)},
         "user_input": True,
-        "required": False,
-    },
-    "speed": {
-        "value": {"type": "number", "min": 0, "max": 5, "default": 1},
-        "user_input": False,
         "required": False,
     },
 }

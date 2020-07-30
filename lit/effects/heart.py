@@ -8,18 +8,12 @@ start_message = name + " started!"
 
 description = "La-dub la-dub"
 
-
 schema = {
-    "speed": {
-        "value": {"type": "number", "min": 1, "max": 100, "default": 50},
-        "user_input": True,
-        "required": False,
-    },
     "color": {
         "value": {"type": "color", "default": [255, 0, 0]},
         "user_input": True,
         "required": False,
-    },
+    }
 }
 
 

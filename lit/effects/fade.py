@@ -14,11 +14,6 @@ def calc_delta(lights, args):
 
 
 schema = {
-    "speed": {
-        "value": {"type": "number", "min": 0, "max": 100, "default": 50},
-        "user_input": True,
-        "required": False,
-    },
     "start color": {
         "value": {"type": "color", "default": (0, 0, 0)},
         "user_input": True,

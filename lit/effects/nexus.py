@@ -7,11 +7,6 @@ start_message = name + " started!"
 description = "Like the Nexus android wallpaper"
 
 schema = {
-    "speed": {
-        "value": {"type": "number", "min": 1, "max": 100, "default": 50},
-        "user_input": True,
-        "required": False,
-    },
     "projectiles": {
         "value": {"type": "int list", "default_gen": lambda lights, args: list()},
         "user_input": False,

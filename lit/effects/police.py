@@ -4,13 +4,9 @@ start_message = "Cops are here!"
 
 description = "Mimics lights on top of police cars."
 
-schema = {
-    "speed": {
-        "value": {"type": "number", "min": 0, "max": 100, "default": 25},
-        "user_input": True,
-        "required": False,
-    }
-}
+default_speed = 25
+
+schema = {}
 
 # CONSTANTS
 LEFT = 0

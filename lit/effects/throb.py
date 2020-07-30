@@ -5,11 +5,6 @@ start_message = name + " started!"
 description = "Shifts through brighness levels repeatedly"
 
 schema = {
-    "speed": {
-        "value": {"type": "number", "min": 0, "max": 100, "default": 50},
-        "user_input": True,
-        "required": False,
-    },
     "color": {
         "value": {"type": "color", "default": (255, 0, 0)},
         "user_input": True,

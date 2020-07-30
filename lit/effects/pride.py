@@ -13,13 +13,9 @@ COLORS = [
     (74, 0, 118),
 ]
 
-schema = {
-    "speed": {
-        "value": {"type": "number", "min": 0, "max": 10, "default": 0},
-        "user_input": True,
-        "required": False,
-    }
-}
+default_speed = 1
+
+schema = {}
 
 
 def update(lights, step, state):

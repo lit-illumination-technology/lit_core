@@ -23,11 +23,7 @@ description = "A light effect"
 #'default': The default value. Must be a primitive
 #'default_gen': A function that returns a default value.
 # 'user_input': True if this field is meant to be an argument passed by the user
-# IMPORTANT NOTE:
-# There are two field names that are considered 'special': 'speed' and 'ranges'
-# Speed is the update frequency (in hertz) that the update function will be called.
-# Bounds may be set by defining it in the scehma.
-# Ranges defines which sections the effect was started on. It is reserved and may not be used
+
 schema = {
     "speed": {
         "value": {"type": "number", "min": 0, "max": 100, "default": 50},
@@ -36,6 +32,10 @@ schema = {
     "color": {"value": {"type": "color", "default": (255, 0, 255)}, "user_input": True},
     "custom": {"value": {"default_gen": lambda x: list()}, "user_input": False},
 }
+
+# default_speed is the update frequency (in hertz) that the update function will be called
+# if no other rate is specified.
+default_speed = 20
 
 # This is the function that controls the effect. Look at the included effects for examples.
 # Params:

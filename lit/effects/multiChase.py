@@ -17,11 +17,6 @@ def create_heads(lights, args):
 
 
 schema = {
-    "speed": {
-        "value": {"type": "number", "min": 0, "max": 100, "default": 50},
-        "user_input": True,
-        "required": False,
-    },
     "number": {
         "value": {
             "type": "number",  # TODO integer type (or step)

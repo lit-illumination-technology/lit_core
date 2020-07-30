@@ -33,7 +33,7 @@ class commands:
         logger.info("Using config directory: {}".format(self.config_path))
         self.stop_event = threading.Event()
         self.effects = {}
-        self.commands = {}
+        self.effect_schemas = {}
         self.sections = {}
         self.virtual_sections = {}
         self.zones = {}
@@ -260,7 +260,8 @@ class commands:
 
         self.history.append({"effect": effect_name.lower(), "state": args.copy()})
 
-        speed = properties.get("speed", DEFAULT_SPEED)
+        default_speed = getattr(effect, "default_speed", DEFAULT_SPEED)
+        speed = properties.get("speed", default_speed)
         self.controller_effects[controller] = self.create_effect(effect, args, speed)
         # Remove empty controllers
         self.controller_effects = {
@@ -304,7 +305,7 @@ class commands:
         return """Effects:\n    ~ """ + (
             "\n    ~ ".join(
                 name + " " + self.schema_to_string(schema)
-                for name, schema in self.commands.items()
+                for name, schema in self.effect_schemas.items()
             )
         )
 
@@ -318,7 +319,16 @@ class commands:
         return ret
 
     def get_effects(self):
-        return [{"name": n, "schema": s} for n, s in self.commands.items()]
+        return [
+            {
+                "name": n,
+                "schema": s,
+                "default_speed": getattr(
+                    self.effects[n.lower()], "default_speed", DEFAULT_SPEED
+                ),
+            }
+            for n, s in self.effect_schemas.items()
+        ]
 
     def get_presets(self):
         return self.presets
@@ -352,7 +362,7 @@ class commands:
                     "opacity": c.opacity,
                     "effect_name": effect_name,
                     "effect_state": state_schema(
-                        e["state"], self.commands[effect_name]
+                        e["state"], self.effect_schemas[effect_name]
                     ),
                 }
             )
@@ -418,7 +428,7 @@ class commands:
                     if v.get("user_input", False)
                 }
                 self.effects[name.lower()] = m
-                self.commands[name] = command_schema
+                self.effect_schemas[name] = command_schema
             except Exception as e:
                 logger.exception("Error loading effect %s", str(m))
 

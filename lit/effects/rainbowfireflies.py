@@ -23,11 +23,6 @@ def setup_start_durations(lights, args):
 
 
 schema = {
-    "speed": {
-        "value": {"type": "number", "min": 1, "max": 100, "default": 50},
-        "user_input": True,
-        "required": False,
-    },
     "density": {
         "value": {"type": "number", "min": 1, "max": 100, "default": 50},
         "user_input": True,

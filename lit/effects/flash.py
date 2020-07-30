@@ -6,13 +6,7 @@ start_message = name + " started!"
 
 description = "All lights change to a random color repeatedly"
 
-schema = {
-    "speed": {
-        "value": {"type": "number", "min": 1, "max": 10, "default": 3},
-        "user_input": True,
-        "required": False,
-    }
-}
+default_speed = 3
 
 
 def update(lights, step, state):

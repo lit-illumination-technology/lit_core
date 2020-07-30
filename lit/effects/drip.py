@@ -12,11 +12,6 @@ def setup_dullness(lights, args):
 
 
 schema = {
-    "speed": {
-        "value": {"type": "number", "min": 0, "max": 100, "default": 50},
-        "user_input": True,
-        "required": False,
-    },
     "color": {
         "value": {"type": "color", "default": (0, 20, 175)},
         "user_input": True,

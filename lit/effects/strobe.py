@@ -4,12 +4,9 @@ start_message = name + " started!"
 
 description = "Lights flash rapidly"
 
+default_speed = 10
+
 schema = {
-    "speed": {
-        "value": {"type": "number", "min": 0, "max": 50, "default": 10},
-        "user_input": True,
-        "required": False,
-    },
     "color": {
         "value": {"type": "color", "default": (255, 255, 255)},
         "user_input": True,
