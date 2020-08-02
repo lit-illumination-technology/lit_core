@@ -84,7 +84,8 @@ class commands:
                 next_used_indexes = device["used_indexes"] + section["size"]
                 if next_used_indexes > device["adapter"].size:
                     raise SyntaxError(
-                        "Adapter '{name}' has {size} pixels available (adapter size), but at least {used} were used by sections".format(
+                        "Adapter '{name}' has {size} pixels available (adapter size), "
+                        "but at least {used} were used by sections".format(
                             name=device["adapter"].name,
                             size=device["adapter"].size,
                             used=next_used_indexes,
@@ -93,7 +94,6 @@ class commands:
                 section_adapter = SectionAdapter(
                     device["used_indexes"], device["adapter"]
                 )
-                section_end_index = section_start_index + section["size"]
                 self.sections[section["name"]] = Section(
                     section["name"],
                     section_start_index,
@@ -153,21 +153,19 @@ class commands:
                                 effect["step"] += 1
 
                     self.show_lock.release()
-                    end = time.time()
-                    took = end - start_time
                     d = next_upd_time - time.time()
-                    if d < 0 and last_warn_time > time.time() + TIME_WARN_COOLDOWN:
-                        logger.warning(
-                            "Can't keep up! Did the system time change, or is the server overloaded? Running {} ms behind.".format(
-                                d * -1000
+                    if d < 0:
+                        if last_warn_time > time.time() + TIME_WARN_COOLDOWN:
+                            logger.warning(
+                                "Can't keep up! Did the system time change, or is the server overloaded? "
+                                "Running {} ms behind.".format(d * -1000)
                             )
-                        )
-                        logger.debug(
-                            "Behind while running effect(s) {}".format(
-                                self.controller_effects.values()
+                            logger.debug(
+                                "Behind while running effect(s) {}".format(
+                                    self.controller_effects.values()
+                                )
                             )
-                        )
-                        last_warn_time = time.time()
+                            last_warn_time = time.time()
                     else:
                         self.stop_event.wait(d)
                     total_steps += 1

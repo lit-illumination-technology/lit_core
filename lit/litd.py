@@ -128,7 +128,7 @@ def start_conn_thread(conn):
                 msg = data.decode()
                 logger.info("received command: {}".format(msg))
                 try:
-                    resp = handle_command(msg).encode()
+                    resp = handle_request(msg).encode()
                 except Exception as e:
                     logger.exception("Unexpected error while handing command")
                     resp = error("Internal error").encode()
@@ -143,18 +143,15 @@ def start_conn_thread(conn):
     thread.start()
 
 
-def handle_command(data):
+def handle_request(data):
     msg = json.loads(data)
     type_error = error('type must be specified as "command" or "query"')
-    if not "type" in msg:
-        return type_error
-    msg_type = msg["type"]
-    if msg_type == "command":
-        return command(msg)
-    elif msg_type == "query":
-        return query(msg)
-    elif msg_type == "dev":
-        return dev_command(msg)
+    if "command" in msg:
+        return command(msg["command"])
+    elif "query" in msg:
+        return query(msg["query"])
+    elif "dev" in msg:
+        return dev_command(msg["dev"])
     else:
         return type_error
 
@@ -170,19 +167,21 @@ def result(data):
 
 def command(msg):
     if "effect" in msg:
+        effect = msg["effect"]
         ret, rc = np.start_effect(
-            msg["effect"], msg.get("args", {}), msg.get("properties", {})
+            effect["name"], effect.get("args", {}), effect.get("properties", {})
         )
     elif "preset" in msg:
-        ret, rc = np.start_preset(msg["preset"], msg.get("properties", {}))
+        preset = msg["preset"]
+        ret, rc = np.start_preset(preset["name"], preset.get("properties", {}))
     else:
-        ret = "Message must have 'effect' or 'preset' key"
+        ret = "Command must be an 'effect' or 'preset'"
         rc = 1
     return json.dumps({"result": ret, "rc": rc})
 
 
 def dev_command(msg):
-    if msg.get("command", "") == "verbosity":
+    if msg["command"] == "verbosity":
         level = msg.get("args", {}).get("level", None)
         level_val = 0
         try:
@@ -190,7 +189,7 @@ def dev_command(msg):
         except AttributeError:
             return json.dumps(
                 {
-                    "result": "args['level'] must be debug, info, warning, error, or critical",
+                    "result": "the verbosity level must be debug, info, warning, error, or critical",
                     "rc": 2,
                 }
             )
@@ -202,7 +201,7 @@ def dev_command(msg):
 
 
 def query(msg):
-    return queries[msg.get("query", "error")]()
+    return queries[msg.get("what", "error")]()
 
 
 def effects():

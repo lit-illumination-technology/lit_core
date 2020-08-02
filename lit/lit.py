@@ -16,10 +16,13 @@ def start_effect(effect_name, effect_args=None, properties=None):
         s = socket.socket(socket.AF_UNIX)
         s.connect("/tmp/litd")
         command = {
-            "type": "command",
-            "effect": effect_name,
-            "args": effect_args,
-            "properties": properties,
+            "command": {
+                "effect": {
+                    "name": effect_name,
+                    "args": effect_args,
+                    "properties": properties,
+                }
+            }
         }
         s.sendall(json.dumps(command).encode())
     except Exception as e:
@@ -39,7 +42,7 @@ def start_preset(preset, properties=None):
     try:
         s = socket.socket(socket.AF_UNIX)
         s.connect("/tmp/litd")
-        command = {"type": "command", "preset": preset, "properties": properties}
+        command = {"command": {"preset": {"name": preset, "properties": properties}}}
         s.sendall(json.dumps(command).encode())
     except Exception as e:
         s.close()
@@ -58,7 +61,7 @@ def query(query):
     try:
         s = socket.socket(socket.AF_UNIX)
         s.connect("/tmp/litd")
-        msg = {"type": "query", "query": query}
+        msg = {"query": {"what": query}}
         s.sendall(json.dumps(msg).encode())
     except Exception as e:
         s.close()
