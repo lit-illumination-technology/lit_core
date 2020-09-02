@@ -15,8 +15,8 @@ def start_effect(effect_name, effect_args=None, properties=None):
     try:
         s = socket.socket(socket.AF_UNIX)
         s.connect("/tmp/litd")
-        command = {
-            "command": {
+        request = {
+            "start": {
                 "effect": {
                     "name": effect_name,
                     "args": effect_args,
@@ -24,7 +24,7 @@ def start_effect(effect_name, effect_args=None, properties=None):
                 }
             }
         }
-        s.sendall(json.dumps(command).encode())
+        s.sendall(json.dumps(request).encode())
     except Exception as e:
         s.close()
         raise conn_error(e)
@@ -42,8 +42,33 @@ def start_preset(preset, properties=None):
     try:
         s = socket.socket(socket.AF_UNIX)
         s.connect("/tmp/litd")
-        command = {"command": {"preset": {"name": preset, "properties": properties}}}
-        s.sendall(json.dumps(command).encode())
+        request = {"start": {"preset": {"name": preset, "properties": properties}}}
+        s.sendall(json.dumps(request).encode())
+    except Exception as e:
+        s.close()
+        raise conn_error(e)
+
+    res = get_response(s)
+    s.close()
+    # rc 0: success, rc 2: command usage error
+    if res.get("rc", 1) != 0:
+        logger.error(response_error(res))
+    return res
+
+
+def stop(effect_id=None, transaction_id=None):
+    s = None
+    try:
+        s = socket.socket(socket.AF_UNIX)
+        s.connect("/tmp/litd")
+        if effect_id is not None:
+            request = {"stop": {"effect_id": effect_id}}
+        elif transaction_id is not None:
+            request = {"stop": {"transaction_id": transaction_id}}
+        else:
+            raise ValueError("effect_id or transaction_id must not be None")
+
+        s.sendall(json.dumps(request).encode())
     except Exception as e:
         s.close()
         raise conn_error(e)
@@ -79,7 +104,7 @@ def dev_command(command, args):
     try:
         s = socket.socket(socket.AF_UNIX)
         s.connect("/tmp/litd")
-        msg = {"type": "dev", "command": command, "args": args}
+        msg = {"dev": {"command": command, "args": args}}
         s.sendall(json.dumps(msg).encode())
     except Exception as e:
         s.close()

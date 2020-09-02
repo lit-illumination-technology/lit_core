@@ -1,6 +1,7 @@
 from .lit import (
     start_effect,
     start_preset,
+    stop,
     query,
     dev_command,
     get_effects,

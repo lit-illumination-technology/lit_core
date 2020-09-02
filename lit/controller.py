@@ -45,6 +45,9 @@ class ControllerManager:
         self.controllers.append(controller)
         return controller
 
+    def remove_controller(self, controller):
+        self.controllers.remove(controller)
+
     def get_controllers(self):
         return self.controllers
 
@@ -80,9 +83,10 @@ class ControllerManager:
                 location[0], *self.pixels[i]
             )
 
-    def show(self):
+    def show(self, show_lock):
         """Pushes the led array to the actual lights"""
-        self.render()
+        with show_lock:
+            self.render()
         for display_adapter in self.display_adapters:
             display_adapter.show()
 

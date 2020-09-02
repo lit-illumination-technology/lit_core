@@ -9,10 +9,11 @@ import sys
 import time
 import threading
 
-from . import controller
+from .controller import ControllerManager
 from .section import Section, SectionAdapter
 from .device import DeviceAdapter
 from . import effects
+from .effect import Effect
 
 __author__ = "Nick Pesce"
 __email__ = "nickpesce22@gmail.com"
@@ -20,7 +21,6 @@ __email__ = "nickpesce22@gmail.com"
 FPS = 40
 SPEED = 0b10
 COLOR = 0b1
-DEFAULT_SPEED = 50  # hertz
 MAX_SHOW_SPEED = 60  # hertz
 TIME_WARN_COOLDOWN = 10  # seconds
 logger = logging.getLogger(__name__)
@@ -30,15 +30,15 @@ class commands:
     def __init__(self, base_path):
         self.base_path = base_path
         self.config_path = os.path.join(base_path, "config")
-        logger.info("Using config directory: {}".format(self.config_path))
-        self.stop_event = threading.Event()
+        logger.info("Using config directory: %s", self.config_path)
+        self.sleep_event = threading.Event()
+
         self.effects = {}
-        self.effect_schemas = {}
+        self.effects_by_id = {}
+        self.transactions = {}
         self.sections = {}
-        self.virtual_sections = {}
         self.zones = {}
         self.default_range = None
-        self.history = []
         self.singleton_args = {}
 
         # Load config files
@@ -106,68 +106,58 @@ class commands:
             for zone in zone_json:
                 self.zones[zone["name"]] = zone["sections"]
 
-        self.controller_manager = controller.ControllerManager(self.sections)
+        self.controller_manager = ControllerManager(self.sections)
         self.import_effects()
-        self.controller_effects = {}
         atexit.register(self._clean_shutdown)
         self.start_loop()
         logger.info("Started effect loop")
 
     def start_loop(self):
-        self.stop_event.clear()
+        self.should_run = True
         self.show_lock = threading.Lock()
 
         def loop(self):
             total_steps = 0
-            next_upd_time = time.time()
             last_warn_time = 0
-            while not self.stop_event.is_set():
+            while self.should_run:
+                next_upd_time = float("inf")
                 start_time = time.time()
                 try:
-                    self.show_lock.acquire()
-                    for controller, effect in self.controller_effects.items():
-                        if effect["next_upd_time"] <= start_time:
-                            su = time.time()
-                            try:
-                                effect["effect"].update(
-                                    controller, effect["step"], effect["state"]
+                    with self.show_lock:
+                        for effect in self.effects_by_id.values():
+                            if effect.next_upd_time <= start_time:
+                                start_upd = time.time()
+                                try:
+                                    effect.update()
+                                except Exception:
+                                    logger.exception(
+                                        'Error in effect "%s"', effect.effect.name
+                                    )
+                                end_upd = time.time()
+                                logger.debug(
+                                    "Took %dms to update %s",
+                                    (end_upd - start_upd) * 1000,
+                                    str(effect),
                                 )
-                            except Exception as e:
-                                logger.exception(
-                                    'Error in effect "%s"',
-                                    getattr(effect["effect"], "name", "NONAME"),
-                                )
-                            eu = time.time()
-                            logger.debug(
-                                "Took {}ms to update {}".format(
-                                    (eu - su) * 1000, effect
-                                )
-                            )
-                            # Speed is in units of updates/second
-                            # If speed is 0, update at DEFAULT_SPEED, but don't increment step
-                            effect["next_upd_time"] += 1 / (
-                                effect["speed"] or DEFAULT_SPEED
-                            )
-                            next_upd_time = min(next_upd_time, effect["next_upd_time"])
-                            if effect["speed"] > 0:
-                                effect["step"] += 1
+                                next_upd_time = min(next_upd_time, effect.next_upd_time)
 
-                    self.show_lock.release()
-                    d = next_upd_time - time.time()
-                    if d < 0:
-                        if last_warn_time > time.time() + TIME_WARN_COOLDOWN:
+                    if next_upd_time == float("inf"):
+                        continue
+                    wait_time = next_upd_time - time.time()
+                    if wait_time < 0:
+                        if last_warn_time < time.time() - TIME_WARN_COOLDOWN:
                             logger.warning(
-                                "Can't keep up! Did the system time change, or is the server overloaded? "
-                                "Running {} ms behind.".format(d * -1000)
+                                "Can't keep up! Did the system time change, "
+                                "or is the server overloaded? Running %d ms behind.",
+                                (wait_time * -1000),
                             )
                             logger.debug(
-                                "Behind while running effect(s) {}".format(
-                                    self.controller_effects.values()
-                                )
+                                "Behind while running effect(s) %s",
+                                str(self.effects_by_id.values()),
                             )
                             last_warn_time = time.time()
                     else:
-                        self.stop_event.wait(d)
+                        self.sleep_event.wait(wait_time)
                     total_steps += 1
                 except Exception as e:
                     if self.show_lock.locked():
@@ -176,18 +166,16 @@ class commands:
 
         def show_loop(self):
             start_time = time.time()
-            while not self.stop_event.is_set():
+            while self.should_run:
                 try:
-                    self.show_lock.acquire()
-                    self.controller_manager.show()
-                    self.show_lock.release()
+                    self.controller_manager.show(self.show_lock)
                     end_time = time.time()
                     show_time = end_time - start_time
                     logger.debug("Show took %dms", show_time * 1000)
                     wait_time = max(0, (1 / MAX_SHOW_SPEED) - show_time)
-                    self.stop_event.wait(wait_time)
+                    self.sleep_event.wait(wait_time)
                     start_time = end_time
-                except Exception as e:
+                except Exception:
                     logger.exception("Error in show loop")
                     if self.show_lock.locked():
                         self.show_lock.release()
@@ -198,11 +186,12 @@ class commands:
         self.loop_thread.start()
 
     def stop_loop(self):
-        self.stop_event.set()
+        self.sleep_event.set()
+        self.should_run = False
         self.loop_thread.join()
         self.show_thread.join()
 
-    def start_preset(self, preset_name, properties):
+    def start_preset(self, preset_name, properties, transaction_id):
         preset = self.presets.get(preset_name, None)
         if not preset:
             msg = "The preset {} does not exist".format(preset_name)
@@ -220,19 +209,18 @@ class commands:
                 command["effect"],
                 command.get("args", {}),
                 command.get("properties", {}),
+                transaction_id,
             )
             if rc != 0:
-                self.start_effect("off", {}, {"overlayed": False})
                 return (result, rc)
         return (preset.get("start_message", "{} started!".format(preset_name)), 0)
 
-    def start_effect(self, effect_name, args, properties):
-        effect_name = effect_name.lower()
-        if effect_name not in self.effects:
+    def start_effect(self, effect_name, args, properties, transaction_id):
+        if not self.is_effect(effect_name):
             return (self.help(), 2)
         effect = self.effects[effect_name.lower()]
         # remove any 'None' args
-        args = {k: v for (k, v) in args.items() if v != None}
+        args = {k: v for (k, v) in args.items() if v is not None}
         # attempt to parse arg values
         args = {k: self.get_value_from_string(k, args[k]) for k in args}
         sections = self.get_sections_from_ranges(
@@ -240,36 +228,46 @@ class commands:
         )
         self.show_lock.acquire()
         opacity = properties.get("opacity", 1)
-        if not isinstance(opacity, int):
+        if not isinstance(opacity, (int, float)):
+            logger.warning("Invalid 'opacity' property received: %s", str(opacity))
             opacity = 1
-            logger.warning("Invalid 'opacity' property received: {}".format(opacity))
         overlayed = properties.get("overlayed", False)
         if not isinstance(overlayed, bool):
-            logger.warning(
-                "Invalid 'overlayed' property received: {}".format(overlayed)
-            )
+            logger.warning("Invalid 'overlayed' property received: %s", str(overlayed))
             overlayed = False
         controller = self.controller_manager.create_controller(
             sections, overlayed=overlayed, opacity=opacity
         )
+        self.effects_by_id = {
+            effect_id: effect
+            for effect_id, effect in self.effects_by_id.items()
+            if effect.controller.size > 0
+        }
+
         # fill in default args from schema
-        schema = getattr(effect, "schema", {})
+        schema = effect.schema
         self.complete_args_with_schema(args, schema, controller)
 
-        self.history.append({"effect": effect_name.lower(), "state": args.copy()})
-
-        default_speed = getattr(effect, "default_speed", DEFAULT_SPEED)
+        default_speed = effect.default_speed
         speed = properties.get("speed", default_speed)
-        self.controller_effects[controller] = self.create_effect(effect, args, speed)
-        # Remove empty controllers
-        self.controller_effects = {
-            c: self.controller_effects[c]
-            for c in self.controller_effects
-            if c.size != 0
-        }
+        effect_instance = effect.create(args, speed, controller, transaction_id)
+        self.transactions.setdefault(transaction_id, []).append(effect_instance.id)
+        self.effects_by_id[effect_instance.id] = effect_instance
         self.show_lock.release()
-        logger.info("New controller manager: {}".format(self.controller_manager))
+        self.sleep_event.set()
+        logger.info("New controller manager: %s", str(self.controller_manager))
         return (effect.start_message, 0)
+
+    def get_transaction(self, transaction_id):
+        return self.transactions.get(transaction_id)
+
+    def stop_effect(self, effect_id):
+        effect = self.effects_by_id.get(effect_id)
+        if effect:
+            self.controller_manager.remove_controller(effect.controller)
+            del self.effects_by_id[effect_id]
+            return True
+        return False
 
     def complete_args_with_schema(self, args, schema, controller):
         for k, v in sorted(
@@ -290,20 +288,11 @@ class commands:
                     if v.get("singleton", False):
                         self.singleton_args[k] = args[k]
 
-    def create_effect(self, effect, state, speed):
-        return {
-            "effect": effect,
-            "state": state.copy(),
-            "step": 0,
-            "speed": speed,
-            "next_upd_time": time.time(),
-        }
-
     def help(self):
         return """Effects:\n    ~ """ + (
             "\n    ~ ".join(
-                name + " " + self.schema_to_string(schema)
-                for name, schema in self.effect_schemas.items()
+                effect.name + " " + self.schema_to_string(effect.command_schema)
+                for effect in self.effects.values()
             )
         )
 
@@ -319,13 +308,11 @@ class commands:
     def get_effects(self):
         return [
             {
-                "name": n,
-                "schema": s,
-                "default_speed": getattr(
-                    self.effects[n.lower()], "default_speed", DEFAULT_SPEED
-                ),
+                "name": effect.name,
+                "schema": effect.command_schema,
+                "default_speed": effect.default_speed,
             }
-            for n, s in self.effect_schemas.items()
+            for effect in self.effects.values()
         ]
 
     def get_presets(self):
@@ -352,16 +339,18 @@ class commands:
         def state_schema(state, schema):
             return {k: v for k, v in state.items() if k in schema}
 
-        for c, e in self.controller_effects.items():
-            effect_name = getattr(e["effect"], "name", "Unnamed")
+        for effect in self.effects_by_id.values():
+            controller = effect.controller
             state.append(
                 {
-                    "sections": c.active_section_names,
-                    "opacity": c.opacity,
-                    "effect_name": effect_name,
+                    "sections": controller.active_section_names,
+                    "opacity": controller.opacity,
+                    "effect_name": effect.effect.name,
                     "effect_state": state_schema(
-                        e["state"], self.effect_schemas[effect_name]
+                        effect.state, effect.effect.command_schema
                     ),
+                    "effect_id": effect.id,
+                    "transaction_id": effect.transaction_id,
                 }
             )
         return state
@@ -394,7 +383,7 @@ class commands:
             # TODO throw invalid color name error
             return [255, 255, 255]
         elif type.lower() == "speed":
-            return self.speeds.get(string.lower(), DEFAULT_SPEED)
+            return self.speeds.get(string.lower())
         elif type.lower() == "ranges":
             if string.lower() == "all":
                 return self.sections.keys()
@@ -415,26 +404,19 @@ class commands:
                 logger.exception("Could not import %s", m)
 
         logger.info("Parsing effects")
-        for m in modules:
+        for module in modules:
             try:
-                logger.info("loading {}".format(str(m)))
-                name = getattr(m, "name", "Unnamed")
-                schema = getattr(m, "schema", {})
-                command_schema = {
-                    k: {k2: v2 for k2, v2 in v.items() if k2 != "user_input"}
-                    for k, v in schema.items()
-                    if v.get("user_input", False)
-                }
-                self.effects[name.lower()] = m
-                self.effect_schemas[name] = command_schema
+                logger.info("loading %s", str(module))
+                effect = Effect(module)
+                self.effects[effect.name.lower()] = effect
             except Exception as e:
-                logger.exception("Error loading effect %s", str(m))
+                logger.exception("Error loading effect %s", str(module))
 
     def _clean_shutdown(self):
         logger.info("Shutting down")
         self.stop_loop()
-        for c in self.controller_manager.get_controllers():
-            c.clear()
+        for controller in self.controller_manager.get_controllers():
+            controller.clear()
         self.controller_manager.show()
 
 
