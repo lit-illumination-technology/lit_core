@@ -10,9 +10,11 @@ import time
 import threading
 
 from .controller import ControllerManager
+from .error import InvalidEffectException
 from .section import Section, SectionAdapter
 from .device import DeviceAdapter
 from . import effects
+from .history import History
 from .effect import Effect
 
 __author__ = "Nick Pesce"
@@ -40,6 +42,7 @@ class commands:
         self.zones = {}
         self.default_range = None
         self.singleton_args = {}
+        self.history = History(self)
 
         # Load config files
         with open(os.path.join(self.config_path, "speeds.json")) as data_file:
@@ -195,29 +198,43 @@ class commands:
         preset = self.presets.get(preset_name, None)
         if not preset:
             msg = "The preset {} does not exist".format(preset_name)
-            return (msg, 2)
+            return Response(msg, 2)
         if "commands" not in preset:
             msg = "The preset {} does not specify commands".format(preset_name)
-            return (msg, 3)
+            return Response(msg, 3)
         for command in preset["commands"]:
             if "effect" not in command:
                 msg = "The preset {} must specify an effect for all commands".format(
                     preset_name
                 )
-                return (msg, 3)
-            result, rc = self.start_effect(
+                return Response(msg, 3)
+            effect_instance = self._start_effect(
                 command["effect"],
                 command.get("args", {}),
                 command.get("properties", {}),
                 transaction_id,
             )
-            if rc != 0:
-                return (result, rc)
-        return (preset.get("start_message", "{} started!".format(preset_name)), 0)
+            if not effect_instance:
+                return Response("Invalid effect: {}".format(command["effect"]), 1)
+        self.history.save(self.get_state())
+        return Response(
+            preset.get("start_message", "{} started!".format(preset_name)),
+            0,
+            transaction_id,
+        )
 
     def start_effect(self, effect_name, args, properties, transaction_id):
         if not self.is_effect(effect_name):
-            return (self.help(), 2)
+            raise InvalidEffectException()
+        effect_instance = self._start_effect(
+            effect_name, args, properties, transaction_id
+        )
+        self.history.save(self.get_state())
+        return Response(effect_instance.effect.start_message, 0, transaction_id)
+
+    def _start_effect(self, effect_name, args, properties, transaction_id):
+        if not self.is_effect(effect_name):
+            return None
         effect = self.effects[effect_name.lower()]
         # remove any 'None' args
         args = {k: v for (k, v) in args.items() if v is not None}
@@ -256,10 +273,15 @@ class commands:
         self.show_lock.release()
         self.sleep_event.set()
         logger.info("New controller manager: %s", str(self.controller_manager))
-        return (effect.start_message, 0)
+        return effect_instance
 
     def get_transaction(self, transaction_id):
         return self.transactions.get(transaction_id)
+
+    def stop_all(self):
+        effect_ids = [effect_id for effect_id in self.effects_by_id]
+        for effect_id in effect_ids:
+            self.stop_effect(effect_id)
 
     def stop_effect(self, effect_id):
         effect = self.effects_by_id.get(effect_id)
@@ -417,7 +439,21 @@ class commands:
         self.stop_loop()
         for controller in self.controller_manager.get_controllers():
             controller.clear()
-        self.controller_manager.show()
+        self.controller_manager.show(self.show_lock)
+
+
+class Response:
+    def __init__(self, message, rc, transaction_id=None):
+        self.message = message
+        self.rc = rc
+        self.transaction_id = transaction_id
+
+    def as_dict(self):
+        return {
+            "message": self.message,
+            "code": self.rc,
+            "transaction_id": self.transaction_id,
+        }
 
 
 if __name__ == "__main__":

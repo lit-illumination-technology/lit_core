@@ -139,9 +139,7 @@ class LitDaemon:
 
     def handle_request(self, data):
         msg = json.loads(data)
-        type_error = self.error(
-            'type must be specified as "start", "modify", or "query"'
-        )
+        type_error = self.error('type must be specified as "start", "stop", or "query"')
         if "start" in msg:
             return self.start_command(msg["start"])
         if "stop" in msg:
@@ -155,11 +153,11 @@ class LitDaemon:
 
     @staticmethod
     def error(msg):
-        return json.dumps({"rc": 1, "result": "ERROR: {}".format(msg)})
+        return json.dumps({"code": 1, "message": "ERROR: {}".format(msg)})
 
     @staticmethod
     def result(data):
-        data["rc"] = 0
+        data["code"] = 0
         return json.dumps(data)
 
     def stop_command(self, msg):
@@ -170,28 +168,56 @@ class LitDaemon:
             transaction_id = msg["transaction_id"]
             for effect_id in self.commands.get_transaction(transaction_id):
                 self.commands.stop_effect(effect_id)
-        return json.dumps({"result": "Stopped", "rc": 0})
+        return json.dumps({"message": "Stopped", "code": 0})
 
     def start_command(self, msg):
         if "effect" in msg:
             transaction_id = next(TRANSACTION_IDS)
             effect = msg["effect"]
-            ret, rc = self.commands.start_effect(
+            response = self.commands.start_effect(
                 effect["name"],
                 effect.get("args", {}),
                 effect.get("properties", {}),
                 transaction_id,
             )
+            return json.dumps(response.as_dict())
         elif "preset" in msg:
             transaction_id = next(TRANSACTION_IDS)
             preset = msg["preset"]
-            ret, rc = self.commands.start_preset(
+            response = self.commands.start_preset(
                 preset["name"], preset.get("properties", {}), transaction_id
             )
+            return json.dumps(response.as_dict())
+        elif "history" in msg:
+            direction = msg["history"]
+            if direction.get("back"):
+                success = self.commands.history.back()
+            elif direction.get("forward"):
+                success = self.commands.history.forward()
+            else:
+                return json.dumps(
+                    {
+                        "message": "History request must specify 'forward' or 'back'",
+                        "code": 1,
+                    }
+                )
+            if not success:
+                return json.dumps({"message": "Nothing to do", "code": 5})
+            return json.dumps(
+                {
+                    "message": "Went {}".format(
+                        "back" if direction.get("back") else "forward"
+                    ),
+                    "code": 0,
+                }
+            )
         else:
-            ret = "Command must be one of 'effect', 'preset', or 'modify'"
-            rc = 1
-        return json.dumps({"result": ret, "rc": rc})
+            return json.dumps(
+                {
+                    "message": "Command must be one of 'effect', 'preset', or 'modify'",
+                    "code": 1,
+                }
+            )
 
     def dev_command(self, msg):
         if msg["command"] == "verbosity":
@@ -202,15 +228,15 @@ class LitDaemon:
             except AttributeError:
                 return json.dumps(
                     {
-                        "result": "the verbosity level must be debug, info, warning, error, or critical",
-                        "rc": 2,
+                        "message": "the verbosity level must be debug, info, warning, error, or critical",
+                        "code": 2,
                     }
                 )
             logging.getLogger().setLevel(level_val)
             return json.dumps(
-                {"result": "Logging level changed to {}".format(level), "rc": 0}
+                {"message": "Logging level changed to {}".format(level), "code": 0}
             )
-        return json.dumps({"result": "Unknown command", "rc": 2})
+        return json.dumps({"message": "Unknown command", "code": 2})
 
     def query(self, msg):
         return self.queries[msg.get("what", "error")]()
@@ -237,7 +263,7 @@ class LitDaemon:
         return self.result({"zones": list(self.commands.get_zones())})
 
     def speeds(self):
-        return self.result({"rc": 0, "speeds": self.commands.get_speeds()})
+        return self.result({"speeds": self.commands.get_speeds()})
 
     def pixels(self):
         return self.result({"pixels": self.commands.get_pixels()})

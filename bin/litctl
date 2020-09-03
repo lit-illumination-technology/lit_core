@@ -36,5 +36,5 @@ if __name__ == "__main__":
             effect_args={"color": args.color},
             properties={"speed": args.speed},
         )
-    print(resp["result"])
-    sys.exit(resp["rc"])
+    print(resp["message"])
+    sys.exit(resp["code"])

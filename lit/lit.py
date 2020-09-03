@@ -32,7 +32,7 @@ def start_effect(effect_name, effect_args=None, properties=None):
     res = get_response(s)
     s.close()
     # rc 0: success, rc 2: command usage error
-    if res.get("rc", 1) != 0:
+    if res.get("code", 1) != 0:
         logger.error(response_error(res))
     return res
 
@@ -51,7 +51,7 @@ def start_preset(preset, properties=None):
     res = get_response(s)
     s.close()
     # rc 0: success, rc 2: command usage error
-    if res.get("rc", 1) != 0:
+    if res.get("code", 1) != 0:
         logger.error(response_error(res))
     return res
 
@@ -76,7 +76,7 @@ def stop(effect_id=None, transaction_id=None):
     res = get_response(s)
     s.close()
     # rc 0: success, rc 2: command usage error
-    if res.get("rc", 1) != 0:
+    if res.get("code", 1) != 0:
         logger.error(response_error(res))
     return res
 
@@ -94,7 +94,43 @@ def query(query):
 
     res = get_response(s)
     s.close()
-    if res.get("rc", 1) != 0:
+    if res.get("code", 1) != 0:
+        logger.error(response_error(res))
+    return res
+
+
+def back():
+    s = None
+    try:
+        s = socket.socket(socket.AF_UNIX)
+        s.connect("/tmp/litd")
+        msg = {"start": {"history": {"back": 1}}}
+        s.sendall(json.dumps(msg).encode())
+    except Exception as e:
+        s.close()
+        raise conn_error(e)
+
+    res = get_response(s)
+    s.close()
+    if res.get("code", 1) != 0:
+        logger.error(response_error(res))
+    return res
+
+
+def forward():
+    s = None
+    try:
+        s = socket.socket(socket.AF_UNIX)
+        s.connect("/tmp/litd")
+        msg = {"start": {"history": {"forward": 1}}}
+        s.sendall(json.dumps(msg).encode())
+    except Exception as e:
+        s.close()
+        raise conn_error(e)
+
+    res = get_response(s)
+    s.close()
+    if res.get("code", 1) != 0:
         logger.error(response_error(res))
     return res
 
@@ -112,7 +148,7 @@ def dev_command(command, args):
 
     res = get_response(s)
     s.close()
-    if res.get("rc", 1) != 0:
+    if res.get("code", 1) != 0:
         logger.error(response_error(res))
     return res
 
@@ -138,8 +174,8 @@ def conn_error(e):
 
 def response_error(res):
     return Exception(
-        "Daemon returned a non-zero response code(rc={}). Error={}".format(
-            res.get("rc", None), res.get("result", "No message")
+        "Daemon returned a non-zero response code={}. Error={}".format(
+            res.get("code", None), res.get("message", "No message")
         )
     )
 
