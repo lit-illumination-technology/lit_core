@@ -49,8 +49,8 @@ def update(lights, step, state):
         sd = start_durations[i]
         if sd[0] + sd[1] <= step:
             state["start_durations"][i] = (
-                step + random.randint(0, int(2 * avg_off_time)),
-                MIN_ON_TIME + random.randint(0, (AVG_ON_TIME - MIN_ON_TIME) * 2),
+                step + random.random() * int(2 * avg_off_time),
+                MIN_ON_TIME + (random.random() * (AVG_ON_TIME - MIN_ON_TIME) * 2),
             )
         brightness = (step - sd[0]) / (sd[1] / 2)
         if brightness > 1:

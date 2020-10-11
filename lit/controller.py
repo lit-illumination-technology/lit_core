@@ -83,10 +83,9 @@ class ControllerManager:
                 location[0], *self.pixels[i]
             )
 
-    def show(self, show_lock):
+    def show(self):
         """Pushes the led array to the actual lights"""
-        with show_lock:
-            self.render()
+        self.render()
         for display_adapter in self.display_adapters:
             display_adapter.show()
 

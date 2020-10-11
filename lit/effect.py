@@ -1,7 +1,7 @@
 import itertools
 import time
 
-DEFAULT_SPEED = 50  # hertz
+DEFAULT_SPEED = 30  # hertz
 EFFECT_IDS = itertools.count(0, 1)
 
 
