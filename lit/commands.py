@@ -20,7 +20,7 @@ from .effect import Effect
 __author__ = "Nick Pesce"
 __email__ = "nickpesce22@gmail.com"
 
-# If the system is running slow, this man effect updates can happen before each light update
+# If the system is running slow, this many effect updates can happen before each light update
 CATCHUP_UPDATES = 3
 TIME_WARN_COOLDOWN = 10  # seconds
 TIME_WARN_THRESHOLD = 0.1  # seconds
@@ -269,8 +269,8 @@ class commands:
     def stop_all(self):
         with self.show_lock:
             effect_ids = [effect_id for effect_id in self.effects_by_id]
-            for effect_id in effect_ids:
-                self.stop_effect(effect_id)
+        for effect_id in effect_ids:
+            self.stop_effect(effect_id)
 
     def stop_effect(self, effect_id):
         with self.show_lock:
