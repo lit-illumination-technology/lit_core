@@ -6,27 +6,47 @@ start_message = name + " started!"
 
 description = "Like the Nexus android wallpaper"
 
+
+def gen_projectile(lights_size):
+    right = random.random() < 0.5
+    distance_from_start = random.randint(0, lights_size // 2)
+    return [
+        -distance_from_start
+        if right
+        else (lights_size - 1 + distance_from_start),  # Head position
+        (1 if right else -1) * (max(0.3, random.normalvariate(2, 1))),  # Speed
+        random.random(),  # Hue
+    ]
+
+
+def gen_starting_projectiles(lights, args):
+    projectiles = []
+    for _ in range(args["number"]):
+        projectiles.append(gen_projectile(lights.size))
+    return projectiles
+
+
 schema = {
+    "number": {
+        "value": {
+            "type": "number",  # TODO integer type (or step)
+            "min": 1,
+            "max": 50,
+            "default": 10,
+        },
+        "user_input": True,
+        "required": False,
+        "index": 0,
+    },
     "projectiles": {
-        "value": {"type": "int list", "default_gen": lambda lights, args: list()},
+        "value": {"type": "int list", "default_gen": gen_starting_projectiles},
         "user_input": False,
     },
 }
 
 
 def update(lights, step, state):
-    # TODO constant number of projectiles. Reuse when go fall off strip. Avoids O(n) remove and inserts.
     projectiles = state["projectiles"]
-    if random.random() < 0.05:
-        right = random.random() < 0.5
-        projectiles.append(
-            [
-                0 if right else (lights.size - 1),
-                (1 if right else -1) * (max(0.3, random.normalvariate(2, 1))),
-                random.random(),
-            ]
-        )
-
     hsvs = [[0, 0, 0, 0] for _ in range(0, lights.size)]
     # Total of value(HSV) at each position
     count = [0] * lights.size
@@ -44,11 +64,10 @@ def update(lights, step, state):
                 hsvs[tail_pixel][3] = max(
                     hsvs[tail_pixel][3], (tail_length - 1.0 * t) / tail_length
                 )
-                # rgbs[tail_pixel] = ((rgbs[tail_pixel][0] * count[tail_pixel]) + r) / (count[tail_pixel] + 1)
-                # rgbs[tail_pixel][1] = ((rgbs[tail_pixel][1] * count[tail_pixel]) + g) / (count[tail_pixel] + 1)
-                # rgbs[tail_pixel][2] = ((rgbs[tail_pixel][2] * count[tail_pixel]) + b) / (count[tail_pixel] + 1)
-                count[tail_pixel] = count[tail_pixel] + v
+                count[tail_pixel] += v
         projectiles[i][0] = projectiles[i][0] + projectiles[i][1]
-        if val[0] + tail_length < 0 or val[0] - tail_length >= lights.size:
-            projectiles.remove(val)
+        if (val[0] + tail_length < 0 and val[1] < 0) or (
+            val[0] - tail_length >= lights.size and val[1] > 0
+        ):
+            projectiles[i] = gen_projectile(lights.size)
     lights.set_pixels_hsv(hsvs)
