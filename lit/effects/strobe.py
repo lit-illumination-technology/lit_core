@@ -16,7 +16,7 @@ schema = {
 
 
 def update(lights, step, state):
-    color = state["color"]
+    color = state["color"].get_color(step)
     if step % 2 == 0:
         lights.set_all_pixels(color[0], color[1], color[2])
     else:

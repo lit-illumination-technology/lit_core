@@ -17,7 +17,7 @@ schema = {
 
 def update(lights, step, state):
     brightness = state["brightness"]
-    color = state["color"]
+    color = state["color"].get_color(step)
     lights.set_all_pixels(
         int(color[0] * brightness),
         int(color[1] * brightness),

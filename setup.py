@@ -7,7 +7,7 @@ setuptools.setup(
     author_email="nickpesce22@gmail.com",
     description="Lit Ilumination Technology",
     url="https://github.com/lit-illumination-technology/lit_core",
-    packages=["lit", "lit.effects"],
+    packages=["lit", "lit.effects", "lit.colors"],
     scripts=["bin/litctl", "bin/litdev"],
     entry_points={"console_scripts": ["litd=lit.litd:start"],},
     package_data={"lit": ["config/*"]},

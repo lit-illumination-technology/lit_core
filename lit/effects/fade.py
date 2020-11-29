@@ -36,10 +36,10 @@ schema = {
 def update(lights, step, state):
     if step >= TOTAL_STEPS:
         # TODO hotswap effects
-        end_color = state["end color"]
+        end_color = state["end color"].get_color()
         lights.set_all_pixels(*end_color)
         return
-    ar, ag, ab = state["start color"]
+    ar, ag, ab = state["start color"].get_color()
     dr, dg, db = state["delta"]
     nr = ar + dr * step
     ng = ag + dg * step

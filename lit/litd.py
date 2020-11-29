@@ -80,9 +80,9 @@ class LitDaemon:
             "effects": self.effects,
             "presets": self.presets,
             "colors": self.colors,
+            "color_types": self.color_types,
             "sections": self.sections,
             "zones": self.zones,
-            "speeds": self.speeds,
             "pixels": self.pixels,
             "state": self.state,
             "error": lambda _: self.error("not a valid query"),
@@ -256,14 +256,14 @@ class LitDaemon:
     def colors(self):
         return self.result({"colors": self.commands.get_colors()})
 
+    def color_types(self):
+        return self.result({"color_types": self.commands.get_color_types()})
+
     def sections(self):
         return self.result({"sections": list(self.commands.get_sections())})
 
     def zones(self):
         return self.result({"zones": list(self.commands.get_zones())})
-
-    def speeds(self):
-        return self.result({"speeds": self.commands.get_speeds()})
 
     def pixels(self):
         return self.result({"pixels": self.commands.get_pixels()})
@@ -273,8 +273,11 @@ class LitDaemon:
 
 
 def start():
-    litd = LitDaemon()
-    litd.start()
+    try:
+        litd = LitDaemon()
+        litd.start()
+    except Exception:
+        logger.exception("Uncaught exception when starting daemon")
 
 
 if __name__ == "__main__":

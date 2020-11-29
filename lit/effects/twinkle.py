@@ -9,7 +9,6 @@ start_message = name + " started!"
 
 description = "Like a little star"
 
-
 def setup_start_durations(lights, args):
     return [(-1, 1)] * lights.size
 
@@ -33,9 +32,9 @@ schema = {
 
 
 def update(lights, step, state):
-    color = state["color"]
     brightnesses = state["brightnesses"]
     for i in range(lights.size):
+        color = state["color"].get_color(step, i)
         brightness = brightnesses[i]
         lights.set_pixel(
             i,

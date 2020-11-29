@@ -28,6 +28,14 @@ schema = {
         "required": False,
         "index": 0,
     },
+    "color": {
+        "value": {
+            "type": "color",  # TODO integer type (or step)
+            "default": {"type": "Random Colors"},
+        },
+        "user_input": True,
+        "required": False,
+    },
     "heads": {
         "value": {"type": "tuple list", "default_gen": create_heads},
         "user_input": False,
@@ -43,4 +51,4 @@ def update(lights, step, state):
         heads[0][i] += 1
         if heads[0][i] >= lights.size:
             heads[0][i] = 0
-            heads[1][i] = random.random()
+            heads[1][i] = state["color"].get_color(step)

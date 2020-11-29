@@ -14,13 +14,15 @@ from .error import InvalidEffectException
 from .section import Section, SectionAdapter
 from .device import DeviceAdapter
 from . import effects
+from . import colors
 from .history import History
 from .effect import Effect
+from .color import ColorType
 
 __author__ = "Nick Pesce"
 __email__ = "nickpesce22@gmail.com"
 
-# If the system is running slow, this man effect updates can happen before each light update
+# If the system is running slow, this many effect updates can happen before each light update
 CATCHUP_UPDATES = 3
 TIME_WARN_COOLDOWN = 10  # seconds
 TIME_WARN_THRESHOLD = 0.1  # seconds
@@ -34,6 +36,7 @@ class commands:
         logger.info("Using config directory: %s", self.config_path)
         self.sleep_event = threading.Event()
 
+        self.color_types = {}
         self.effects = {}
         self.effects_by_id = {}
         self.transactions = {}
@@ -44,14 +47,11 @@ class commands:
         self.history = History(self)
 
         # Load config files
-        with open(os.path.join(self.config_path, "speeds.json")) as data_file:
-            self.speeds = json.load(data_file)
-
         with open(os.path.join(self.config_path, "presets.json")) as data_file:
             self.presets = json.load(data_file)
 
         with open(os.path.join(self.config_path, "colors.json")) as data_file:
-            self.colors = json.load(data_file)
+            self.named_rgb_colors = json.load(data_file)
 
         with open(os.path.join(self.config_path, "ranges.json")) as data_file:
             range_json = json.load(data_file)
@@ -109,6 +109,7 @@ class commands:
                 self.zones[zone["name"]] = zone["sections"]
 
         self.controller_manager = ControllerManager(self.sections)
+        self.import_colors()
         self.import_effects()
         atexit.register(self._clean_shutdown)
         self.start_loop()
@@ -223,19 +224,19 @@ class commands:
         if not self.is_effect(effect_name):
             return None
         effect = self.effects[effect_name.lower()]
-        # remove any 'None' args
-        args = {k: v for (k, v) in args.items() if v is not None}
-        # attempt to parse arg values
-        args = {k: self.get_value_from_string(k, args[k]) for k in args}
         sections = self.get_sections_from_ranges(
             properties.get("ranges", [self.default_range])
         )
         with self.show_lock:
-            opacity = properties.get("opacity", 1)
+            opacity = properties.get("opacity")
+            if opacity is None:
+                opacity = 1
             if not isinstance(opacity, (int, float)):
                 logger.warning("Invalid 'opacity' property received: %s", str(opacity))
                 opacity = 1
-            overlayed = properties.get("overlayed", False)
+            overlayed = properties.get("overlayed")
+            if overlayed is None:
+                overlayed = False
             if not isinstance(overlayed, bool):
                 logger.warning(
                     "Invalid 'overlayed' property received: %s", str(overlayed)
@@ -250,9 +251,13 @@ class commands:
                 if effect.controller.size > 0
             }
 
-            # fill in default args from schema
             schema = effect.schema
+            # remove any 'None' args
+            args = {k: v for (k, v) in args.items() if v is not None}
+            # fill in default args from schema
             self.complete_args_with_schema(args, schema, controller)
+            # attempt to parse arg values
+            args = {k: self.process_arg_value(k, args[k], controller) for k in args}
 
             default_speed = effect.default_speed
             speed = properties.get("speed", default_speed)
@@ -269,8 +274,8 @@ class commands:
     def stop_all(self):
         with self.show_lock:
             effect_ids = [effect_id for effect_id in self.effects_by_id]
-            for effect_id in effect_ids:
-                self.stop_effect(effect_id)
+        for effect_id in effect_ids:
+            self.stop_effect(effect_id)
 
     def stop_effect(self, effect_id):
         with self.show_lock:
@@ -326,10 +331,10 @@ class commands:
         return self.presets
 
     def get_colors(self):
-        return self.colors
+        return self.named_rgb_colors
 
-    def get_speeds(self):
-        return self.speeds
+    def get_color_types(self):
+        return [{"name": ct.name, "schema": ct.schema} for ct in self.color_types.values()]
 
     def get_sections(self):
         return self.sections
@@ -373,30 +378,44 @@ class commands:
                 ret += self.zones[r]
         return ret
 
-    def get_value_from_string(self, type, string):
+    def process_arg_value(self, arg_type, value, lights_controller):
         """Given a attribute represented as a string, convert it to the appropriate value"""
-        if not isinstance(string, str):
-            return string
-        if type.lower() == "color":
-            if string.lower() == "random":
-                return list(
-                    map(
-                        lambda x: int(255 * x),
-                        colorsys.hsv_to_rgb(random.random(), 1, 1),
+        if arg_type.lower() == "color":
+            generator_schema = None
+            rgb = None
+            if isinstance(value, dict):
+                # Color generator
+                generator_schema = value
+            elif isinstance(value, str):
+                if value == "random":
+                    rgb = list(
+                        map(
+                            lambda x: int(255 * x),
+                            colorsys.hsv_to_rgb(random.random(), 1, 1),
+                        )
                     )
+                else:
+                    for color in self.named_rgb_colors:
+                        if color["name"].lower() == value.lower():
+                            rgb = color["rgb"]
+                    raise ValueError(f"Invalid color name: {value}")
+            elif isinstance(value, (tuple, list)):
+                # RGB
+                rgb = list(value)
+            else:
+                raise ValueError(f"Invalid type for color argument: {type(value)}")
+            if not generator_schema:
+                generator_schema = {
+                    "type": "Static Color",
+                    "args": {"color": rgb},
+                }
+            color_type = self.color_types.get(generator_schema["type"].lower())
+            if not color_type:
+                raise ValueError(
+                    f"Invalid color generator type: {generator_schema.get('type')}"
                 )
-            for c in self.colors:
-                if c["name"].lower() == string.lower():
-                    return c["rgb"]
-            # TODO throw invalid color name error
-            return [255, 255, 255]
-        elif type.lower() == "speed":
-            return self.speeds.get(string.lower())
-        elif type.lower() == "ranges":
-            if string.lower() == "all":
-                return self.sections.keys()
-            return string.split(",")
-        return string
+            return color_type.new_generator(generator_schema["args"], lights_controller)
+        return value
 
     def is_effect(self, name):
         return name.lower() in self.effects
@@ -411,7 +430,7 @@ class commands:
             except Exception as e:
                 logger.exception("Could not import %s", m)
 
-        logger.info("Parsing effects")
+        logger.info("Parsing effect modules")
         for module in modules:
             try:
                 logger.info("loading %s", str(module))
@@ -419,6 +438,25 @@ class commands:
                 self.effects[effect.name.lower()] = effect
             except Exception as e:
                 logger.exception("Error loading effect %s", str(module))
+
+    def import_colors(self):
+        module_names = colors.colors
+        modules = []
+        for m in module_names:
+            try:
+                module = importlib.import_module(m)
+                modules.append(module)
+            except Exception as e:
+                logger.exception("Could not import %s", m)
+
+        logger.info("Parsing color generator modules")
+        for module in modules:
+            try:
+                logger.info("loading %s", str(module))
+                color_type = ColorType(module)
+                self.color_types[color_type.name.lower()] = color_type
+            except Exception as e:
+                logger.exception("Error loading color type %s", str(module))
 
     def _clean_shutdown(self):
         logger.info("Shutting down")

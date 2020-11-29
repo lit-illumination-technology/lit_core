@@ -9,7 +9,7 @@ from .lit import (
     get_effects,
     get_presets,
     get_colors,
-    get_speeds,
+    get_color_types,
     get_sections,
     get_zones,
     get_pixels,

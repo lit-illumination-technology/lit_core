@@ -192,6 +192,10 @@ def get_colors():
     return query("colors")["colors"]
 
 
+def get_color_types():
+    return query("color_types")["color_types"]
+
+
 def get_speeds():
     return query("speeds")["speeds"]
 

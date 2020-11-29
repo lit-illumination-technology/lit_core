@@ -9,8 +9,8 @@ start_message = name + " started!"
 description = "You would not believe your eyes"
 
 
-def setup_start_durations(lights, args):
-    return [(-1, 1)] * lights.size
+def setup_start_duration_colors(lights, args):
+    return [(-1, 1, (0, 0, 0))] * lights.size
 
 
 schema = {
@@ -24,8 +24,11 @@ schema = {
         "user_input": True,
         "required": False,
     },
-    "start_durations": {
-        "value": {"type": "(int, int) list", "default_gen": setup_start_durations},
+    "start_duration_colors": {
+        "value": {
+            "type": "(int, int, (int, int, int)) list",
+            "default_gen": setup_start_duration_colors,
+        },
         "user_input": False,
     },
 }
@@ -36,8 +39,8 @@ MIN_ON_TIME = 10
 
 
 def update(lights, step, state):
-    color = state["color"]
-    start_durations = state["start_durations"]
+    color_gen = state["color"]
+    start_duration_colors = state["start_duration_colors"]
     """ MATH:
     DENSITY = OnTime/(Ontime+OffTime)
     OnTime(1-DENSITY) = Density*OffTime
@@ -46,20 +49,21 @@ def update(lights, step, state):
     density = state["density"] / 100
     avg_off_time = ((1 - density) * AVG_ON_TIME) / density
     for i in range(lights.size):
-        sd = start_durations[i]
-        if sd[0] + sd[1] <= step:
-            state["start_durations"][i] = (
+        sdc = start_duration_colors[i]
+        if sdc[0] + sdc[1] <= step:
+            state["start_duration_colors"][i] = (
                 step + random.random() * int(2 * avg_off_time),
                 MIN_ON_TIME + (random.random() * (AVG_ON_TIME - MIN_ON_TIME) * 2),
+                color_gen.get_color(step, i),
             )
-        brightness = (step - sd[0]) / (sd[1] / 2)
+        brightness = (step - sdc[0]) / (sdc[1] / 2)
         if brightness > 1:
             brightness = 2 - brightness
         brightness = max(brightness, 0)
         lights.set_pixel(
             i,
-            int(color[0] * brightness),
-            int(color[1] * brightness),
-            int(color[2] * brightness),
+            int(sdc[2][0] * brightness),
+            int(sdc[2][1] * brightness),
+            int(sdc[2][2] * brightness),
             brightness,
         )

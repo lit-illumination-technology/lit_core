@@ -9,7 +9,7 @@ class Effect:
     def __init__(self, module):
         self.name = getattr(module, "name", "Unnamed")
         self.schema = getattr(module, "schema", {})
-        self.start_message = getattr(module, "start_message", "{self.name} started")
+        self.start_message = getattr(module, "start_message", f"{self.name} started")
         self.command_schema = {
             k: {k2: v2 for k2, v2 in v.items() if k2 != "user_input"}
             for k, v in self.schema.items()
@@ -41,14 +41,21 @@ class EffectInstance:
         self.id = next(EFFECT_IDS)
         self.controller = controller
         self.transaction_id = transaction_id
+        self.static_pixels = []
 
     def update(self):
-        self.effect.module.update(self.controller, self.step, self.state)
         # Speed is in units of updates/second
-        # If speed is 0, update at DEFAULT_SPEED, but don't increment step
-        self.next_upd_time += 1 / (self.speed or self.effect.default_speed)
         if self.speed > 0:
+            self.effect.module.update(self.controller, self.step, self.state)
             self.step += 1
+            self.next_upd_time += 1 / self.speed
+        else:
+            if not self.static_pixels:
+                self.effect.module.update(self.controller, self.step, self.state)
+            self.static_pixels = self.controller.get_pixels()
+            self.controller.set_pixels(self.static_pixels)
+            self.next_upd_time += 1 / DEFAULT_SPEED
+
 
     def __str__(self):
         return str(
