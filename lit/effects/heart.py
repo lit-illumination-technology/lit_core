@@ -18,7 +18,7 @@ schema = {
 
 
 def update(lights, step, state):
-    color = state["color"]
+    color = state["color"].get_color(step)
     sub_step = step % 60
     lub = sub_step in range(0, 3) or sub_step in range(9, 12)
     brightness = 1 if lub else 0.4
