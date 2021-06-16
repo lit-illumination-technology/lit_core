@@ -334,7 +334,9 @@ class commands:
         return self.named_rgb_colors
 
     def get_color_types(self):
-        return [{"name": ct.name, "schema": ct.schema} for ct in self.color_types.values()]
+        return [
+            {"name": ct.name, "schema": ct.schema} for ct in self.color_types.values()
+        ]
 
     def get_sections(self):
         return self.sections
@@ -349,7 +351,19 @@ class commands:
         state = []
 
         def state_schema(state, schema):
-            return {k: v for k, v in state.items() if k in schema}
+            processed = {}
+            for k, v in state.items():
+                if k in schema:
+                    if (
+                        not isinstance(v, (dict, str, int, float, bool))
+                        and v is not None
+                    ):
+                        try:
+                            v = v.as_dict()
+                        except AttributeError:
+                            v = str(v)
+                    processed[k] = v
+            return processed
 
         with self.show_lock:
             for effect in self.effects_by_id.values():

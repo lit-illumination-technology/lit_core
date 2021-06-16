@@ -8,7 +8,7 @@ class ColorType:
         return ColorGenerator(self, args, lights)
 
     def __str__(self):
-        return str({"name": self.name, "schema": self.schema})
+        return str({"type": self.name, "schema": self.schema})
 
 
 class ColorGenerator:
@@ -26,5 +26,8 @@ class ColorGenerator:
             return self.color_type.module.get_palette(size)
         return [self.get_color(i) for i in range(size)]
 
+    def as_dict(self):
+        return {"type": self.color_type.name, "args": self.args}
+
     def __str__(self):
-        return str({"name": self.color_type.name, "args": self.args})
+        return str(self.as_dict)
