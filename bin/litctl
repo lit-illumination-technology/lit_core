@@ -1,4 +1,4 @@
-#! /usr/bin/python3.5
+#! /bin/env python3
 import argparse
 import sys
 
@@ -12,6 +12,7 @@ if __name__ == "__main__":
         "-s",
         dest="speed",
         type=float,
+        default=0,
         help="speed of the effect (if applicable)",
     )
     parser.add_argument(

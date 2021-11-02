@@ -1,7 +1,7 @@
 import itertools
 import time
 
-DEFAULT_SPEED = 30  # hertz
+DEFAULT_SPEED = 1  # hertz
 EFFECT_IDS = itertools.count(0, 1)
 
 
@@ -55,7 +55,6 @@ class EffectInstance:
             self.static_pixels = self.controller.get_pixels()
             self.controller.set_pixels(self.static_pixels)
             self.next_upd_time += 1 / DEFAULT_SPEED
-
 
     def __str__(self):
         return str(

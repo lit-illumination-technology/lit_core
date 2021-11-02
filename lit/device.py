@@ -4,6 +4,8 @@ import socket
 
 logger = logging.getLogger(__name__)
 
+MAX_SKIPPED_SHOWS = 1000
+
 
 class DeviceAdapter:
     """ A DeviceAdapter represents a physical display device.
@@ -14,6 +16,8 @@ class DeviceAdapter:
     def __init__(self, name, size):
         self.size = size
         self.name = name
+        self.dirty = True
+        self.skipped_shows = 0
 
     @staticmethod
     def from_config(config):
@@ -27,10 +31,13 @@ class DeviceAdapter:
         return adapter
 
     def set_pixel_color_rgb(self, n, r, g, b):
-        pass
+        self.dirty = True
 
     def show(self):
-        pass
+        should_show = self.dirty or self.skipped_shows > MAX_SKIPPED_SHOWS
+        self.dirty = False
+        self.skipped_shows = 0 if should_show else self.skipped_shows + 1
+        return should_show
 
     def __eq__(self, other):
         return self.name == other.name
@@ -49,13 +56,18 @@ class UDPAdapter(DeviceAdapter):
         self.pixels = [0] * size * 3
 
     def set_pixel_color_rgb(self, n, r, g, b):
-        self.pixels[3 * n] = r
-        self.pixels[3 * n + 1] = g
-        self.pixels[3 * n + 2] = b
+        if [r, g, b] != self.pixels[3 * n : 3 * n + 3]:
+            self.dirty = True
+            self.pixels[3 * n] = r
+            self.pixels[3 * n + 1] = g
+            self.pixels[3 * n + 2] = b
 
     def show(self):
-        payload = bytearray(self.pixels) + int(time.time() * 100).to_bytes(8, "little")
-        self.socket.sendto(payload, 0, (self.ip, self.port))
+        if super().show():
+            payload = bytearray(self.pixels) + int(time.time() * 100).to_bytes(
+                8, "little"
+            )
+            self.socket.sendto(payload, 0, (self.ip, self.port))
 
 
 class WS2812Adapter(DeviceAdapter):
@@ -76,7 +88,8 @@ class WS2812Adapter(DeviceAdapter):
         self.ws2812.setPixelColorRGB(n, r, g, b)
 
     def show(self):
-        self.ws2812.show()
+        if super().show():
+            self.ws2812.show()
 
     def _init_ws2812(self):
         from rpi_ws281x import Adafruit_NeoPixel, WS2812_STRIP
