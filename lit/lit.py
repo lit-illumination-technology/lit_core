@@ -12,6 +12,8 @@ def start_effect(effect_name, effect_args=None, properties=None):
     s = None
     if effect_args is None:
         effect_args = {}
+    if properties is None:
+        properties = {}
     try:
         s = socket.socket(socket.AF_UNIX)
         s.connect("/tmp/litd")
@@ -38,6 +40,8 @@ def start_effect(effect_name, effect_args=None, properties=None):
 
 
 def start_preset(preset, properties=None):
+    if properties is None:
+        properties = {}
     s = None
     try:
         s = socket.socket(socket.AF_UNIX)

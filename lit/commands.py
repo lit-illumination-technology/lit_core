@@ -254,10 +254,10 @@ class commands:
             schema = effect.schema
             # remove any 'None' args
             args = {k: v for (k, v) in args.items() if v is not None}
-            # fill in default args from schema
-            self.complete_args_with_schema(args, schema, controller)
             # attempt to parse arg values
             args = {k: self.process_arg_value(k, args[k], controller) for k in args}
+            # fill in default args from schema
+            self.complete_args_with_schema(args, schema, controller)
 
             default_speed = effect.default_speed
             speed = properties.get("speed", default_speed)
@@ -293,17 +293,20 @@ class commands:
             if (not k in args or not v.get("user_input", False)) and (
                 "default" in v["value"] or "default_gen" in v["value"]
             ):
+                new_val = None
                 # If this arg is a singleton that was already set, give a reference
                 if v.get("singleton", False) and k in self.singleton_args:
-                    args[k] = self.singleton_args[k]
+                    new_val = self.singleton_args[k]
                 # Otherwise, get the default value
                 else:
                     if "default_gen" in v["value"]:
-                        args[k] = v["value"]["default_gen"](controller, args)
+                        new_val = v["value"]["default_gen"](controller, args)
                     else:
-                        args[k] = v["value"]["default"]
+                        new_val = v["value"]["default"]
                     if v.get("singleton", False):
-                        self.singleton_args[k] = args[k]
+                        self.singleton_args[k] = new_val
+
+                args[k] = self.process_arg_value(k, new_val, controller)
 
     def help(self):
         return """Effects:\n    ~ """ + (
