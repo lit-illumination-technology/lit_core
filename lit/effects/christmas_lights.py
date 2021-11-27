@@ -6,6 +6,8 @@ description = "Colors of traditional colored christmas lights"
 
 schema = {}
 
+default_speed = 0
+
 BRIGHTNESS = 0.2
 
 
@@ -22,5 +24,3 @@ def update(lights, step, state):
             lights.set_pixel(i, int(255 * BRIGHTNESS), int(170 * BRIGHTNESS), 0)
         elif seq == 8:
             lights.set_pixel(i, 0, 0, int(170 * BRIGHTNESS))
-        else:
-            lights.set_pixel(i, 0, 0, 0)
