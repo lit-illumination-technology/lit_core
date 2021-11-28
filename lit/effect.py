@@ -21,7 +21,7 @@ class Effect:
     def create(self, args, speed, controller, transaction_id):
         return EffectInstance(self, args, speed, controller, transaction_id)
 
-    def __str__(self):
+    def __repr__(self):
         return str(
             {
                 "name": self.name,
@@ -50,13 +50,13 @@ class EffectInstance:
             self.step += 1
             self.next_upd_time += 1 / self.speed
         else:
-            if not self.static_pixels:
+            if not self.static_pixels or self.controller.size != len(self.static_pixels):
                 self.effect.module.update(self.controller, self.step, self.state)
             self.static_pixels = self.controller.get_pixels()
             self.controller.set_pixels(self.static_pixels)
             self.next_upd_time += 1 / DEFAULT_SPEED
 
-    def __str__(self):
+    def __repr__(self):
         return str(
             {
                 "name": self.effect.name,
