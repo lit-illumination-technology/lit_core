@@ -126,7 +126,7 @@ class LitDaemon:
                         resp = self.handle_request(msg).encode()
                     except Exception as e:
                         logger.exception("Unexpected error while handing command")
-                        resp = self.error("Internal error").encode()
+                        resp = self.error(f"Internal error: {e}").encode()
                     logger.debug("responding: {}".format(resp))
                     # First 32 bytes is message length
                     conn.send(str(len(resp)).zfill(32).encode())
