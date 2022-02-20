@@ -255,7 +255,7 @@ class commands:
             # remove any 'None' args
             args = {k: v for (k, v) in args.items() if v is not None}
             # attempt to parse arg values
-            args = {k: self.process_arg_value(k, args[k], controller) for k in args}
+            args = {k: self.process_arg_value(schema[k]["value"]["type"], args[k], controller) for k in args}
             # fill in default args from schema
             self.complete_args_with_schema(args, schema, controller)
 

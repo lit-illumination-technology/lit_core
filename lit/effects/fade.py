@@ -6,10 +6,12 @@ description = "Lights fade from one color to another"
 
 TOTAL_STEPS = 1000
 
+import logging
 
 def calc_delta(lights, args):
-    ar, ag, ab = args["start color"]
-    br, bg, bb = args["end color"]
+    logging.warning(args)
+    ar, ag, ab = args["start color"].get_color()
+    br, bg, bb = args["end color"].get_color()
     return ((br - ar) / TOTAL_STEPS, (bg - ag) / TOTAL_STEPS, (bb - ab) / TOTAL_STEPS)
 
 
@@ -35,7 +37,7 @@ schema = {
 
 def update(lights, step, state):
     if step >= TOTAL_STEPS:
-        # TODO hotswap effects
+        # TODO hotswap effects instead of duplicating "on"
         end_color = state["end color"].get_color()
         lights.set_all_pixels(*end_color)
         return

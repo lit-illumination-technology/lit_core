@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="lit-core",
-    version="0.0.4",
+    version="0.0.5",
     author="Nick Pesce",
     author_email="nickpesce22@gmail.com",
     description="Lit Ilumination Technology",
