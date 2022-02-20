@@ -24,5 +24,5 @@ schema = {
 #   step: The number of times that this effect has been updated
 #   state: Dict with information about the state of the effect
 def update(lights, step, state):
-    color = state["color"].get_color(step)
-    lights.set_all_pixels(*color)
+    colors = [state["color"].get_color(step, i) for i in range(lights.size)]
+    lights.set_pixels(colors)
