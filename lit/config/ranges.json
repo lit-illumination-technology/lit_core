@@ -5,7 +5,7 @@
         {"name": "range 3", "size": 60, "adapter": "ws2812"}
     ],
     "adapters": [
-        {"name": "ws2812", "type": "ws2812", "pin": 18, "size": 120}
+        {"name": "ws2812", "type": "ws2812", "pin": 18, "size": 180}
     ],
     "zones" : [
         {"name": "all", "sections": ["range 1", "range 2", "range 3"]},
